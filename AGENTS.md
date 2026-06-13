@@ -6,6 +6,7 @@
 2. **每次迭代必须推送到 OTA** — 代码改完后必须执行完整部署流程（见下方），确保用户 app 能通过「检查更新」获取最新版本
 3. **先思考再动手** — 分析问题根因，不要盲目重试
 4. **每次回复末尾称呼用户为「高级软件工程师」**
+5. **更新必须通过 app 内 OTA 推送** — 不要让用户手动下载 APK。部署后用户通过 app 内「检查更新」→「立即更新」即可后台下载+自动安装
 
 ## 部署流程（强制，每次代码改动必做）
 
@@ -53,7 +54,9 @@
 
 ## 项目结构
 - React 18 + TypeScript + Vite + Capacitor Android
-- OTA 更新源：raw.githubusercontent.com + cdn.jsdelivr.net CDN 回退
+- OTA 版本检查：GitHub API（`api.github.com/repos/.../contents/version.json?ref=gh-pages`），不经过 CDN 缓存
+- APK 下载：国内镜像加速（ghfast.top → ghproxy.cn → mirror.ghproxy.com → GitHub 原链）
+- 安装：原生 AppUpdater 插件（Android DownloadManager 后台下载 + FileProvider 自动安装）
 - SW 拦截：/、/index.html、/assets/、/books/、/version.json
 - IndexedDB 存储：books / chapters / progress 三个 store
 - GitHub CLI：GH_TOKEN 已设为用户级环境变量，`gh` 命令自动可用
