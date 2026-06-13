@@ -14,18 +14,20 @@ interface Props {
 
 interface LocalBookIndex {
   id: string; title: string; author: string; sourceId: string; sourceName: string; description: string
+  tags?: string[]
 }
 
 const LOCAL_BOOKS_URL = 'books/index.json'
 const REMOTE_BOOKS_URL = 'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/books/index.json'
 
-const HOT_CATEGORIES = ['玄幻', '都市', '穿越', '重生', '系统', '修仙', '武侠', '言情', '悬疑', '网游', '末日', '神医']
+
 
 export default function Discover({ onViewDetail, showToast, books }: Props) {
   const [localBooks, setLocalBooks] = useState<DiscoverItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedCat, setSelectedCat] = useState('')
+  const [allTags, setAllTags] = useState<string[]>([])
 
   const fetchLocalBooks = useCallback(async () => {
     setLoading(true)
@@ -59,13 +61,13 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
         }
       } catch { /* 远程不可达，仅用本地 */ }
 
-      // 按分类筛选（简单关键词匹配）
+      // 提取所有唯一tag
+      setAllTags(Array.from(new Set(index.flatMap(b => b.tags || []))))
+
+      // 按tag筛选
       let filtered = index
       if (selectedCat) {
-        filtered = index.filter(b => 
-          b.title.includes(selectedCat) || 
-          b.description.includes(selectedCat)
-        )
+        filtered = index.filter(b => b.tags?.includes(selectedCat))
       }
 
       const items: DiscoverItem[] = filtered.map(b => ({
@@ -157,9 +159,9 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
     <div style={{ padding: 12 }}>
       {/* 分类快捷入口 */}
       <div style={{ marginBottom: 16 }}>
-        <div className="section-title">热门分类</div>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {HOT_CATEGORIES.map(q => (
+        <div className="section-title">分类标签</div>
+        <div style={{ display: 'flex', gap: 8, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4, scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {allTags.map(q => (
             <button
               key={q}
               onClick={() => setSelectedCat(prev => prev === q ? '' : q)}

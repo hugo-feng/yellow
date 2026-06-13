@@ -52,7 +52,7 @@ function AppInner() {
   const [cacheTask, setCacheTask] = useState<CacheTask | null>(null)
   const [currentVersion, setCurrentVersion] = useState('1.0.0')
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => {
-    const defaults: ReaderSettings = { fontSize: 18, lineHeight: 1.8, theme: 'dark', fontFamily: 'system', maxWidth: 720, brightness: 100, paragraphSpacing: 1.2 }
+    const defaults: ReaderSettings = { fontSize: 18, lineHeight: 1.8, theme: 'dark', fontFamily: 'system', maxWidth: 720, brightness: 100, paragraphSpacing: 1.2, pageMode: 'swipe' }
     try {
       const saved = localStorage.getItem('reader-settings')
       return saved ? { ...defaults, ...JSON.parse(saved) } : defaults

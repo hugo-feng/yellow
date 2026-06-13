@@ -74,6 +74,15 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
           </div>
         )}
 
+        {/* 标签 */}
+        <div style={{ padding: '0 16px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {generateTags(book).map(tag => (
+              <span key={tag} className="badge" style={{ background: 'var(--accent-glow)', color: 'var(--accent)' }}>{tag}</span>
+            ))}
+          </div>
+        </div>
+
         {/* 操作按钮 */}
         <div style={{ padding: '0 16px', marginBottom: 20, display: 'flex', gap: 10 }}>
           <button
@@ -172,4 +181,27 @@ function InfoRow({ label, value, isLast }: { label: string; value: string; isLas
       </span>
     </div>
   )
+}
+
+function generateTags(book: Book): string[] {
+  const text = `${book.title} ${book.description || ''}`
+  const tags: string[] = []
+  const tagMap: [RegExp, string][] = [
+    [/短篇|小品/, '短篇'],
+    [/校园|同学|老师|学生/, '校园'],
+    [/家庭|爸爸|妈妈|哥哥|姐姐|弟弟|妹妹|公公|儿媳|嫂嫂|侄女/, '家庭'],
+    [/青春|少女|少年/, '青春'],
+    [/都市|城市/, '都市'],
+    [/悬疑|推理/, '悬疑'],
+    [/穿越|重生/, '穿越'],
+    [/武侠|修仙|玄幻/, '玄幻'],
+    [/言情|恋爱|爱情/, '言情'],
+    [/职场|工作/, '职场'],
+    [/情感|浪漫/, '情感'],
+  ]
+  for (const [re, tag] of tagMap) {
+    if (re.test(text) && !tags.includes(tag)) tags.push(tag)
+  }
+  if (tags.length === 0) tags.push('小说')
+  return tags.slice(0, 5)
 }

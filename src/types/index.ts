@@ -58,6 +58,7 @@ export interface ReaderSettings {
   maxWidth: number
   brightness: number
   paragraphSpacing: number
+  pageMode: 'scroll' | 'swipe'
 }
 
 export type TabKey = 'discover' | 'bookshelf' | 'search' | 'settings'

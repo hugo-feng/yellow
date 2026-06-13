@@ -20,6 +20,9 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const [loading, setLoading] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const controlsTimer = useRef<ReturnType<typeof setTimeout>>()
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null)
+  const [isSwiping, setIsSwiping] = useState(false)
 
   const currentChapter = book.chapters[currentChapterIdx]
   const hasPrev = currentChapterIdx > 0
@@ -107,6 +110,42 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const changeSetting = useCallback(<K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value })
   }, [settings, onSettingsChange])
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (settings.pageMode !== 'swipe') return
+    const touch = e.touches[0]
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() }
+    setIsSwiping(true)
+  }, [settings.pageMode])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current || settings.pageMode !== 'swipe') return
+    const touch = e.touches[0]
+    const dx = touch.clientX - touchStartRef.current.x
+    const dy = touch.clientY - touchStartRef.current.y
+    if (Math.abs(dx) > Math.abs(dy)) {
+      setSwipeOffset(dx)
+    }
+  }, [settings.pageMode])
+
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStartRef.current || settings.pageMode !== 'swipe') return
+    const threshold = 80
+    const velocity = Math.abs(swipeOffset) / (Date.now() - touchStartRef.current.time) * 1000
+
+    if (swipeOffset < -threshold || (swipeOffset < -30 && velocity > 300)) {
+      if (hasNext) {
+        handleNextChapter()
+      }
+    } else if (swipeOffset > threshold || (swipeOffset > 30 && velocity > 300)) {
+      if (hasPrev) {
+        handlePrevChapter()
+      }
+    }
+    setSwipeOffset(0)
+    setIsSwiping(false)
+    touchStartRef.current = null
+  }, [swipeOffset, hasNext, hasPrev, settings.pageMode, handleNextChapter, handlePrevChapter])
 
   const themeColors = {
     dark: { bg: '#0f0f1a', text: '#d8d8e0', border: '#2a2a45' },
@@ -199,14 +238,20 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         ref={contentRef}
         style={{
           flex: 1,
-          overflow: 'auto',
+          overflow: settings.pageMode === 'swipe' ? 'hidden' : 'auto',
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           padding: 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 0px) + 96px)',
           filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined,
-          transition: 'background 0.3s, filter 0.3s'
+          transition: settings.pageMode === 'swipe'
+            ? (isSwiping ? 'background 0.3s, filter 0.3s' : 'background 0.3s, filter 0.3s, transform 0.3s ease')
+            : 'background 0.3s, filter 0.3s',
+          transform: settings.pageMode === 'swipe' ? `translateX(${swipeOffset}px)` : undefined
         }}
         onClick={toggleControls}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <div
           style={{
@@ -292,6 +337,10 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           上一章
         </button>
 
+        <div style={{ flex: 2, textAlign: 'center', color: '#1a1a2e', fontSize: 12, fontWeight: 700 }}>
+          {currentChapterIdx + 1} / {book.chapters.length}
+        </div>
+
         <button
           style={{
             background: 'rgba(0,0,0,0.2)',
@@ -346,6 +395,22 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-secondary)' }}>
             <div className="modal-handle" />
             <h3 style={{ fontSize: 16, marginBottom: 16, color: 'var(--accent)' }}>阅读设置</h3>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>翻页模式</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[{ key: 'swipe' as const, label: '左右滑动' }, { key: 'scroll' as const, label: '上下滚动' }].map(m => (
+                  <button key={m.key} onClick={() => changeSetting('pageMode', m.key)} style={{
+                    flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
+                    border: settings.pageMode === m.key ? '2px solid var(--accent)' : '2px solid var(--border)',
+                    background: 'var(--bg-card)', color: 'var(--text-primary)',
+                    fontSize: 12, cursor: 'pointer', fontWeight: settings.pageMode === m.key ? 700 : 400, transition: 'all 0.2s'
+                  }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>
