@@ -72,16 +72,16 @@ function AppInner() {
 
   useEffect(() => {
     loadBooks()
-    // 等 SW 就绪后再读版本 + 检查更新
     waitSWReady().then(async () => {
       await getCurrentVersion().then(v => setCurrentVersion(v))
       try {
         const result = await checkForUpdates(getUpdateUrl())
+        console.log('[OTA] 启动自动检查结果:', JSON.stringify(result))
         if (result.hasUpdate && result.version) {
           setUpdateInfo({ version: result.version, description: result.description || '' })
           setShowUpdateModal(true)
         }
-      } catch { /* 静默 */ }
+      } catch (e) { console.error('[OTA] 启动检查异常:', e) }
     })
   }, [loadBooks])
 

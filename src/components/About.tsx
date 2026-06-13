@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.7.3', date: '2026-06-14', changes: [
+    '彻查OTA推送：全链路console.log+减少重试+错误toast'
+  ]},
   { version: '1.7.2', date: '2026-06-14', changes: [
     '新增左右滑动翻页模式（带滑动动画），默认翻页方式改为滑动',
     '阅读底栏显示当前章节进度（N/M）',
@@ -100,7 +103,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.7.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.7.3')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

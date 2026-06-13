@@ -1,5 +1,5 @@
 {
-  "version": "1.7.2",
-  "description": "修复OTA更新检查：fetch超时保护+错误提示可见",
+  "version": "1.7.3",
+  "description": "彻查OTA推送：全链路console.log+减少重试+错误toast",
   "releaseDate": "2026-06-14"
 }

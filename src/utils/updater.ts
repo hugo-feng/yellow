@@ -15,7 +15,7 @@ export async function waitSWReady() {
     if ('serviceWorker' in navigator) {
       await Promise.race([
         navigator.serviceWorker.ready,
-        new Promise(r => setTimeout(r, 5000))
+        new Promise(r => setTimeout(r, 3000))
       ])
     }
   } catch {}
@@ -27,8 +27,10 @@ export async function getCurrentVersion(): Promise<string> {
     const response = await fetch('version.json')
     const data = await response.json()
     currentVersion = data.version
+    console.log('[OTA] 本地版本:', currentVersion)
     return currentVersion
-  } catch {
+  } catch (e) {
+    console.warn('[OTA] 读取本地version.json失败:', (e as Error).message, '使用默认:', currentVersion)
     return currentVersion
   }
 }
@@ -37,9 +39,9 @@ export function getUpdateUrl(): string {
   return activeVersionUrl || UPDATE_URLS[0]
 }
 
-function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<Response> {
+async function fetchSingle(url: string, timeoutMs = 8000): Promise<Response> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`请求超时(${timeoutMs / 1000}s)`)), timeoutMs)
+    const timer = setTimeout(() => reject(new Error(`超时${timeoutMs / 1000}s`)), timeoutMs)
     fetch(url, { cache: 'no-cache' })
       .then(resp => { clearTimeout(timer); resolve(resp) })
       .catch(err => { clearTimeout(timer); reject(err) })
@@ -47,29 +49,40 @@ function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<Response> {
 }
 
 async function fetchWithFallback(path: string): Promise<Response> {
+  const errors: string[] = []
+
   if (activeBaseUrl) {
     try {
-      const resp = await fetchWithTimeout(`${activeBaseUrl}/${path}`)
+      const resp = await fetchSingle(`${activeBaseUrl}/${path}`)
       if (resp.ok) return resp
-    } catch (e) { console.warn('[OTA] 活跃源失败:', (e as Error).message) }
+      errors.push(`缓存源 ${resp.status}`)
+    } catch (e) { errors.push(`缓存源 ${(e as Error).message}`) }
   }
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    for (const url of UPDATE_URLS) {
-      try {
-        const base = url.replace(/\/version\.json$/, '')
-        const resp = await fetchWithTimeout(`${base}/${path}`)
-        if (resp.ok) {
-          activeBaseUrl = base
-          activeVersionUrl = `${base}/version.json`
-          return resp
-        }
-        console.warn(`[OTA] ${url} 响应 ${resp.status}`)
-      } catch (e) { console.warn(`[OTA] ${url} 失败:`, (e as Error).message) }
+  for (const url of UPDATE_URLS) {
+    const base = url.replace(/\/version\.json$/, '')
+    const fullUrl = `${base}/${path}`
+    try {
+      console.log('[OTA] 尝试:', fullUrl)
+      const resp = await fetchSingle(fullUrl)
+      if (resp.ok) {
+        activeBaseUrl = base
+        activeVersionUrl = `${base}/version.json`
+        console.log('[OTA] 成功:', fullUrl)
+        return resp
+      }
+      const msg = `HTTP ${resp.status}`
+      console.warn('[OTA] 失败:', fullUrl, msg)
+      errors.push(`${url} → ${msg}`)
+    } catch (e) {
+      const msg = (e as Error).message
+      console.warn('[OTA] 异常:', fullUrl, msg)
+      errors.push(`${url} → ${msg}`)
     }
-    if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
   }
-  throw new Error('所有更新源不可达（已重试3次）')
+
+  console.error('[OTA] 所有源不可达:', errors)
+  throw new Error(`更新源不可达: ${errors.join('; ')}`)
 }
 
 export async function checkForUpdates(updateUrl: string): Promise<{
@@ -80,14 +93,20 @@ export async function checkForUpdates(updateUrl: string): Promise<{
 }> {
   try {
     await waitSWReady()
+    console.log('[OTA] 开始检查, currentVersion=', currentVersion)
     const response = await fetchWithFallback('version.json')
     const remote = await response.json()
-    if (compareVersions(remote.version, currentVersion) > 0) {
+    console.log('[OTA] 远程版本:', remote.version, '| 本地:', currentVersion)
+    const cmp = compareVersions(remote.version, currentVersion)
+    console.log('[OTA] compareVersions结果:', cmp)
+    if (cmp > 0) {
       return { hasUpdate: true, version: remote.version, description: remote.description }
     }
     return { hasUpdate: false }
   } catch (err: any) {
-    return { hasUpdate: false, error: err.message || '检查更新失败' }
+    const msg = err.message || '检查更新失败'
+    console.error('[OTA] checkForUpdates异常:', msg)
+    return { hasUpdate: false, error: msg }
   }
 }
 
@@ -116,7 +135,6 @@ export async function downloadAndApply(updateUrl: string): Promise<{ success: bo
     if ('caches' in window) {
       const cache = await caches.open('yellow-app-cache')
       
-      // 删除旧的 assets 缓存（防止 reload 时加载旧 JS/CSS）
       const oldKeys = await cache.keys()
       for (const req of oldKeys) {
         const p = new URL(req.url).pathname
