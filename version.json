@@ -1,7 +1,7 @@
 {
-  "version": "4.2.0",
-  "versionCode": 420,
-  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v4.2.0/yellow-v4.2.0.apk",
-  "updateContent": "发现页优化：TanStack Query缓存(10分钟新鲜+1小时GC)\n页面切换不再重新加载书籍列表\n移除左右翻页模式",
+  "version": "4.3.0",
+  "versionCode": 430,
+  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v4.3.0/yellow-v4.3.0.apk",
+  "updateContent": "阅读界面全面屏适配+去除黄色竖条+进度条整合到底栏\n缓存管理重写(TanStack Query+进度条+存储统计)",
   "releaseDate": "2026-06-14"
 }
