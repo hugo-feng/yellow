@@ -24,11 +24,12 @@
 9. 验证 gh-pages：`git fetch origin gh-pages && git show origin/gh-pages:version.json`
 10. 验证 Pages 构建成功：`gh run list --limit 1`（确认 `pages build and deployment` 为 success）
 
-### APK 构建阶段
+### APK 构建阶段（**两步必须分开执行，不能合并到一个命令**）
 11. 删除 `android/app/build` 缓存
-12. `npx cap sync android`（**必须从项目根目录运行**，不能从 android/ 子目录）
-13. `gradlew.bat assembleDebug`（在 android/ 目录执行）
-14. 验证 APK 内嵌版本号：`dist/assets/index-*.js` 和 `android/app/src/main/assets/public/assets/index-*.js` 哈希一致
+12. `npx cap sync android`（**单独执行，workdir 必须是项目根目录 F:\kilo\yellow**）
+13. 验证 dist 和 Android assets 文件哈希一致
+14. `gradlew.bat assembleDebug`（在 android/ 目录执行）
+15. 验证 APK 内嵌版本号正确
 
 ### 发布阶段
 15. `git add -A && git commit -m "vX.Y.Z: 描述"`
