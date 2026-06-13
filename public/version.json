@@ -1,5 +1,5 @@
 {
-  "version": "1.6.2",
-  "description": "二级页面支持系统右滑返回手势（不再直接退出App）",
+  "version": "1.6.3",
+  "description": "Capacitor backButton事件监听，系统右滑返回正确关闭二级页面",
   "releaseDate": "2026-06-14"
 }

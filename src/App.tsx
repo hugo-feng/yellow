@@ -98,14 +98,30 @@ function AppInner() {
   }, [hasSubPage])
 
   useEffect(() => {
-    const onPopState = () => {
-      if (readingBook) { handleCloseReader(); return }
-      if (detailBook) { setDetailBook(null); return }
-      if (showAbout) { setShowAbout(false); return }
-      if (showCacheManager) { setShowCacheManager(false); return }
+    const goBack = () => {
+      if (readingBook) { handleCloseReader(); return true }
+      if (detailBook) { setDetailBook(null); return true }
+      if (showAbout) { setShowAbout(false); return true }
+      if (showCacheManager) { setShowCacheManager(false); return true }
+      return false
     }
+
+    const onPopState = () => { goBack() }
     window.addEventListener('popstate', onPopState)
-    return () => window.removeEventListener('popstate', onPopState)
+
+    let capListener: { remove: () => void } | null = null
+    try {
+      import('@capacitor/app').then(({ App: CapApp }) => {
+        CapApp.addListener('backButton', () => {
+          if (!goBack()) CapApp.exitApp()
+        }).then(l => { capListener = l })
+      }).catch(() => {})
+    } catch {}
+
+    return () => {
+      window.removeEventListener('popstate', onPopState)
+      capListener?.remove()
+    }
   }, [readingBook, detailBook, showAbout, showCacheManager])
 
   const handleReadBook = useCallback(async (book: Book) => {

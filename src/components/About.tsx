@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.6.3', date: '2026-06-14', changes: [
+    '修复系统右滑返回手势：用Capacitor backButton事件替代popstate'
+  ]},
   { version: '1.6.2', date: '2026-06-14', changes: [
     '二级页面（关于/书籍详情/缓存管理/阅读器）支持系统右滑返回手势'
   ]},
@@ -78,7 +81,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.3')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
