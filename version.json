@@ -1,5 +1,5 @@
 {
-  "version": "1.6.3",
-  "description": "Capacitor backButton事件监听，系统右滑返回正确关闭二级页面",
+  "version": "1.6.4",
+  "description": "删除刷新页面按钮+OTA更新时清理旧缓存防止版本倒退",
   "releaseDate": "2026-06-14"
 }
