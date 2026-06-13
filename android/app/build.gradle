@@ -1,4 +1,15 @@
 apply plugin: 'com.android.application'
+import groovy.json.JsonSlurper
+
+def versionFile = file('../../public/version.json')
+def ver = '1.0.0'
+def verCode = 1
+if (versionFile.exists()) {
+    def vj = new JsonSlurper().parseText(versionFile.text)
+    ver = vj.version
+    def parts = ver.split('\\.')
+    verCode = parts[0].toInteger() * 10000 + (parts.length > 1 ? parts[1].toInteger() * 100 : 0) + (parts.length > 2 ? parts[2].toInteger() : 0)
+}
 
 android {
     namespace = "com.yellow.reader"
@@ -7,8 +18,8 @@ android {
         applicationId "com.yellow.reader"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        versionCode verCode
+        versionName ver
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -24,8 +35,7 @@ android {
     }
     applicationVariants.all { variant ->
         variant.outputs.all { output ->
-            def buildTime = new Date().format("yyyyMMdd-HHmmss", TimeZone.getTimeZone("Asia/Shanghai"))
-            output.outputFileName = "yellow-v${variant.versionName}-${buildTime}.apk"
+            output.outputFileName = "yellow-v${variant.versionName}.apk"
         }
     }
 }
