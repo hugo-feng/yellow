@@ -1,5 +1,5 @@
 {
-  "version": "1.9.8",
-  "description": "修复翻页分页: 中文字符宽度修正+padding扣除",
+  "version": "1.9.9",
+  "description": "更新机制改为跳转GitHub Release下载APK",
   "releaseDate": "2026-06-14"
 }
