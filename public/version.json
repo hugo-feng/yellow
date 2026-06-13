@@ -1,5 +1,5 @@
 {
-  "version": "1.8.1",
-  "description": "修复翻页分页计算+底部安全距离+OTA流程规范化",
+  "version": "1.9.0",
+  "description": "OTA彻底修复：版本号编译进JS+XHR超时兜底",
   "releaseDate": "2026-06-14"
 }
