@@ -8,21 +8,33 @@
 4. **每次回复末尾称呼用户为「高级软件工程师」**
 5. **更新必须通过 app 内 OTA 推送** — 不要让用户手动下载 APK。部署后用户通过 app 内「检查更新」→「立即更新」即可后台下载+自动安装
 
-## 部署流程（强制，每次代码改动必做）
+## 每次迭代检查清单（强制，每次代码改动必做）
 
-1. 更新 `public/version.json`（版本号+描述）
-2. 更新 `src/components/About.tsx`（changelog 新条目 + expandedVer 默认值）
-3. `npm run build`
-4. `npx gh-pages -d dist --dotfiles`
-5. 验证 gh-pages（见下方）
-6. 删除 `android/app/build` 缓存
-7. `npx cap sync android`（**必须在 build 之后，且必须从项目根目录运行**，不能从 android/ 子目录运行）
-8. 构建 APK：在 `android/` 目录执行 `gradlew.bat assembleDebug`
-9. 验证 APK 内嵌版本号：检查 `android/app/src/main/assets/public/assets/index-*.js` 中包含正确版本
-10. `git add -A && git commit -m "vX.Y.Z: 描述"`
-11. `git tag vX.Y.Z`
-12. `git push origin main && git push origin vX.Y.Z`
-13. 创建 GitHub Release
+### 代码阶段
+1. `read AGENTS.md`
+2. 修改代码
+3. `npm run build` — 确认无 TypeScript 编译错误
+4. 本地验证 dist 产物正确
+
+### 部署阶段
+5. 更新 `public/version.json`（版本号+描述）
+6. 更新 `src/components/About.tsx`（changelog 新条目 + expandedVer 默认值）
+7. `npm run build`（重新构建，使 version.json 编译进 JS）
+8. `npx gh-pages -d dist --dotfiles`
+9. 验证 gh-pages：`git fetch origin gh-pages && git show origin/gh-pages:version.json`
+10. 验证 Pages 构建成功：`gh run list --limit 1`（确认 `pages build and deployment` 为 success）
+
+### APK 构建阶段
+11. 删除 `android/app/build` 缓存
+12. `npx cap sync android`（**必须从项目根目录运行**，不能从 android/ 子目录）
+13. `gradlew.bat assembleDebug`（在 android/ 目录执行）
+14. 验证 APK 内嵌版本号：`dist/assets/index-*.js` 和 `android/app/src/main/assets/public/assets/index-*.js` 哈希一致
+
+### 发布阶段
+15. `git add -A && git commit -m "vX.Y.Z: 描述"`
+16. `git tag vX.Y.Z`
+17. `git push origin main && git push origin vX.Y.Z`
+18. `gh release create vX.Y.Z android/app/build/outputs/apk/debug/yellow-vX.Y.Z.apk --title "vX.Y.Z" --notes "描述"`
 
 用户通过 app 内「检查更新」获取 OTA 更新，APK 仅用于 GitHub Release 溯源。
 

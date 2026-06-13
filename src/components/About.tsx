@@ -3,6 +3,12 @@ import { checkForUpdates, getApkUrl, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '2.1.0', date: '2026-06-14', changes: [
+    '翻页底层重构：采用CSS Multi-Column分页（epub.js/foliate-js行业标准方案）',
+    '文字自动分列：column-width=视口宽度，浏览器自动排版分页',
+    '翻页=translateX偏移，松手后snap动画到目标页',
+    '手势方向锁定：首次移动>10px后锁定水平/垂直，防止误触'
+  ]},
   { version: '2.0.2', date: '2026-06-14', changes: [
     '修复下载进度不动：移除不可靠的镜像HEAD测速，直接用GitHub原链',
     'DownloadManager原生支持HTTP重定向，自动走GitHub CDN',
@@ -159,7 +165,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('2.0.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('2.1.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
