@@ -2,6 +2,12 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, APP_VERSION } from '../utils/updater'
 
 const changelog = [
+  { version: '1.9.7', date: '2026-06-14', changes: [
+    'OTA终极修复：用GitHub API获取版本（绕过jsDelivr和raw.githubusercontent.com的CDN缓存）'
+  ]},
+  { version: '1.9.6', date: '2026-06-14', changes: [
+    'OTA修复：GitHub raw设为首选更新源（jsDelivr CDN缓存过期不刷新）'
+  ]},
   { version: '1.9.5', date: '2026-06-14', changes: [
     'Reader彻底重写：翻页模式和滚动模式完全分离，不再共用容器',
     '翻页模式：overflow:hidden + translateX滑动 + 字符估算分页',
@@ -127,7 +133,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.5')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.7')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

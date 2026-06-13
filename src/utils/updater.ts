@@ -2,9 +2,10 @@ declare const __APP_VERSION__: string
 
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
 
-const CDN_URLS = [
-  'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json',
-  'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/version.json'
+const VERSION_URLS = [
+  'https://api.github.com/repos/hugo-feng/yellow/contents/version.json?ref=gh-pages',
+  'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/version.json',
+  'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json'
 ]
 
 export async function waitSWReady() {
@@ -23,17 +24,24 @@ export async function getCurrentVersion(): Promise<string> {
 }
 
 export function getUpdateUrl(): string {
-  return CDN_URLS[0]
+  return VERSION_URLS[0]
 }
 
-function xhrGet(url: string, timeout = 8000): Promise<any> {
+function xhrGet(url: string, timeout = 10000): Promise<any> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('GET', url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now(), true)
     xhr.timeout = timeout
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
-        try { resolve(JSON.parse(xhr.responseText)) } catch { reject(new Error('JSON解析失败')) }
+        try {
+          const data = JSON.parse(xhr.responseText)
+          if (data.content && data.encoding === 'base64') {
+            resolve(JSON.parse(atob(data.content.replace(/\s/g, ''))))
+          } else {
+            resolve(data)
+          }
+        } catch { reject(new Error('JSON解析失败')) }
       } else { reject(new Error('HTTP ' + xhr.status)) }
     }
     xhr.onerror = () => reject(new Error('网络错误'))
@@ -49,7 +57,7 @@ export async function checkForUpdates(): Promise<{
   error?: string
 }> {
   const errors: string[] = []
-  for (const url of CDN_URLS) {
+  for (const url of VERSION_URLS) {
     try {
       const remote = await xhrGet(url)
       if (remote && remote.version) {
@@ -64,19 +72,15 @@ export async function checkForUpdates(): Promise<{
 
 export async function downloadAndApply(): Promise<{ success: boolean; error?: string }> {
   try {
-    const html = await xhrGet('https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/index.html').then(r => {
-      if (typeof r === 'string') return r
-      throw new Error('非HTML')
-    }).catch(async () => {
-      const xhr = new XMLHttpRequest()
-      xhr.open('GET', 'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/index.html?_t=' + Date.now(), true)
-      xhr.timeout = 10000
-      return new Promise<string>((resolve, reject) => {
-        xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.responseText) : reject(new Error('HTTP ' + xhr.status))
-        xhr.onerror = () => reject(new Error('网络错误'))
-        xhr.ontimeout = () => reject(new Error('超时'))
-        xhr.send()
-      })
+    const htmlUrl = 'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/index.html?_t=' + Date.now()
+    const xhr = new XMLHttpRequest()
+    xhr.open('GET', htmlUrl, true)
+    xhr.timeout = 15000
+    const html = await new Promise<string>((resolve, reject) => {
+      xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.responseText) : reject(new Error('HTTP ' + xhr.status))
+      xhr.onerror = () => reject(new Error('网络错误'))
+      xhr.ontimeout = () => reject(new Error('超时'))
+      xhr.send()
     })
 
     if ('caches' in window) {
