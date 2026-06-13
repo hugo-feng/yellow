@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.4.0', date: '2026-06-14', changes: [
+    '修复OTA下载失败：改用GitHub直链（DownloadManager原生支持302重定向）',
+    '添加User-Agent请求头（防止GitHub拒绝无UA请求）',
+    '移除ghfast.top代理（嵌套URL格式DownloadManager不支持）'
+  ]},
   { version: '4.3.0', date: '2026-06-14', changes: [
     '阅读界面全面屏适配：内容区正确处理状态栏和底部手势条安全距离',
     '去除右侧黄色竖条（Chapter dots指示器）',
@@ -217,7 +222,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.3.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.4.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

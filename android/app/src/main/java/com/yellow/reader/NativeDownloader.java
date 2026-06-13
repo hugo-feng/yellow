@@ -38,6 +38,7 @@ public class NativeDownloader {
         request.setAllowedOverMetered(true);
         request.setAllowedOverRoaming(true);
         request.setMimeType("application/vnd.android.package-archive");
+        request.addRequestHeader("User-Agent", "YellowReader/1.0 Android");
 
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         downloadId = dm.enqueue(request);

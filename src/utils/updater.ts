@@ -69,7 +69,7 @@ export async function checkForUpdates(): Promise<{
             updateInfo: {
               version: remote.version,
               versionCode: remote.versionCode,
-              downloadUrl: remote.downloadUrl || `https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v${remote.version}/yellow-v${remote.version}.apk`,
+              downloadUrl: remote.downloadUrl || `https://github.com/hugo-feng/yellow/releases/download/v${remote.version}/yellow-v${remote.version}.apk`,
               updateContent: remote.updateContent || remote.description || '有新的功能和改进可用'
             }
           }
