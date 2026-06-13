@@ -1,5 +1,5 @@
 {
-  "version": "1.6.5",
-  "description": "修复系统右滑返回（cap sync注册@capacitor/app插件）+ 重新构建APK",
+  "version": "1.6.6",
+  "description": "彻查清理垃圾代码（删除失效脚本/占位书籍/无用组件）+ 重建APK",
   "releaseDate": "2026-06-14"
 }
