@@ -2,15 +2,12 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
-  { version: '1.7.3', date: '2026-06-14', changes: [
-    '彻查OTA推送：全链路console.log+减少重试+错误toast'
-  ]},
-  { version: '1.7.2', date: '2026-06-14', changes: [
-    '新增左右滑动翻页模式（带滑动动画），默认翻页方式改为滑动',
-    '阅读底栏显示当前章节进度（N/M）',
-    '阅读设置新增翻页模式切换（左右滑动/上下滚动）',
-    '修复OTA更新检查：fetch添加10秒超时保护，防止WebView中无限挂起',
-    'OTA检查失败时弹toast提示，不再静默吞错'
+  { version: '1.8.0', date: '2026-06-14', changes: [
+    '左右翻页改为分页模式：文字自动切割成页，左右滑动翻页（非逐章切换）',
+    '书籍详情页显示内容标签（短篇/校园/情感等），移除格式标签',
+    '书籍缩略图无封面时完整显示书名（支持换行）',
+    '阅读底栏显示页码+章节进度',
+    'OTA更新检查：fetch超时保护+错误toast提示'
   ]},
   { version: '1.6.6', date: '2026-06-14', changes: [
     '彻查清理垃圾代码：删除scripts/爬虫脚本、占位书籍、无用组件、临时文件',
@@ -103,7 +100,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.7.3')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.8.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

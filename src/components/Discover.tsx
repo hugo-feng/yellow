@@ -205,11 +205,11 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
               style={{ animationDelay: `${i * 0.03}s` }}
               onClick={() => handleClick(item)}
             >
-              <div className="discover-cover">
+              <div className="discover-cover" style={{ padding: 6, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: 1.3, wordBreak: 'break-all' }}>
                 {item.cover ? (
                   <img src={item.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <span>{item.title.slice(0, 3)}</span>
+                  <span style={{ fontSize: 12 }}>{item.title}</span>
                 )}
               </div>
               <div className="discover-info">

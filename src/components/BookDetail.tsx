@@ -51,7 +51,7 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
               color: 'var(--text-muted)', fontSize: 14
             }}
           >
-            {!book.cover && book.title.slice(0, 4)}
+            {!book.cover && <span style={{ padding: 4, textAlign: 'center', lineHeight: 1.3 }}>{book.title}</span>}
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{book.title}</h2>
           {book.author && (
@@ -59,7 +59,6 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
           )}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span className="badge">{book.sourceName}</span>
-            {book.format && <span className="badge" style={{ background: 'rgba(76,175,132,0.15)', color: 'var(--success)' }}>{book.format.toUpperCase()}</span>}
             {chapters.length > 0 && (
               <span className="badge" style={{ background: 'rgba(100,149,237,0.15)', color: '#8888cc' }}>{chapters.length} 章</span>
             )}

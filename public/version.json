@@ -1,5 +1,5 @@
 {
-  "version": "1.7.3",
-  "description": "彻查OTA推送：全链路console.log+减少重试+错误toast",
+  "version": "1.8.0",
+  "description": "左右翻页分页模式/详情页tag/无封面完整书名",
   "releaseDate": "2026-06-14"
 }

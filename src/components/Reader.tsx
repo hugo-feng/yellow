@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import type { Book, Chapter, ReaderSettings, ReadingProgress } from '../types'
 import { saveChapter, getChapter, saveProgress, getBookChapters, saveBook } from '../utils/db'
 import { getBookContent } from '../utils/sources'
@@ -23,6 +23,8 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const [swipeOffset, setSwipeOffset] = useState(0)
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null)
   const [isSwiping, setIsSwiping] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [pageCount, setPageCount] = useState(1)
 
   const currentChapter = book.chapters[currentChapterIdx]
   const hasPrev = currentChapterIdx > 0
@@ -69,7 +71,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   }, [currentChapterIdx])
 
   useEffect(() => {
-    if (contentRef.current && scrollPos > 0) {
+    if (contentRef.current && scrollPos > 0 && settings.pageMode === 'scroll') {
       contentRef.current.scrollTop = scrollPos
     }
   }, [currentChapterIdx])
@@ -86,6 +88,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     if (hasPrev) {
       setCurrentChapterIdx(prev => prev - 1)
       setScrollPos(0)
+      setCurrentPage(0)
     }
   }, [hasPrev])
 
@@ -93,6 +96,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     if (hasNext) {
       setCurrentChapterIdx(prev => prev + 1)
       setScrollPos(0)
+      setCurrentPage(0)
     }
   }, [hasNext])
 
@@ -110,42 +114,6 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const changeSetting = useCallback(<K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) => {
     onSettingsChange({ ...settings, [key]: value })
   }, [settings, onSettingsChange])
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (settings.pageMode !== 'swipe') return
-    const touch = e.touches[0]
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() }
-    setIsSwiping(true)
-  }, [settings.pageMode])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!touchStartRef.current || settings.pageMode !== 'swipe') return
-    const touch = e.touches[0]
-    const dx = touch.clientX - touchStartRef.current.x
-    const dy = touch.clientY - touchStartRef.current.y
-    if (Math.abs(dx) > Math.abs(dy)) {
-      setSwipeOffset(dx)
-    }
-  }, [settings.pageMode])
-
-  const handleTouchEnd = useCallback(() => {
-    if (!touchStartRef.current || settings.pageMode !== 'swipe') return
-    const threshold = 80
-    const velocity = Math.abs(swipeOffset) / (Date.now() - touchStartRef.current.time) * 1000
-
-    if (swipeOffset < -threshold || (swipeOffset < -30 && velocity > 300)) {
-      if (hasNext) {
-        handleNextChapter()
-      }
-    } else if (swipeOffset > threshold || (swipeOffset > 30 && velocity > 300)) {
-      if (hasPrev) {
-        handlePrevChapter()
-      }
-    }
-    setSwipeOffset(0)
-    setIsSwiping(false)
-    touchStartRef.current = null
-  }, [swipeOffset, hasNext, hasPrev, settings.pageMode, handleNextChapter, handlePrevChapter])
 
   const themeColors = {
     dark: { bg: '#0f0f1a', text: '#d8d8e0', border: '#2a2a45' },
@@ -166,6 +134,89 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       .split('\n')
       .filter(p => p.trim())
     : []
+
+  const isSwipeMode = settings.pageMode === 'swipe'
+
+  const pages = useMemo(() => {
+    if (!isSwipeMode || paragraphs.length === 0) return [paragraphs]
+    const el = contentRef.current
+    if (!el) return [paragraphs]
+    const containerH = el.clientHeight - 20
+    const lineHeightPx = settings.fontSize * settings.lineHeight
+    const paraSpacingPx = settings.fontSize * settings.paragraphSpacing
+    const charW = settings.fontSize * 0.55
+    const contentW = Math.min(el.clientWidth - 40, settings.maxWidth || 9999)
+    const charsPerLine = Math.floor(contentW / charW) || 20
+    const result: string[][] = []
+    let curPage: string[] = []
+    let usedH = 0
+    for (const p of paragraphs) {
+      const pIndent = settings.fontSize * 2
+      const firstLineW = contentW - pIndent
+      const firstLineChars = Math.floor(firstLineW / charW) || charsPerLine
+      const remaining = p.length - firstLineChars
+      const extraLines = remaining > 0 ? Math.ceil(remaining / charsPerLine) : 0
+      const totalLines = 1 + extraLines
+      const pH = totalLines * lineHeightPx + paraSpacingPx
+      if (usedH + pH > containerH && curPage.length > 0) {
+        result.push(curPage)
+        curPage = []
+        usedH = 0
+      }
+      curPage.push(p)
+      usedH += pH
+    }
+    if (curPage.length > 0) result.push(curPage)
+    return result.length > 0 ? result : [paragraphs]
+  }, [isSwipeMode, paragraphs, settings.fontSize, settings.lineHeight, settings.paragraphSpacing, settings.maxWidth])
+
+  useEffect(() => {
+    setPageCount(pages.length)
+    if (currentPage >= pages.length) setCurrentPage(Math.max(0, pages.length - 1))
+  }, [pages])
+
+  const goToPage = useCallback((page: number) => {
+    if (page < 0) {
+      if (hasPrev) { handlePrevChapter(); setCurrentPage(9999) }
+    } else if (page >= pageCount) {
+      if (hasNext) { handleNextChapter(); setCurrentPage(0) }
+    } else {
+      setCurrentPage(page)
+    }
+  }, [pageCount, hasNext, hasPrev, handleNextChapter, handlePrevChapter])
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!isSwipeMode) return
+    const touch = e.touches[0]
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() }
+    setIsSwiping(true)
+  }, [isSwipeMode])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current || !isSwipeMode) return
+    const touch = e.touches[0]
+    const dx = touch.clientX - touchStartRef.current.x
+    const dy = touch.clientY - touchStartRef.current.y
+    if (Math.abs(dx) > Math.abs(dy)) {
+      setSwipeOffset(dx)
+    }
+  }, [isSwipeMode])
+
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStartRef.current || !isSwipeMode) return
+    const threshold = 60
+    const elapsed = Date.now() - touchStartRef.current.time
+    const velocity = Math.abs(swipeOffset) / (elapsed || 1) * 1000
+
+    if (swipeOffset < -threshold || (swipeOffset < -20 && velocity > 200)) {
+      goToPage(currentPage + 1)
+    } else if (swipeOffset > threshold || (swipeOffset > 20 && velocity > 200)) {
+      goToPage(currentPage - 1)
+    }
+    setSwipeOffset(0)
+    setIsSwiping(false)
+    touchStartRef.current = null
+  }, [swipeOffset, isSwipeMode, currentPage, goToPage])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg }}>
@@ -238,15 +289,15 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         ref={contentRef}
         style={{
           flex: 1,
-          overflow: settings.pageMode === 'swipe' ? 'hidden' : 'auto',
+          overflow: isSwipeMode ? 'hidden' : 'auto',
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           padding: 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 0px) + 96px)',
           filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined,
-          transition: settings.pageMode === 'swipe'
+          transition: isSwipeMode
             ? (isSwiping ? 'background 0.3s, filter 0.3s' : 'background 0.3s, filter 0.3s, transform 0.3s ease')
             : 'background 0.3s, filter 0.3s',
-          transform: settings.pageMode === 'swipe' ? `translateX(${swipeOffset}px)` : undefined
+          transform: isSwipeMode ? `translateX(${swipeOffset}px)` : undefined
         }}
         onClick={toggleControls}
         onTouchStart={handleTouchStart}
@@ -280,9 +331,9 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             </div>
           )}
 
-          {paragraphs.map((p, i) => (
+          {(isSwipeMode ? (pages[currentPage] || []) : paragraphs).map((p, i) => (
             <p
-              key={i}
+              key={isSwipeMode ? `p-${currentPage}-${i}` : i}
               style={{
                 marginBottom: `${settings.paragraphSpacing}em`,
                 textIndent: '2em'
@@ -292,7 +343,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             </p>
           ))}
 
-          {paragraphs.length > 0 && !loading && (
+          {paragraphs.length > 0 && !loading && !isSwipeMode && (
             <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: 13 }}>
               {currentChapterIdx + 1} / {book.chapters.length}
             </div>
@@ -338,7 +389,10 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         </button>
 
         <div style={{ flex: 2, textAlign: 'center', color: '#1a1a2e', fontSize: 12, fontWeight: 700 }}>
-          {currentChapterIdx + 1} / {book.chapters.length}
+          {isSwipeMode
+            ? `${currentPage + 1}/${pageCount} · 第${currentChapterIdx + 1}章`
+            : `${currentChapterIdx + 1} / ${book.chapters.length}`
+          }
         </div>
 
         <button
@@ -399,8 +453,8 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>翻页模式</label>
               <div style={{ display: 'flex', gap: 8 }}>
-                {[{ key: 'swipe' as const, label: '左右滑动' }, { key: 'scroll' as const, label: '上下滚动' }].map(m => (
-                  <button key={m.key} onClick={() => changeSetting('pageMode', m.key)} style={{
+                {[{ key: 'swipe' as const, label: '左右翻页' }, { key: 'scroll' as const, label: '上下滚动' }].map(m => (
+                  <button key={m.key} onClick={() => { changeSetting('pageMode', m.key); setCurrentPage(0) }} style={{
                     flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
                     border: settings.pageMode === m.key ? '2px solid var(--accent)' : '2px solid var(--border)',
                     background: 'var(--bg-card)', color: 'var(--text-primary)',

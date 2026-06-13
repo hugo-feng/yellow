@@ -78,10 +78,14 @@ export default function Bookshelf({ books, onRead, onDelete, onRefresh }: Props)
                 justifyContent: 'center',
                 color: 'var(--text-muted)',
                 fontSize: 11,
-                overflow: 'hidden'
-              }}
-            >
-              {!book.cover && '无封面'}
+              overflow: 'hidden',
+              padding: 4,
+              textAlign: 'center',
+              lineHeight: 1.3,
+              wordBreak: 'break-all'
+            }}
+          >
+            {!book.cover && <span style={{ fontSize: 11 }}>{book.title}</span>}
             </div>
 
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
