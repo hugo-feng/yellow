@@ -1,5 +1,5 @@
 {
-  "version": "1.5.6",
-  "description": "修复设置页黑屏（ErrorBoundary+Settings全字段null安全兜底）",
+  "version": "1.5.7",
+  "description": "OTA检查等SW就绪再发请求+jsDelivr优先+版本读取同步",
   "releaseDate": "2026-06-14"
 }
