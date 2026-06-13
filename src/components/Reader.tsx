@@ -21,7 +21,6 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const [content, setContent] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
-  const savedScrollRef = useRef<number>(0)
 
   const chapter = book.chapters[chapterIdx]
   const hasPrev = chapterIdx > 0
@@ -42,7 +41,6 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
 
   const paragraphs = content ? content.replace(/\r\n/g, '\n').split('\n').filter(p => p.trim()) : []
 
-  // ── Load chapter content ──
   const loadContent = useCallback(async () => {
     if (!chapter) return
     setLoading(true)
@@ -68,7 +66,6 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
 
   useEffect(() => { loadContent() }, [chapterIdx])
 
-  // ── Restore scroll position after content loads ──
   useEffect(() => {
     if (!loading && content && scrollRef.current) {
       const savedPos = initialProgress?.chapterIndex === chapterIdx ? (initialProgress?.scrollPosition ?? 0) : 0
@@ -78,11 +75,9 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     }
   }, [loading, content, chapterIdx])
 
-  // ── Chapter weights for overall progress ──
   const chapterWeights = book.chapters.map(ch => (ch.content?.length || 1000))
   const totalWeight = chapterWeights.reduce((a, b) => a + b, 0)
 
-  // ── Scroll progress ──
   const [scrollProgress, setScrollProgress] = useState(0)
 
   const handleScroll = useCallback(() => {
@@ -101,8 +96,6 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const goChapter = useCallback((dir: number) => {
     const next = chapterIdx + dir
     if (next >= 0 && next < book.chapters.length) {
-      // Save current scroll position
-      if (scrollRef.current) savedScrollRef.current = scrollRef.current.scrollTop
       setChapterIdx(next)
       setScrollProgress(0)
     }
@@ -121,43 +114,46 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     onSettingsChange({ ...settings, [k]: v })
   }, [settings, onSettingsChange])
 
-  // ── Overall progress ──
   const completedWeight = chapterWeights.slice(0, chapterIdx).reduce((a, b) => a + b, 0)
   const currentWeight = chapterWeights[chapterIdx] || 1000
   const overallPercent = totalWeight > 0
     ? Math.round((completedWeight + currentWeight * scrollProgress) / totalWeight * 100)
     : 0
 
-  const contentPadding = 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 34px) + 108px)'
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg }}>
-      {/* Top bar */}
+      {/* Top bar - respects safe area */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
-        paddingTop: 'var(--safe-top)', background: 'var(--accent)',
+        paddingTop: 'env(safe-area-inset-top, 24px)',
+        background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
-        transition: 'opacity 0.3s', minHeight: 'calc(var(--safe-top) + 48px)'
+        transition: 'opacity 0.25s', minHeight: 'calc(env(safe-area-inset-top, 24px) + 48px)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', width: '100%', justifyContent: 'space-between' }}>
-          <button style={{ background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 20, padding: '8px 16px', color: '#1a1a2e', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={handleClose}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>返回
+          <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 20, padding: '8px 16px', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={handleClose}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            返回
           </button>
-          <span style={{ color: '#1a1a2e', fontSize: 13, fontWeight: 700 }}>{overallPercent}%</span>
-          <button style={{ background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 20, padding: '8px 16px', color: '#1a1a2e', fontSize: 14, fontWeight: 700, cursor: 'pointer' }} onClick={() => { setShowSettings(true); setShowControls(false) }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{overallPercent}%</span>
+          <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 20, padding: '8px 16px', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }} onClick={() => { setShowSettings(true); setShowControls(false) }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>
           </button>
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content - full screen with proper safe area padding */}
       <div
         ref={scrollRef}
         style={{
           flex: 1, overflow: 'auto', overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
-          padding: contentPadding,
+          paddingTop: 'calc(env(safe-area-inset-top, 24px) + 48px)',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 60px)',
+          paddingLeft: 16,
+          paddingRight: 16,
           filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined
         }}
         onClick={toggleControls}
@@ -188,41 +184,54 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             <p key={i} style={{ marginBottom: `${settings.paragraphSpacing}em`, textIndent: '2em' }}>{p}</p>
           ))}
           {paragraphs.length > 0 && !loading && (
-            <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: 13 }}>
-              {overallPercent}% · 第{chapterIdx + 1}/{book.chapters.length}章
+            <div style={{ textAlign: 'center', padding: '40px 0 20px', color: 'var(--text-muted)', fontSize: 13 }}>
+              —— {overallPercent}% · 第{chapterIdx + 1}/{book.chapters.length}章 ——
             </div>
           )}
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom bar - respects bottom gesture area */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
-        background: 'var(--accent)', padding: '12px 16px calc(var(--safe-bottom) + 12px)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none', transition: 'opacity 0.3s'
+        background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
+        transition: 'opacity 0.25s'
       }}>
-        <button style={{ background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 20, padding: '8px 20px', color: '#1a1a2e', fontSize: 14, fontWeight: 700, cursor: hasPrev ? 'pointer' : 'default', opacity: hasPrev ? 1 : 0.4, flex: 1 }} onClick={() => goChapter(-1)} disabled={!hasPrev}>上一章</button>
-        <div style={{ flex: 2, textAlign: 'center', color: '#1a1a2e', fontSize: 12, fontWeight: 700 }}>
-          {overallPercent}% · 第{chapterIdx + 1}章
+        {/* Progress slider */}
+        <div style={{ padding: '8px 16px 4px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', minWidth: 32, textAlign: 'right' }}>{chapterIdx + 1}</span>
+            <div style={{ flex: 1, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', position: 'relative', cursor: 'pointer' }}
+              onClick={(e) => {
+                const el = scrollRef.current
+                if (!el) return
+                const rect = e.currentTarget.getBoundingClientRect()
+                const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+                el.scrollTop = ratio * (el.scrollHeight - el.clientHeight)
+              }}
+            >
+              <div style={{ height: '100%', width: `${scrollProgress * 100}%`, borderRadius: 2, background: 'var(--accent)', transition: 'width 0.1s' }} />
+            </div>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', minWidth: 32 }}>{book.chapters.length}</span>
+          </div>
         </div>
-        <button style={{ background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 20, padding: '8px 20px', color: '#1a1a2e', fontSize: 14, fontWeight: 700, cursor: hasNext ? 'pointer' : 'default', opacity: hasNext ? 1 : 0.4, flex: 1 }} onClick={() => goChapter(1)} disabled={!hasNext}>下一章</button>
-      </div>
 
-      {/* Progress bar */}
-      <div style={{
-        position: 'fixed', bottom: 'calc(var(--safe-bottom, 0px) + 56px)', left: 20, right: 20, zIndex: 19,
-        height: 3, borderRadius: 1.5, background: 'rgba(255,255,255,0.1)',
-        opacity: showControls ? 0 : 0.8, transition: 'opacity 0.3s'
-      }}>
-        <div style={{ height: '100%', width: `${overallPercent}%`, borderRadius: 1.5, background: 'var(--accent)', transition: 'width 0.3s' }} />
-      </div>
-
-      {/* Chapter dots */}
-      <div style={{ position: 'fixed', top: 'calc(var(--safe-top) + 60px)', right: 6, zIndex: 15, display: 'flex', flexDirection: 'column', gap: 4, opacity: showControls ? 0 : 0.6, transition: 'opacity 0.3s' }}>
-        {book.chapters.map((_, i) => (
-          <div key={i} style={{ width: 3, height: book.chapters.length > 20 ? 6 : 16, borderRadius: 2, background: i === chapterIdx ? 'var(--accent)' : (settings.theme === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'), transition: 'all 0.2s' }} />
-        ))}
+        {/* Chapter nav buttons */}
+        <div style={{ display: 'flex', padding: '4px 16px 12px', gap: 10 }}>
+          <button style={{
+            flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
+            padding: '10px', color: '#fff', fontSize: 13, fontWeight: 600,
+            cursor: hasPrev ? 'pointer' : 'default', opacity: hasPrev ? 1 : 0.3
+          }} onClick={() => goChapter(-1)} disabled={!hasPrev}>上一章</button>
+          <button style={{
+            flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
+            padding: '10px', color: '#fff', fontSize: 13, fontWeight: 600,
+            cursor: hasNext ? 'pointer' : 'default', opacity: hasNext ? 1 : 0.3
+          }} onClick={() => goChapter(1)} disabled={!hasNext}>下一章</button>
+        </div>
       </div>
 
       {/* Settings */}

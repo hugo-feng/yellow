@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.3.0', date: '2026-06-14', changes: [
+    '阅读界面全面屏适配：内容区正确处理状态栏和底部手势条安全距离',
+    '去除右侧黄色竖条（Chapter dots指示器）',
+    '阅读进度条整合到底栏：章节滑块+点击跳转+上下章按钮',
+    '底栏和顶栏改为毛玻璃半透明效果',
+    '缓存管理重写：TanStack Query缓存+存储统计+缓存进度条'
+  ]},
   { version: '4.2.0', date: '2026-06-14', changes: [
     '发现页优化：TanStack Query缓存(10分钟新鲜+1小时GC)，页面切换不再重新加载',
     'QueryClientProvider全局注入，所有数据请求自动缓存/去重/重试',
@@ -210,7 +217,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.2.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.3.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
