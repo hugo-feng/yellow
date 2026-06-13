@@ -74,7 +74,7 @@ export default function About({ currentVersion, showToast, onClose }: Props) {
         <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>关于 Yellow</h1>
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px 16px calc(var(--safe-bottom) + 16px)' }}>
         {/* 版本信息 */}
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--accent)', marginBottom: 4 }}>Yellow</div>

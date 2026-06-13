@@ -38,7 +38,7 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
         </h1>
       </div>
 
-      <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
+      <div style={{ flex: 1, overflow: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 'calc(var(--safe-bottom) + 16px)' }}>
         {/* 书籍信息 */}
         <div style={{ padding: '20px 16px', textAlign: 'center' }}>
           <div

@@ -139,7 +139,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           right: 0,
           zIndex: 20,
           background: `linear-gradient(to bottom, ${theme.bg}, transparent)`,
-          padding: 'calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px',
+          padding: 'calc(var(--safe-top) + 12px) 16px 12px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -195,7 +195,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           flex: 1,
           overflow: 'auto',
           WebkitOverflowScrolling: 'touch',
-          padding: 'calc(env(safe-area-inset-top, 0px) + 48px) 20px 80px',
+          padding: 'calc(var(--safe-top) + 48px) 20px 80px',
           transition: 'background 0.3s'
         }}
         onClick={toggleControls}
@@ -256,7 +256,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           right: 0,
           zIndex: 20,
           background: `linear-gradient(to top, ${theme.bg}, transparent)`,
-          padding: '20px 16px calc(env(safe-area-inset-bottom, 0px) + 32px)',
+          padding: '20px 16px calc(var(--safe-bottom) + 32px)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
