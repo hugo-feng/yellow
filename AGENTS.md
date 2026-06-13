@@ -20,6 +20,18 @@
 
 常见坑：`gh-pages` 命令输出 `Published` 但实际没更新文件（可能是 dist/ 未清理、缓存、或并发部署冲突）。
 
+## 版本管理（强制，每次迭代必做）
+每次代码改动必须同步更新以下三处，不得遗漏：
+
+1. **版本号** `public/version.json` — 递增版本号（patch/minor/major），写清本次改动描述
+2. **迭代日志** `src/components/About.tsx` — changelog 数组头部插入新版本条目（版本号+日期+改动列表），同时更新 `expandedVer` 默认值为最新版本号
+3. **Git tag** — 打 `vX.Y.Z` tag 与版本号对应
+
+版本号规范：
+- patch（1.6.5→1.6.6）：bug修复、小改动
+- minor（1.6.x→1.7.0）：新功能、UI重构
+- major（1.x.x→2.0.0）：架构变更、破坏性更新
+
 ## 项目结构
 - React 18 + TypeScript + Vite + Capacitor Android
 - OTA 更新源：raw.githubusercontent.com + cdn.jsdelivr.net CDN 回退
