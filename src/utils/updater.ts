@@ -105,6 +105,16 @@ export async function downloadAndApply(updateUrl: string): Promise<{ success: bo
 
     if ('caches' in window) {
       const cache = await caches.open('yellow-app-cache')
+      
+      // 删除旧的 assets 缓存（防止 reload 时加载旧 JS/CSS）
+      const oldKeys = await cache.keys()
+      for (const req of oldKeys) {
+        const p = new URL(req.url).pathname
+        if (p.startsWith('/assets/') || p === '/index.html' || p === '/version.json') {
+          await cache.delete(req)
+        }
+      }
+      
       await Promise.all([
         cache.put('/index.html', new Response(html, { headers: { 'Content-Type': 'text/html' } })),
         cache.put('/version.json', verResp.clone()),

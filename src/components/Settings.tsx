@@ -68,7 +68,7 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
           <button className={`toggle ${theme === 'dark' ? 'active' : ''}`} onClick={toggleTheme} />
         </div>
 
-        <div style={{ ...midEntryStyle, cursor: 'default' }}>
+        <div style={{ ...lastEntryStyle, cursor: 'default' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <EntryIcon bg="rgba(100,149,237,0.15)" color="#6495ed">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
@@ -80,19 +80,6 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
           </div>
           <button className={`toggle ${autoCheck ? 'active' : ''}`} onClick={toggleAutoCheck} />
         </div>
-
-        <button style={lastEntryStyle} onClick={() => { window.location.reload() }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <EntryIcon bg="rgba(76,175,132,0.15)" color="var(--success)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
-            </EntryIcon>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>刷新页面</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>重新加载应用资源</div>
-            </div>
-          </div>
-          <Chevron />
-        </button>
       </div>
 
       {/* 存储 */}

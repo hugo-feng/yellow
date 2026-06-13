@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.6.4', date: '2026-06-14', changes: [
+    '删除设置页「刷新页面」按钮（会导致版本倒退）', 'OTA更新时清理旧assets缓存，防止reload加载旧JS'
+  ]},
   { version: '1.6.3', date: '2026-06-14', changes: [
     '修复系统右滑返回手势：用Capacitor backButton事件替代popstate'
   ]},
@@ -81,7 +84,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.3')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.4')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
