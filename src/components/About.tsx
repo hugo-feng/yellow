@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.6.1', date: '2026-06-14', changes: [
+    '检查更新无新版本时弹窗显示「当前已是最新版本 vX.Y.Z」'
+  ]},
   { version: '1.6.0', date: '2026-06-14', changes: [
     '设置页重构：去掉阅读设置（保留在阅读界面右上角），改为全局设置',
     '新增：自动检查更新开关、刷新页面、清除所有数据、设备信息',
@@ -71,7 +74,8 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.0')
+  const [showLatest, setShowLatest] = useState(false)
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.1')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
@@ -84,7 +88,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
       setRemoteVersion(result.version || null)
       setRemoteDesc(result.description || '')
     } else {
-      showToast('已是最新版本 ✓')
+      setShowLatest(true)
     }
   }, [showToast])
 
@@ -217,6 +221,19 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
           ))}
         </div>
       </div>
+
+      {showLatest && (
+        <div className="modal-overlay" onClick={() => setShowLatest(false)}>
+          <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 20px' }}>
+            <div style={{ width: 56, height: 56, borderRadius: 28, background: 'rgba(76,175,132,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4caf84" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            </div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6, color: 'var(--success)' }}>当前已是最新版本</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 20 }}>v{currentVersion}</p>
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setShowLatest(false)}>知道了</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
