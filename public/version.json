@@ -1,5 +1,5 @@
 {
-  "version": "1.9.0",
-  "description": "OTA彻底修复：版本号编译进JS+XHR超时兜底",
+  "version": "1.9.1",
+  "description": "翻页重写：DOM实测分页+translateY定位+手势修复",
   "releaseDate": "2026-06-14"
 }

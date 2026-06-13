@@ -20,15 +20,18 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const [loading, setLoading] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const controlsTimer = useRef<ReturnType<typeof setTimeout>>()
-  const [swipeOffset, setSwipeOffset] = useState(0)
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null)
   const [isSwiping, setIsSwiping] = useState(false)
+  const [swipeOffset, setSwipeOffset] = useState(0)
   const [currentPage, setCurrentPage] = useState(0)
-  const [pageCount, setPageCount] = useState(1)
+  const [pageOffsets, setPageOffsets] = useState<number[]>([0])
+  const [measured, setMeasured] = useState(false)
 
   const currentChapter = book.chapters[currentChapterIdx]
   const hasPrev = currentChapterIdx > 0
   const hasNext = currentChapterIdx < book.chapters.length - 1
+  const isSwipeMode = settings.pageMode === 'swipe'
+  const pageCount = pageOffsets.length
 
   const loadChapterContent = useCallback(async (chapter: Chapter) => {
     if (chapter.content) return chapter.content
@@ -66,12 +69,10 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     setLoading(false)
   }, [currentChapter, book, loadChapterContent, showToast])
 
-  useEffect(() => {
-    ensureContent()
-  }, [currentChapterIdx])
+  useEffect(() => { ensureContent() }, [currentChapterIdx])
 
   useEffect(() => {
-    if (contentRef.current && scrollPos > 0 && settings.pageMode === 'scroll') {
+    if (contentRef.current && scrollPos > 0 && !isSwipeMode) {
       contentRef.current.scrollTop = scrollPos
     }
   }, [currentChapterIdx])
@@ -89,6 +90,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       setCurrentChapterIdx(prev => prev - 1)
       setScrollPos(0)
       setCurrentPage(0)
+      setMeasured(false)
     }
   }, [hasPrev])
 
@@ -97,6 +99,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       setCurrentChapterIdx(prev => prev + 1)
       setScrollPos(0)
       setCurrentPage(0)
+      setMeasured(false)
     }
   }, [hasNext])
 
@@ -129,53 +132,36 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   }
 
   const paragraphs = currentChapter?.content
-    ? currentChapter.content
-      .replace(/\r\n/g, '\n')
-      .split('\n')
-      .filter(p => p.trim())
+    ? currentChapter.content.replace(/\r\n/g, '\n').split('\n').filter(p => p.trim())
     : []
 
-  const isSwipeMode = settings.pageMode === 'swipe'
-
-  const [pages, setPages] = useState<string[][]>([[]])
-
   useEffect(() => {
-    if (!isSwipeMode || paragraphs.length === 0) { setPages([paragraphs]); return }
+    if (!isSwipeMode || paragraphs.length === 0) { setPageOffsets([0]); setMeasured(true); return }
     const el = contentRef.current
-    if (!el) { setPages([paragraphs]); return }
+    if (!el) return
     const containerH = el.clientHeight
-    const lineHeightPx = settings.fontSize * settings.lineHeight
-    const paraSpacingPx = settings.fontSize * settings.paragraphSpacing
-    const charW = settings.fontSize * 0.55
-    const contentW = Math.min(el.clientWidth - 40, settings.maxWidth || 9999)
-    const charsPerLine = Math.floor(contentW / charW) || 20
-    const result: string[][] = []
-    let curPage: string[] = []
+    if (containerH <= 0) return
+    const paraEls = el.querySelectorAll('p[data-page-para]')
+    if (paraEls.length === 0) return
+    const offsets: number[] = [0]
     let usedH = 0
-    for (const p of paragraphs) {
-      const pIndent = settings.fontSize * 2
-      const firstLineW = contentW - pIndent
-      const firstLineChars = Math.floor(firstLineW / charW) || charsPerLine
-      const remaining = p.length - firstLineChars
-      const extraLines = remaining > 0 ? Math.ceil(remaining / charsPerLine) : 0
-      const totalLines = 1 + extraLines
-      const pH = totalLines * lineHeightPx + paraSpacingPx
-      if (usedH + pH > containerH && curPage.length > 0) {
-        result.push(curPage)
-        curPage = []
-        usedH = 0
+    paraEls.forEach((pEl, i) => {
+      const pH = pEl.getBoundingClientRect().height
+      if (usedH + pH > containerH && i > 0) {
+        const prevEl = paraEls[i - 1] as HTMLElement
+        offsets.push(prevEl.offsetTop + prevEl.offsetHeight)
+        usedH = pH
+      } else {
+        usedH += pH
       }
-      curPage.push(p)
-      usedH += pH
-    }
-    if (curPage.length > 0) result.push(curPage)
-    setPages(result.length > 0 ? result : [paragraphs])
-  }, [isSwipeMode, paragraphs, settings.fontSize, settings.lineHeight, settings.paragraphSpacing, settings.maxWidth, currentChapterIdx])
+    })
+    setPageOffsets(offsets.length > 0 ? offsets : [0])
+    setMeasured(true)
+  }, [isSwipeMode, paragraphs, settings.fontSize, settings.lineHeight, settings.paragraphSpacing, settings.maxWidth, currentChapterIdx, loading])
 
   useEffect(() => {
-    setPageCount(pages.length)
-    if (currentPage >= pages.length) setCurrentPage(Math.max(0, pages.length - 1))
-  }, [pages])
+    if (currentPage >= pageOffsets.length) setCurrentPage(Math.max(0, pageOffsets.length - 1))
+  }, [pageOffsets])
 
   const goToPage = useCallback((page: number) => {
     if (page < 0) {
@@ -189,99 +175,48 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!isSwipeMode) return
-    const touch = e.touches[0]
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() }
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, time: Date.now() }
     setIsSwiping(true)
   }, [isSwipeMode])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!touchStartRef.current || !isSwipeMode) return
-    const touch = e.touches[0]
-    const dx = touch.clientX - touchStartRef.current.x
-    const dy = touch.clientY - touchStartRef.current.y
-    if (Math.abs(dx) > Math.abs(dy)) {
-      setSwipeOffset(dx)
-    }
+    const dx = e.touches[0].clientX - touchStartRef.current.x
+    const dy = e.touches[0].clientY - touchStartRef.current.y
+    if (Math.abs(dx) > Math.abs(dy)) setSwipeOffset(dx)
   }, [isSwipeMode])
 
   const handleTouchEnd = useCallback(() => {
     if (!touchStartRef.current || !isSwipeMode) return
-    const threshold = 60
     const elapsed = Date.now() - touchStartRef.current.time
     const velocity = Math.abs(swipeOffset) / (elapsed || 1) * 1000
-
-    if (swipeOffset < -threshold || (swipeOffset < -20 && velocity > 200)) {
+    if (swipeOffset < -60 || (swipeOffset < -20 && velocity > 200)) {
       goToPage(currentPage + 1)
-    } else if (swipeOffset > threshold || (swipeOffset > 20 && velocity > 200)) {
+    } else if (swipeOffset > 60 || (swipeOffset > 20 && velocity > 200)) {
       goToPage(currentPage - 1)
     }
-    setSwipeOffset(0)
     setIsSwiping(false)
+    setSwipeOffset(0)
     touchStartRef.current = null
   }, [swipeOffset, isSwipeMode, currentPage, goToPage])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg }}>
       {/* Top controls */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 20,
-          paddingTop: 'var(--safe-top)',
-          background: 'var(--accent)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          opacity: showControls ? 1 : 0,
-          pointerEvents: showControls ? 'auto' : 'none',
-          transition: 'opacity 0.3s',
-          height: 'auto',
-          minHeight: 'calc(var(--safe-top) + 48px)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px 8px 16px', width: '100%', justifyContent: 'space-between' }}>
-          <button
-            style={{
-              background: 'rgba(0,0,0,0.2)',
-              border: 'none',
-              borderRadius: 20,
-              padding: '8px 16px',
-              color: '#1a1a2e',
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4
-            }}
-            onClick={handleClose}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
+        paddingTop: 'var(--safe-top)', background: 'var(--accent)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
+        transition: 'opacity 0.3s', height: 'auto', minHeight: 'calc(var(--safe-top) + 48px)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', width: '100%', justifyContent: 'space-between' }}>
+          <button style={{ background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 20, padding: '8px 16px', color: '#1a1a2e', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={handleClose}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
             返回
           </button>
-
-          <button
-            style={{
-              background: 'rgba(0,0,0,0.2)',
-              border: 'none',
-              borderRadius: 20,
-              padding: '8px 16px',
-              color: '#1a1a2e',
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-            onClick={() => { setShowSettings(true); setShowControls(false) }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
+          <button style={{ background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 20, padding: '8px 16px', color: '#1a1a2e', fontSize: 14, fontWeight: 700, cursor: 'pointer' }} onClick={() => { setShowSettings(true); setShowControls(false) }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
           </button>
         </div>
       </div>
@@ -291,35 +226,32 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         ref={contentRef}
         style={{
           flex: 1,
-          overflow: isSwipeMode ? 'hidden' : 'auto',
-          overflowX: 'hidden',
-          WebkitOverflowScrolling: 'touch',
-          padding: 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 34px) + 108px)',
+          overflow: 'hidden',
           filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined,
-          transition: isSwipeMode
-            ? (isSwiping ? 'background 0.3s, filter 0.3s' : 'background 0.3s, filter 0.3s, transform 0.3s ease')
-            : 'background 0.3s, filter 0.3s',
-          transform: isSwipeMode ? `translateX(${swipeOffset}px)` : undefined
+          position: 'relative',
+          touchAction: isSwipeMode ? 'none' : 'auto'
         }}
         onClick={toggleControls}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div
-          style={{
-            fontSize: settings.fontSize,
-            lineHeight: settings.lineHeight,
-            fontFamily: fontFamilyMap[settings.fontFamily] || fontFamilyMap.system,
-            color: theme.text,
-            maxWidth: settings.maxWidth > 0 ? settings.maxWidth : undefined,
-            margin: '0 auto',
-            textAlign: 'justify',
-            wordBreak: 'break-word',
-            userSelect: 'text',
-            WebkitUserSelect: 'text'
-          }}
-        >
+        {/* Inner container: translateY for page positioning, translateX for swipe visual */}
+        <div style={{
+          padding: 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 34px) + 108px)',
+          transform: `translate(${isSwipeMode ? swipeOffset : 0}px, ${isSwipeMode ? -(pageOffsets[currentPage] || 0) : 0}px)`,
+          transition: isSwiping ? 'none' : 'transform 0.3s ease',
+          fontSize: settings.fontSize,
+          lineHeight: settings.lineHeight,
+          fontFamily: fontFamilyMap[settings.fontFamily] || fontFamilyMap.system,
+          color: theme.text,
+          maxWidth: settings.maxWidth > 0 ? settings.maxWidth : undefined,
+          margin: isSwipeMode ? undefined : '0 auto',
+          textAlign: 'justify',
+          wordBreak: 'break-word',
+          userSelect: 'text',
+          WebkitUserSelect: 'text'
+        }}>
           {loading && paragraphs.length === 0 && (
             <div style={{ textAlign: 'center', padding: 40 }}>
               <div className="spinner" style={{ margin: '0 auto' }} />
@@ -328,24 +260,20 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           )}
 
           {!loading && paragraphs.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-              暂无内容
-            </div>
+            <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>暂无内容</div>
           )}
 
-          {(isSwipeMode ? (pages[currentPage] || []) : paragraphs).map((p, i) => (
+          {paragraphs.map((p, i) => (
             <p
-              key={isSwipeMode ? `p-${currentPage}-${i}` : i}
-              style={{
-                marginBottom: `${settings.paragraphSpacing}em`,
-                textIndent: '2em'
-              }}
+              key={i}
+              data-page-para={isSwipeMode ? '1' : undefined}
+              style={{ marginBottom: `${settings.paragraphSpacing}em`, textIndent: '2em' }}
             >
               {p}
             </p>
           ))}
 
-          {paragraphs.length > 0 && !loading && !isSwipeMode && (
+          {!isSwipeMode && paragraphs.length > 0 && !loading && (
             <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-muted)', fontSize: 13 }}>
               {currentChapterIdx + 1} / {book.chapters.length}
             </div>
@@ -354,94 +282,24 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       </div>
 
       {/* Bottom controls */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 20,
-          background: 'var(--accent)',
-          padding: '12px 16px calc(var(--safe-bottom) + 12px)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          opacity: showControls ? 1 : 0,
-          pointerEvents: showControls ? 'auto' : 'none',
-          transition: 'opacity 0.3s'
-        }}
-      >
-        <button
-          style={{
-            background: 'rgba(0,0,0,0.2)',
-            border: 'none',
-            borderRadius: 20,
-            padding: '8px 20px',
-            color: '#1a1a2e',
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: hasPrev ? 'pointer' : 'default',
-            opacity: hasPrev ? 1 : 0.4,
-            flex: 1
-          }}
-          onClick={handlePrevChapter}
-          disabled={!hasPrev}
-        >
-          上一章
-        </button>
-
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
+        background: 'var(--accent)', padding: '12px 16px calc(var(--safe-bottom) + 12px)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
+        transition: 'opacity 0.3s'
+      }}>
+        <button style={{ background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 20, padding: '8px 20px', color: '#1a1a2e', fontSize: 14, fontWeight: 700, cursor: hasPrev ? 'pointer' : 'default', opacity: hasPrev ? 1 : 0.4, flex: 1 }} onClick={handlePrevChapter} disabled={!hasPrev}>上一章</button>
         <div style={{ flex: 2, textAlign: 'center', color: '#1a1a2e', fontSize: 12, fontWeight: 700 }}>
-          {isSwipeMode
-            ? `${currentPage + 1}/${pageCount} · 第${currentChapterIdx + 1}章`
-            : `${currentChapterIdx + 1} / ${book.chapters.length}`
-          }
+          {isSwipeMode ? `${currentPage + 1}/${pageCount} · 第${currentChapterIdx + 1}章` : `${currentChapterIdx + 1} / ${book.chapters.length}`}
         </div>
-
-        <button
-          style={{
-            background: 'rgba(0,0,0,0.2)',
-            border: 'none',
-            borderRadius: 20,
-            padding: '8px 20px',
-            color: '#1a1a2e',
-            fontSize: 14,
-            fontWeight: 700,
-            cursor: hasNext ? 'pointer' : 'default',
-            opacity: hasNext ? 1 : 0.4,
-            flex: 1
-          }}
-          onClick={handleNextChapter}
-          disabled={!hasNext}
-        >
-          下一章
-        </button>
+        <button style={{ background: 'rgba(0,0,0,0.2)', border: 'none', borderRadius: 20, padding: '8px 20px', color: '#1a1a2e', fontSize: 14, fontWeight: 700, cursor: hasNext ? 'pointer' : 'default', opacity: hasNext ? 1 : 0.4, flex: 1 }} onClick={handleNextChapter} disabled={!hasNext}>下一章</button>
       </div>
 
       {/* Chapter indicator */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 'calc(var(--safe-top) + 60px)',
-          right: 6,
-          zIndex: 15,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-          opacity: showControls ? 0 : 0.6,
-          transition: 'opacity 0.3s'
-        }}
-      >
+      <div style={{ position: 'fixed', top: 'calc(var(--safe-top) + 60px)', right: 6, zIndex: 15, display: 'flex', flexDirection: 'column', gap: 4, opacity: showControls ? 0 : 0.6, transition: 'opacity 0.3s' }}>
         {book.chapters.map((_, i) => (
-          <div
-            key={i}
-            style={{
-              width: 3,
-              height: book.chapters.length > 20 ? 6 : 16,
-              borderRadius: 2,
-              background: i === currentChapterIdx ? 'var(--accent)' : (settings.theme === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'),
-              transition: 'all 0.2s'
-            }}
-          />
+          <div key={i} style={{ width: 3, height: book.chapters.length > 20 ? 6 : 16, borderRadius: 2, background: i === currentChapterIdx ? 'var(--accent)' : (settings.theme === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'), transition: 'all 0.2s' }} />
         ))}
       </div>
 
@@ -451,108 +309,35 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-secondary)' }}>
             <div className="modal-handle" />
             <h3 style={{ fontSize: 16, marginBottom: 16, color: 'var(--accent)' }}>阅读设置</h3>
-
             <div style={{ marginBottom: 16 }}>
               <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>翻页模式</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {[{ key: 'swipe' as const, label: '左右翻页' }, { key: 'scroll' as const, label: '上下滚动' }].map(m => (
-                  <button key={m.key} onClick={() => { changeSetting('pageMode', m.key); setCurrentPage(0) }} style={{
-                    flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
-                    border: settings.pageMode === m.key ? '2px solid var(--accent)' : '2px solid var(--border)',
-                    background: 'var(--bg-card)', color: 'var(--text-primary)',
-                    fontSize: 12, cursor: 'pointer', fontWeight: settings.pageMode === m.key ? 700 : 400, transition: 'all 0.2s'
-                  }}>
-                    {m.label}
-                  </button>
+                  <button key={m.key} onClick={() => { changeSetting('pageMode', m.key); setCurrentPage(0) }} style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)', border: settings.pageMode === m.key ? '2px solid var(--accent)' : '2px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 12, cursor: 'pointer', fontWeight: settings.pageMode === m.key ? 700 : 400, transition: 'all 0.2s' }}>{m.label}</button>
                 ))}
               </div>
             </div>
-
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>
-                字体大小：{settings.fontSize}px
-              </label>
-              <input
-                type="range"
-                min="14"
-                max="28"
-                value={settings.fontSize}
-                onChange={e => changeSetting('fontSize', Number(e.target.value))}
-                style={{ width: '100%', accentColor: 'var(--accent)' }}
-              />
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>字体大小：{settings.fontSize}px</label>
+              <input type="range" min="14" max="28" value={settings.fontSize} onChange={e => changeSetting('fontSize', Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent)' }} />
             </div>
-
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>
-                行间距：{settings.lineHeight.toFixed(1)}
-              </label>
-              <input
-                type="range"
-                min="1.3"
-                max="2.5"
-                step="0.1"
-                value={settings.lineHeight}
-                onChange={e => changeSetting('lineHeight', Number(e.target.value))}
-                style={{ width: '100%', accentColor: 'var(--accent)' }}
-              />
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'block' }}>行间距：{settings.lineHeight.toFixed(1)}</label>
+              <input type="range" min="1.3" max="2.5" step="0.1" value={settings.lineHeight} onChange={e => changeSetting('lineHeight', Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent)' }} />
             </div>
-
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>
-                主题
-              </label>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>主题</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {(['dark', 'light', 'sepia'] as const).map(t => (
-                  <button
-                    key={t}
-                    onClick={() => changeSetting('theme', t)}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: settings.theme === t ? '2px solid var(--accent)' : '2px solid var(--border)',
-                      background: t === 'dark' ? '#1a1a2e' : t === 'light' ? '#f5f5f0' : '#f4ecd8',
-                      color: t === 'dark' ? '#ddd' : t === 'light' ? '#333' : '#5a4738',
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      fontWeight: settings.theme === t ? 700 : 400,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {t === 'dark' ? '暗黑' : t === 'light' ? '明亮' : '护眼'}
-                  </button>
+                  <button key={t} onClick={() => changeSetting('theme', t)} style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)', border: settings.theme === t ? '2px solid var(--accent)' : '2px solid var(--border)', background: t === 'dark' ? '#1a1a2e' : t === 'light' ? '#f5f5f0' : '#f4ecd8', color: t === 'dark' ? '#ddd' : t === 'light' ? '#333' : '#5a4738', fontSize: 12, cursor: 'pointer', fontWeight: settings.theme === t ? 700 : 400, transition: 'all 0.2s' }}>{t === 'dark' ? '暗黑' : t === 'light' ? '明亮' : '护眼'}</button>
                 ))}
               </div>
             </div>
-
             <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>
-                字体
-              </label>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>字体</label>
               <div style={{ display: 'flex', gap: 8 }}>
-                {[
-                  { key: 'system', label: '系统' },
-                  { key: 'serif', label: '衬线' },
-                  { key: 'mono', label: '等宽' }
-                ].map(f => (
-                  <button
-                    key={f.key}
-                    onClick={() => changeSetting('fontFamily', f.key)}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: settings.fontFamily === f.key ? '2px solid var(--accent)' : '2px solid var(--border)',
-                      background: 'var(--bg-card)',
-                      color: 'var(--text-primary)',
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      fontWeight: settings.fontFamily === f.key ? 700 : 400,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {f.label}
-                  </button>
+                {[{ key: 'system', label: '系统' }, { key: 'serif', label: '衬线' }, { key: 'mono', label: '等宽' }].map(f => (
+                  <button key={f.key} onClick={() => changeSetting('fontFamily', f.key)} style={{ flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)', border: settings.fontFamily === f.key ? '2px solid var(--accent)' : '2px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: 12, cursor: 'pointer', fontWeight: settings.fontFamily === f.key ? 700 : 400, transition: 'all 0.2s' }}>{f.label}</button>
                 ))}
               </div>
             </div>

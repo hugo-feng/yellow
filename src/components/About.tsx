@@ -2,6 +2,11 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.9.1', date: '2026-06-14', changes: [
+    '翻页彻底重写：渲染全部段落+DOM实测高度分页+translateY定位',
+    '修复滑动弹回：swipe用translateX偏移，松手后CSS transition动画到新页',
+    '内容区touchAction:none防止WebView默认手势干扰'
+  ]},
   { version: '1.9.0', date: '2026-06-14', changes: [
     'OTA彻底修复：版本号编译进JS bundle，不再依赖运行时fetch',
     'OTA检查添加XMLHttpRequest超时兜底（WebView fetch可能失效）',
@@ -105,7 +110,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.1')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
