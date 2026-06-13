@@ -14,7 +14,8 @@
     "cap:open": "npx cap open android",
     "cap:build": "npm run build && npx cap sync && npx cap open android",
     "deploy:ota": "npm run build && npx gh-pages -d dist -m \"deploy: OTA update [skip ci]\"",
-    "deploy:full": "npm run build && npx cap sync android && npx gh-pages -d dist -m \"deploy: full release [skip ci]\" && npx cap open android"
+    "deploy:full": "npm run build && npx cap sync android && npx gh-pages -d dist -m \"deploy: full release [skip ci]\" && npx cap open android",
+    "release": "node -e \"const v=require('./public/version.json').version; require('child_process').execSync('git add . && git commit -m v'+v+' && git tag -a v'+v+' -m v'+v+' && git push origin main v'+v,{stdio:'inherit'})\""
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
