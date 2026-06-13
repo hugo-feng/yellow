@@ -32,21 +32,24 @@ async function fetchWithFallback(path: string): Promise<Response> {
     } catch {}
   }
   
-  // 逐一尝试所有镜像
-  for (const url of UPDATE_URLS) {
-    try {
-      const base = url.replace(/\/version\.json$/, '')
-      const fullUrl = `${base}/${path}`
-      const ctrl = new AbortController()
-      const tm = setTimeout(() => ctrl.abort(), 8000)
-      const resp = await fetch(fullUrl, { signal: ctrl.signal, cache: 'no-cache' })
-      clearTimeout(tm)
-      if (resp.ok) {
-        activeBaseUrl = base
-        activeVersionUrl = `${base}/version.json`
-        return resp
-      }
-    } catch {}
+  // 逐一尝试所有镜像（首次可能因 SW 未就绪失败，重试一次）
+  for (let attempt = 0; attempt < 2; attempt++) {
+    for (const url of UPDATE_URLS) {
+      try {
+        const base = url.replace(/\/version\.json$/, '')
+        const fullUrl = `${base}/${path}`
+        const ctrl = new AbortController()
+        const tm = setTimeout(() => ctrl.abort(), 10000)
+        const resp = await fetch(fullUrl, { signal: ctrl.signal, cache: 'no-cache' })
+        clearTimeout(tm)
+        if (resp.ok) {
+          activeBaseUrl = base
+          activeVersionUrl = `${base}/version.json`
+          return resp
+        }
+      } catch {}
+    }
+    if (attempt === 0) await new Promise(r => setTimeout(r, 1500))
   }
   throw new Error('所有更新源不可达')
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import type { Book } from '../types'
-import { getStorageInfo, clearCache } from '../utils/db'
+import type { Book, ReaderSettings } from '../types'
+import { getStorageInfo } from '../utils/db'
 import { useTheme } from '../hooks/useTheme'
 
 interface Props {
@@ -9,19 +9,20 @@ interface Props {
   onOpenAbout: () => void
   cacheTask?: { bookId: string; title: string; progress: number; current: number; total: number } | null
   onOpenCacheManager?: () => void
+  readerSettings?: ReaderSettings
+  onReaderSettingsChange?: (settings: ReaderSettings) => void
 }
 
-export default function Settings({ books, showToast, onOpenAbout, cacheTask, onOpenCacheManager }: Props) {
+export default function Settings({ books, showToast, onOpenAbout, cacheTask, onOpenCacheManager, readerSettings, onReaderSettingsChange }: Props) {
   const [storageInfo, setStorageInfo] = useState({ books: 0, chapters: 0, size: '0 B' })
-  const [showClearConfirm, setShowClearConfirm] = useState(false)
   const { theme, toggle: toggleTheme } = useTheme()
 
   useEffect(() => { getStorageInfo().then(setStorageInfo) }, [books])
 
-  const handleClear = async () => {
-    await clearCache(); showToast('缓存已清除'); setShowClearConfirm(false)
-    setStorageInfo({ books: 0, chapters: 0, size: '0 B' })
-    setTimeout(() => window.location.reload(), 500)
+  const updateReader = <K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) => {
+    if (readerSettings && onReaderSettingsChange) {
+      onReaderSettingsChange({ ...readerSettings, [key]: value })
+    }
   }
 
   return (
@@ -38,8 +39,124 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
         </div>
       </div>
 
-      {/* 关于 */}
+      {/* 阅读设置 */}
+      <h3 style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 12 }}>阅读设置</h3>
+      <div className="card" style={{ padding: '14px 16px', marginBottom: 24 }}>
+        {readerSettings && (
+          <>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                <span>字体大小</span><span style={{ fontWeight: 600 }}>{readerSettings.fontSize}px</span>
+              </label>
+              <input type="range" min="14" max="28" value={readerSettings.fontSize}
+                onChange={e => updateReader('fontSize', Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent)' }} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                <span>行间距</span><span style={{ fontWeight: 600 }}>{readerSettings.lineHeight.toFixed(1)}</span>
+              </label>
+              <input type="range" min="1.3" max="2.5" step="0.1" value={readerSettings.lineHeight}
+                onChange={e => updateReader('lineHeight', Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent)' }} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                <span>段间距</span><span style={{ fontWeight: 600 }}>{readerSettings.paragraphSpacing.toFixed(1)}em</span>
+              </label>
+              <input type="range" min="0.4" max="2.0" step="0.1" value={readerSettings.paragraphSpacing}
+                onChange={e => updateReader('paragraphSpacing', Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent)' }} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+                <span>亮度</span><span style={{ fontWeight: 600 }}>{readerSettings.brightness}%</span>
+              </label>
+              <input type="range" min="30" max="100" value={readerSettings.brightness}
+                onChange={e => updateReader('brightness', Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--accent)' }} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>阅读主题</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {(['dark', 'light', 'sepia'] as const).map(t => (
+                  <button key={t} onClick={() => updateReader('theme', t)} style={{
+                    flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
+                    border: readerSettings.theme === t ? '2px solid var(--accent)' : '2px solid var(--border)',
+                    background: t === 'dark' ? '#1a1a2e' : t === 'light' ? '#f5f5f0' : '#f4ecd8',
+                    color: t === 'dark' ? '#ddd' : t === 'light' ? '#333' : '#5a4738',
+                    fontSize: 12, cursor: 'pointer', fontWeight: readerSettings.theme === t ? 700 : 400, transition: 'all 0.2s'
+                  }}>
+                    {t === 'dark' ? '暗黑' : t === 'light' ? '明亮' : '护眼'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>字体</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[{ key: 'system', label: '系统' }, { key: 'serif', label: '衬线' }, { key: 'mono', label: '等宽' }].map(f => (
+                  <button key={f.key} onClick={() => updateReader('fontFamily', f.key)} style={{
+                    flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
+                    border: readerSettings.fontFamily === f.key ? '2px solid var(--accent)' : '2px solid var(--border)',
+                    background: 'var(--bg-card)', color: 'var(--text-primary)',
+                    fontSize: 12, cursor: 'pointer', fontWeight: readerSettings.fontFamily === f.key ? 700 : 400, transition: 'all 0.2s'
+                  }}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* 其他 */}
       <h3 style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 12 }}>其他</h3>
+
+      {/* 缓存管理 */}
+      {onOpenCacheManager && (
+        <button className="card" style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px', marginBottom: 12, cursor: 'pointer', background: 'var(--bg-card)',
+          border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: 14
+        }} onClick={onOpenCacheManager}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(76,175,132,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: 600 }}>缓存管理</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                {cacheTask ? `正在缓存: ${cacheTask.title} ${cacheTask.progress}%` : `${storageInfo.books}本 · ${storageInfo.chapters}章 · ${storageInfo.size}`}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {cacheTask && <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)' }}><polyline points="9 18 15 12 9 6" /></svg>
+          </div>
+        </button>
+      )}
+
+      {cacheTask && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
+            <span>正在缓存: {cacheTask.title}</span>
+            <span>{cacheTask.current}/{cacheTask.total}章</span>
+          </div>
+          <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${cacheTask.progress}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 0.3s' }} />
+          </div>
+        </div>
+      )}
+
+      {/* 关于 */}
       <button className="card" style={{
         width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '16px', marginBottom: 12, cursor: 'pointer', background: 'var(--bg-card)',
@@ -56,75 +173,6 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)' }}><polyline points="9 18 15 12 9 6" /></svg>
       </button>
-
-      {/* 存储 */}
-      <div className="card" style={{ padding: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>缓存书籍</span>
-          <span style={{ fontWeight: 600 }}>{storageInfo.books} 本</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>缓存章节</span>
-          <span style={{ fontWeight: 600 }}>{storageInfo.chapters} 章</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>占用空间</span>
-          <span style={{ fontWeight: 600 }}>{storageInfo.size}</span>
-        </div>
-        <button className="btn btn-danger btn-block btn-sm" onClick={() => setShowClearConfirm(true)} disabled={storageInfo.books === 0}>清除所有缓存</button>
-      </div>
-
-      {/* 缓存管理 */}
-      {onOpenCacheManager && (
-        <button className="card" style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px', marginBottom: 12, marginTop: 12, cursor: 'pointer', background: 'var(--bg-card)',
-          border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: 14
-        }} onClick={onOpenCacheManager}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(76,175,132,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--success)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 600 }}>缓存管理</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {cacheTask ? `正在缓存: ${cacheTask.title} ${cacheTask.progress}%` : '查看已缓存内容 · 管理存储空间'}
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {cacheTask && <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)' }}><polyline points="9 18 15 12 9 6" /></svg>
-          </div>
-        </button>
-      )}
-
-      {/* 缓存任务进度 */}
-      {cacheTask && (
-        <div style={{ marginBottom: 12, marginTop: 12 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>
-            <span>正在缓存: {cacheTask.title}</span>
-            <span>{cacheTask.current}/{cacheTask.total}章</span>
-          </div>
-          <div style={{ height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${cacheTask.progress}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 0.3s' }} />
-          </div>
-        </div>
-      )}
-
-      {showClearConfirm && (
-        <div className="modal-overlay" onClick={() => setShowClearConfirm(false)}>
-          <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()}>
-            <div className="modal-handle" />
-            <h3 style={{ fontSize: 16, marginBottom: 12, color: 'var(--danger)' }}>确认清除</h3>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 20 }}>此操作将清除所有缓存的书籍和章节内容，书架上的书也会被移除。确定继续？</p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowClearConfirm(false)}>取消</button>
-              <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleClear}>确认清除</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

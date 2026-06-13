@@ -56,6 +56,8 @@ export interface ReaderSettings {
   theme: 'light' | 'dark' | 'sepia'
   fontFamily: string
   maxWidth: number
+  brightness: number
+  paragraphSpacing: number
 }
 
 export type TabKey = 'discover' | 'bookshelf' | 'search' | 'settings'

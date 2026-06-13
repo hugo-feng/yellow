@@ -32,7 +32,7 @@ function AppInner() {
   const [currentVersion, setCurrentVersion] = useState('1.0.0')
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => {
     const saved = localStorage.getItem('reader-settings')
-    return saved ? JSON.parse(saved) : { fontSize: 18, lineHeight: 1.8, theme: 'dark', fontFamily: 'system', maxWidth: 720 }
+    return saved ? JSON.parse(saved) : { fontSize: 18, lineHeight: 1.8, theme: 'dark', fontFamily: 'system', maxWidth: 720, brightness: 100, paragraphSpacing: 1.2 }
   })
   const [toast, setToast] = useState<string | null>(null)
   const { theme } = useTheme()
@@ -204,7 +204,8 @@ function AppInner() {
         )}
         {activeTab === 'settings' && (
           <Settings books={books} showToast={showToast} onOpenAbout={() => setShowAbout(true)}
-            cacheTask={cacheTask} onOpenCacheManager={() => setShowCacheManager(true)} />
+            cacheTask={cacheTask} onOpenCacheManager={() => setShowCacheManager(true)}
+            readerSettings={readerSettings} onReaderSettingsChange={setReaderSettings} />
         )}
       </div>
 

@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.5.1', date: '2026-06-14', changes: [
+    '设置页新增阅读器设置（字体/行距/段距/亮度/主题/字体族）', 'OTA首次检查失败自动重试（1.5s延迟后二次尝试）', '阅读内容区亮度调节（CSS filter）', '滚动条全面屏手势条适配', '移除旧版清除缓存按钮（统一用缓存管理）'
+  ]},
   { version: '1.5.0', date: '2026-06-14', changes: [
     '书籍详情页新增「缓存」按钮，后台逐章缓存到本地', '设置新增缓存管理二级界面（查看/删除已缓存书籍）', 'OTA更新完成后弹窗提示（不再直接reload）', '阅读器内容区全面屏上下安全区间距修正'
   ]},
@@ -44,7 +47,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.1')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

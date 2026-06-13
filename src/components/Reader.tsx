@@ -200,9 +200,11 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         style={{
           flex: 1,
           overflow: 'auto',
+          overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
           padding: 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 0px) + 96px)',
-          transition: 'background 0.3s'
+          filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined,
+          transition: 'background 0.3s, filter 0.3s'
         }}
         onClick={toggleControls}
       >
@@ -237,7 +239,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             <p
               key={i}
               style={{
-                marginBottom: settings.lineHeight > 1.5 ? '1.2em' : '0.8em',
+                marginBottom: `${settings.paragraphSpacing}em`,
                 textIndent: '2em'
               }}
             >
