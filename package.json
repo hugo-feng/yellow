@@ -1,7 +1,7 @@
 {
   "name": "yellow-reader",
   "version": "1.0.0",
-  "description": "Yellow Reader - 简洁强大的移动端阅读器",
+  "description": "Yellow - 简洁强大的移动端阅读器",
   "private": true,
   "type": "module",
   "scripts": {
@@ -25,6 +25,7 @@
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "@vitejs/plugin-react": "^4.2.1",
+    "gh-pages": "^6.3.0",
     "typescript": "^5.3.3",
     "vite": "^5.0.12"
   }

@@ -72,7 +72,7 @@ export default function Changelog() {
     <div style={{ padding: 16 }}>
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>Yellow Reader</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>Yellow</h2>
           <span className="badge" style={{ fontSize: 12 }}>v1.0.0</span>
         </div>
         <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>

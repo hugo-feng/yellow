@@ -104,7 +104,7 @@ export default function App() {
   return (
     <div className="app-container">
       <div className="header">
-        <h1>Yellow Reader</h1>
+        <h1>Yellow</h1>
         <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-muted)' }}>v1.0.0</span>
       </div>
 
