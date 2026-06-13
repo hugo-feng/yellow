@@ -2,6 +2,12 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.4.1', date: '2026-06-14', changes: [
+    'OTA更新源增加jsDelivr CDN镜像回退', '自动检查更新失败时显示错误提示', 'HTML资源解析适配相对路径(./assets/)'
+  ]},
+  { version: '1.4.0', date: '2026-06-14', changes: [
+    '全局全面屏安全区自适应（JS兜底检测+CSS变量统一）', 'header/tab-bar/modal/toast 全面适配安全区', '书籍详情页：章节目录/作者/操作按钮完成', '预缓存书索引增至18本'
+  ]},
   { version: '1.3.0', date: '2026-06-14', changes: [
     '发现页点击进入书籍详情页（显示章节目录/作者/来源等信息）', '详情页可加入书架后再开始阅读', '阅读器全面屏安全区适配修复（顶部按钮不再被状态栏遮挡）', '预缓存书籍增至12本'
   ]},
@@ -31,7 +37,7 @@ export default function About({ currentVersion, showToast, onClose }: Props) {
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.0.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.4.1')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

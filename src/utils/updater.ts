@@ -1,6 +1,12 @@
 let currentVersion = '1.0.0'
 
-const UPDATE_URL = 'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/version.json'
+const UPDATE_URLS = [
+  'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/version.json',
+  'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json'
+]
+
+let activeBaseUrl = ''
+let activeVersionUrl = ''
 
 export async function getCurrentVersion(): Promise<string> {
   try {
@@ -14,7 +20,35 @@ export async function getCurrentVersion(): Promise<string> {
 }
 
 export function getUpdateUrl(): string {
-  return UPDATE_URL
+  return activeVersionUrl || UPDATE_URLS[0]
+}
+
+async function fetchWithFallback(path: string): Promise<Response> {
+  // 如果有已探测成功的 URL，直接用
+  if (activeBaseUrl) {
+    try {
+      const resp = await fetch(`${activeBaseUrl}/${path}`)
+      if (resp.ok) return resp
+    } catch {}
+  }
+  
+  // 逐一尝试所有镜像
+  for (const url of UPDATE_URLS) {
+    try {
+      const base = url.replace(/\/version\.json$/, '')
+      const fullUrl = `${base}/${path}`
+      const ctrl = new AbortController()
+      const tm = setTimeout(() => ctrl.abort(), 8000)
+      const resp = await fetch(fullUrl, { signal: ctrl.signal })
+      clearTimeout(tm)
+      if (resp.ok) {
+        activeBaseUrl = base
+        activeVersionUrl = `${base}/version.json`
+        return resp
+      }
+    } catch {}
+  }
+  throw new Error('所有更新源不可达')
 }
 
 export async function checkForUpdates(updateUrl: string): Promise<{
@@ -24,40 +58,37 @@ export async function checkForUpdates(updateUrl: string): Promise<{
   error?: string
 }> {
   try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 10000)
-    const response = await fetch(updateUrl, { signal: controller.signal, cache: 'no-cache' })
-    clearTimeout(timeout)
-    if (!response.ok) return { hasUpdate: false, error: `服务器响应异常: ${response.status}` }
+    const response = await fetchWithFallback('version.json')
     const remote = await response.json()
     if (compareVersions(remote.version, currentVersion) > 0) {
       return { hasUpdate: true, version: remote.version, description: remote.description }
     }
     return { hasUpdate: false }
   } catch (err: any) {
-    return { hasUpdate: false, error: err.message === 'AbortError' ? '连接超时' : `检查失败: ${err.message}` }
+    return { hasUpdate: false, error: err.message || '检查更新失败' }
   }
 }
 
 export async function downloadAndApply(updateUrl: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const baseUrl = updateUrl.replace(/\/version\.json$/, '')
-    
-    // 下载新版本文件
+    // 下载新版文件
     const [htmlResp, verResp] = await Promise.all([
-      fetch(`${baseUrl}/index.html`, { cache: 'no-cache' }),
-      fetch(updateUrl, { cache: 'no-cache' })
+      fetchWithFallback('index.html'),
+      fetchWithFallback('version.json')
     ])
-    if (!htmlResp.ok) throw new Error(`下载 index.html 失败: ${htmlResp.status}`)
     
     const html = await htmlResp.text()
-    const jsMatch = html.match(/\/assets\/index-[^.]+\.js/)
+    const jsMatch = html.match(/["']([./]*\/assets\/index-[^.]+\.js)["']/)
     if (!jsMatch) throw new Error('无法解析资源文件')
-    const cssMatch = html.match(/\/assets\/index-[^.]+\.css/)
+    const jsPath = jsMatch[1].replace(/^\.\//, '/')
+    const cssMatch = html.match(/["']([./]*\/assets\/index-[^.]+\.css)["']/)
     
     // 下载 JS 和 CSS
-    const dlPromises = [fetch(`${baseUrl}${jsMatch[0]}`, { cache: 'no-cache' })]
-    if (cssMatch) dlPromises.push(fetch(`${baseUrl}${cssMatch[0]}`, { cache: 'no-cache' }))
+    const dlPromises = [fetchWithFallback(jsPath.startsWith('/') ? jsPath.slice(1) : jsPath)]
+    if (cssMatch) {
+      const cssPath = cssMatch[1].replace(/^\.\//, '/')
+      dlPromises.push(fetchWithFallback(cssPath.startsWith('/') ? cssPath.slice(1) : cssPath))
+    }
     const results = await Promise.all(dlPromises)
     for (const r of results) { if (!r.ok) throw new Error(`资源下载失败: ${r.status}`) }
 
@@ -69,8 +100,8 @@ export async function downloadAndApply(updateUrl: string): Promise<{ success: bo
       await Promise.all([
         cache.put('/index.html', new Response(html, { headers: { 'Content-Type': 'text/html' } })),
         cache.put('/version.json', verResp.clone()),
-        cache.put(jsMatch[0], new Response(await results[0].blob(), { headers: { 'Content-Type': 'application/javascript' } })),
-        cssMatch && results.length > 1 ? cache.put(cssMatch[0], new Response(await results[1].blob(), { headers: { 'Content-Type': 'text/css' } })) : Promise.resolve()
+        cache.put(jsPath, new Response(await results[0].blob(), { headers: { 'Content-Type': 'application/javascript' } })),
+        cssMatch && results.length > 1 ? cache.put(cssMatch[1].replace(/^\.\//, '/'), new Response(await results[1].blob(), { headers: { 'Content-Type': 'text/css' } })) : Promise.resolve()
       ])
       
       localStorage.setItem('yellow-update-pending', 'true')

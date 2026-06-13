@@ -49,8 +49,10 @@ function AppInner() {
         if (result.hasUpdate && result.version) {
           setUpdateInfo({ version: result.version, description: result.description || '' })
           setShowUpdateModal(true)
+        } else if (result.error) {
+          showToast(result.error)
         }
-      } catch { /* silent */ }
+      } catch { showToast('更新检查失败') }
     }, 2000)
     return () => clearTimeout(timer)
   }, [loadBooks])
