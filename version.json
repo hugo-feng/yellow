@@ -1,5 +1,5 @@
 {
-  "version": "1.7.0",
-  "description": "左右滑动翻页+动画 / 阅读进度 / 书籍标签 / 主页横滑tag筛选",
+  "version": "1.7.1",
+  "description": "Reader滑动翻页+底栏进度显示重新构建部署",
   "releaseDate": "2026-06-14"
 }
