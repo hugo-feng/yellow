@@ -1,7 +1,7 @@
 {
-  "version": "4.5.0",
-  "versionCode": 450,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.5.0/yellow-v4.5.0.apk",
-  "updateContent": "书籍详情页加入书架/缓存后停留不退出\n阅读界面全面屏适配(安全区背景色)\n修复字间距(text-align:left替代justify)",
+  "version": "4.6.0",
+  "versionCode": 460,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.6.0/yellow-v4.6.0.apk",
+  "updateContent": "修复OTA下载后自动安装：添加REQUEST_INSTALL_PACKAGES权限\nBroadcastReceiver改用RECEIVER_EXPORTED接收系统广播",
   "releaseDate": "2026-06-14"
 }
