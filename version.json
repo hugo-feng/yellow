@@ -1,5 +1,5 @@
 {
-  "version": "1.9.7",
-  "description": "OTA终极修复: GitHub API获取版本(绕过CDN缓存)",
+  "version": "1.9.8",
+  "description": "修复翻页分页: 中文字符宽度修正+padding扣除",
   "releaseDate": "2026-06-14"
 }
