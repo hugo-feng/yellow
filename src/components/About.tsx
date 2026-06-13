@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.4.2', date: '2026-06-14', changes: [
+    '阅读器顶栏底栏改为黄色高亮突出', '顶栏底栏全面屏safe-area适配', '章节指示条优化'
+  ]},
   { version: '1.4.1', date: '2026-06-14', changes: [
     'OTA更新源增加jsDelivr CDN镜像回退', '自动检查更新失败时显示错误提示', 'HTML资源解析适配相对路径(./assets/)'
   ]},
@@ -37,7 +40,7 @@ export default function About({ currentVersion, showToast, onClose }: Props) {
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.4.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.4.2')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

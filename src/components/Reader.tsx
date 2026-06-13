@@ -138,54 +138,60 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           left: 0,
           right: 0,
           zIndex: 20,
-          background: `linear-gradient(to bottom, ${theme.bg}, transparent)`,
-          padding: 'calc(var(--safe-top) + 12px) 16px 12px',
+          paddingTop: 'var(--safe-top)',
+          background: 'var(--accent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           opacity: showControls ? 1 : 0,
           pointerEvents: showControls ? 'auto' : 'none',
-          transition: 'opacity 0.3s'
+          transition: 'opacity 0.3s',
+          height: 'auto',
+          minHeight: 'calc(var(--safe-top) + 48px)'
         }}
       >
-        <button
-          style={{
-            background: 'rgba(0,0,0,0.2)',
-            border: 'none',
-            borderRadius: 20,
-            padding: '8px 14px',
-            color: theme.text,
-            fontSize: 14,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4
-          }}
-          onClick={handleClose}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          返回
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px 8px 16px', width: '100%', justifyContent: 'space-between' }}>
+          <button
+            style={{
+              background: 'rgba(0,0,0,0.2)',
+              border: 'none',
+              borderRadius: 20,
+              padding: '8px 16px',
+              color: '#1a1a2e',
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+            onClick={handleClose}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            返回
+          </button>
 
-        <button
-          style={{
-            background: 'rgba(0,0,0,0.2)',
-            border: 'none',
-            borderRadius: 20,
-            padding: '8px 14px',
-            color: theme.text,
-            fontSize: 14,
-            cursor: 'pointer'
-          }}
-          onClick={() => { setShowSettings(true); setShowControls(false) }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </button>
+          <button
+            style={{
+              background: 'rgba(0,0,0,0.2)',
+              border: 'none',
+              borderRadius: 20,
+              padding: '8px 16px',
+              color: '#1a1a2e',
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: 'pointer'
+            }}
+            onClick={() => { setShowSettings(true); setShowControls(false) }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Content area */}
@@ -195,7 +201,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           flex: 1,
           overflow: 'auto',
           WebkitOverflowScrolling: 'touch',
-          padding: 'calc(var(--safe-top) + 48px) 20px 80px',
+          padding: 'calc(var(--safe-top) + 48px) 20px calc(var(--safe-bottom) + 80px)',
           transition: 'background 0.3s'
         }}
         onClick={toggleControls}
@@ -255,8 +261,8 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           left: 0,
           right: 0,
           zIndex: 20,
-          background: `linear-gradient(to top, ${theme.bg}, transparent)`,
-          padding: '20px 16px calc(var(--safe-bottom) + 32px)',
+          background: 'var(--accent)',
+          padding: '12px 16px calc(var(--safe-bottom) + 12px)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -266,26 +272,53 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         }}
       >
         <button
-          className="btn btn-secondary btn-sm"
+          style={{
+            background: 'rgba(0,0,0,0.2)',
+            border: 'none',
+            borderRadius: 20,
+            padding: '8px 20px',
+            color: '#1a1a2e',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: hasPrev ? 'pointer' : 'default',
+            opacity: hasPrev ? 1 : 0.4
+          }}
           onClick={handlePrevChapter}
           disabled={!hasPrev}
-          style={{ opacity: hasPrev ? 1 : 0.3 }}
         >
           上一章
         </button>
 
         <button
-          className="btn btn-secondary btn-sm"
+          style={{
+            background: 'rgba(0,0,0,0.2)',
+            border: 'none',
+            borderRadius: 20,
+            padding: '8px 20px',
+            color: '#1a1a2e',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: 'pointer'
+          }}
           onClick={() => setShowSettings(true)}
         >
           设置
         </button>
 
         <button
-          className="btn btn-secondary btn-sm"
+          style={{
+            background: 'rgba(0,0,0,0.2)',
+            border: 'none',
+            borderRadius: 20,
+            padding: '8px 20px',
+            color: '#1a1a2e',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: hasNext ? 'pointer' : 'default',
+            opacity: hasNext ? 1 : 0.4
+          }}
           onClick={handleNextChapter}
           disabled={!hasNext}
-          style={{ opacity: hasNext ? 1 : 0.3 }}
         >
           下一章
         </button>
@@ -295,14 +328,13 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       <div
         style={{
           position: 'fixed',
-          top: '50%',
-          right: 8,
-          transform: 'translateY(-50%)',
+          top: 'calc(var(--safe-top) + 60px)',
+          right: 6,
           zIndex: 15,
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
-          opacity: showControls ? 0 : 0.5,
+          opacity: showControls ? 0 : 0.6,
           transition: 'opacity 0.3s'
         }}
       >
@@ -313,7 +345,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
               width: 3,
               height: book.chapters.length > 20 ? 6 : 16,
               borderRadius: 2,
-              background: i === currentChapterIdx ? 'var(--accent)' : theme.border,
+              background: i === currentChapterIdx ? 'var(--accent)' : (settings.theme === 'dark' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.18)'),
               transition: 'all 0.2s'
             }}
           />

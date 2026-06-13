@@ -1,5 +1,5 @@
 {
-  "version": "1.4.1",
-  "description": "OTA更新源双路回退(raw+jsDelivr CDN) + 自动检查失败提示 + HTML解析适配相对路径",
+  "version": "1.4.2",
+  "description": "阅读器顶栏底栏黄色高亮突出 + 全面屏safe-area适配",
   "releaseDate": "2026-06-14"
 }
