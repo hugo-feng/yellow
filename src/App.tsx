@@ -148,8 +148,9 @@ function AppInner() {
     showToast('已从书架移除')
   }, [showToast])
 
-  const handleAddBook = useCallback((book: Book) => {
+  const handleAddBook = useCallback(async (book: Book) => {
     setBooks(prev => prev.find(b => b.id === book.id) ? prev : [book, ...prev])
+    try { await saveBook(book) } catch (e) { console.error('[DB] saveBook failed:', e) }
   }, [])
 
   const cacheBook = useCallback(async (book: Book) => {
