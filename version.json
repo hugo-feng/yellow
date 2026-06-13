@@ -1,5 +1,5 @@
 {
-  "version": "1.9.4",
-  "description": "OTA根治: 版本化SW缓存+纯XHR+启动清理旧缓存",
+  "version": "1.9.5",
+  "description": "Reader彻底重写: 翻页/滚动模式完全分离",
   "releaseDate": "2026-06-14"
 }
