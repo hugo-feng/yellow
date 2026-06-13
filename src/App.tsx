@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
-import { getAllBooks, removeBook, saveProgress, getProgress } from './utils/db'
+import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
 import { getCurrentVersion, checkForUpdates, getUpdateUrl } from './utils/updater'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import Bookshelf from './components/Bookshelf'
@@ -10,6 +10,11 @@ import Settings from './components/Settings'
 import Reader from './components/Reader'
 import BookDetail from './components/BookDetail'
 import About from './components/About'
+import CacheManager from './components/CacheManager'
+
+interface CacheTask {
+  bookId: string; title: string; progress: number; current: number; total: number
+}
 
 function AppInner() {
   const [activeTab, setActiveTab] = useState<TabKey>('discover')
@@ -18,8 +23,12 @@ function AppInner() {
   const [detailBook, setDetailBook] = useState<Book | null>(null)
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null)
   const [showAbout, setShowAbout] = useState(false)
+  const [showCacheManager, setShowCacheManager] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [updateInfo, setUpdateInfo] = useState<{ version: string; description: string } | null>(null)
+  const [showOtaSuccess, setShowOtaSuccess] = useState(false)
+  const [otaNewVersion, setOtaNewVersion] = useState('')
+  const [cacheTask, setCacheTask] = useState<CacheTask | null>(null)
   const [currentVersion, setCurrentVersion] = useState('1.0.0')
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => {
     const saved = localStorage.getItem('reader-settings')
@@ -37,12 +46,9 @@ function AppInner() {
     try { setBooks(await getAllBooks()) } catch (e) { console.error(e) }
   }, [])
 
-  // 启动自动检查 OTA 更新
   useEffect(() => {
     loadBooks()
     getCurrentVersion().then(v => setCurrentVersion(v))
-    
-    // 延迟 2 秒后自动检查更新
     const timer = setTimeout(async () => {
       try {
         const result = await checkForUpdates(getUpdateUrl())
@@ -80,6 +86,60 @@ function AppInner() {
     setBooks(prev => prev.find(b => b.id === book.id) ? prev : [book, ...prev])
   }, [])
 
+  const cacheBook = useCallback(async (book: Book) => {
+    if (cacheTask) { showToast('已有缓存任务进行中'); return }
+    const chapters = book.chapters || []
+    if (chapters.length === 0) { showToast('无可缓存内容'); return }
+
+    if (!books.find(b => b.id === book.id)) handleAddBook(book)
+
+    setCacheTask({ bookId: book.id, title: book.title, progress: 0, current: 0, total: chapters.length })
+
+    try {
+      await saveBook({ ...book, cached: true })
+
+      for (let i = 0; i < chapters.length; i++) {
+        const ch = chapters[i]
+        setCacheTask(prev => prev ? { ...prev, current: i + 1, progress: Math.round(((i + 1) / chapters.length) * 100) } : null)
+
+        if (ch.content) {
+          await saveChapter({ ...ch, id: `${book.id}-ch-${ch.index}`, cached: true })
+          continue
+        }
+
+        const existing = await getChapter(`${book.id}-ch-${ch.index}`)
+        if (existing?.content) continue
+
+        try {
+          if (ch.url) {
+            const resp = await fetch(ch.url)
+            if (resp.ok) {
+              const text = await resp.text()
+              const bodyMatch = text.match(/<div[^>]*id="bookcontent"[^>]*>([\s\S]*?)<\/div>/i)
+              let content = ''
+              if (bodyMatch) {
+                content = bodyMatch[1].replace(/<[^>]+>/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+              } else {
+                const pMatches = text.match(/<p[^>]*>([\s\S]*?)<\/p>/gi)
+                content = pMatches ? pMatches.map(p => p.replace(/<[^>]+>/g, '').trim()).filter(Boolean).join('\n\n') : text.replace(/<[^>]+>/g, '').trim()
+              }
+              if (content) {
+                await saveChapter({ ...ch, id: `${book.id}-ch-${ch.index}`, content, cached: true })
+              }
+            }
+          }
+        } catch { /* skip */ }
+      }
+
+      showToast(`"${book.title}" 已缓存完成`)
+      loadBooks()
+    } catch {
+      showToast('缓存失败')
+    } finally {
+      setCacheTask(null)
+    }
+  }, [cacheTask, books, handleAddBook, showToast, loadBooks])
+
   if (readingBook) {
     return (
       <Reader book={readingBook} initialProgress={readingProgress}
@@ -101,6 +161,8 @@ function AppInner() {
         }}
         onClose={() => setDetailBook(null)}
         showToast={showToast}
+        cacheBook={cacheBook}
+        cacheTask={cacheTask}
       />
     )
   }
@@ -108,7 +170,18 @@ function AppInner() {
   if (showAbout) {
     return (
       <About currentVersion={currentVersion} showToast={showToast}
-        onClose={() => setShowAbout(false)} />
+        onClose={() => setShowAbout(false)}
+        onOtaSuccess={(v) => { setOtaNewVersion(v); setShowOtaSuccess(true); setShowAbout(false) }} />
+    )
+  }
+
+  if (showCacheManager) {
+    return (
+      <CacheManager
+        onClose={() => setShowCacheManager(false)}
+        showToast={showToast}
+        cacheTask={cacheTask}
+      />
     )
   }
 
@@ -130,7 +203,8 @@ function AppInner() {
           <SearchPage onAddBook={handleAddBook} onRead={handleReadBook} showToast={showToast} books={books} />
         )}
         {activeTab === 'settings' && (
-          <Settings books={books} showToast={showToast} onOpenAbout={() => setShowAbout(true)} />
+          <Settings books={books} showToast={showToast} onOpenAbout={() => setShowAbout(true)}
+            cacheTask={cacheTask} onOpenCacheManager={() => setShowCacheManager(true)} />
         )}
       </div>
 
@@ -143,7 +217,6 @@ function AppInner() {
 
       {toast && <div className="toast scale-in">{toast}</div>}
 
-      {/* OTA 更新弹窗 */}
       {showUpdateModal && updateInfo && (
         <div className="modal-overlay" onClick={() => setShowUpdateModal(false)}>
           <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 20px' }}>
@@ -168,6 +241,19 @@ function AppInner() {
                 setShowAbout(true)
               }}>查看详情</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showOtaSuccess && (
+        <div className="modal-overlay" onClick={() => setShowOtaSuccess(false)}>
+          <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 20px' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 24, background: 'rgba(76,175,132,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4caf84" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            </div>
+            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6, color: 'var(--success)' }}>更新完成</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 20 }}>已更新至 v{otaNewVersion}，重启后生效</p>
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => { setShowOtaSuccess(false); window.location.reload() }}>立即重启</button>
           </div>
         </div>
       )}

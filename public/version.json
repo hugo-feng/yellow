@@ -1,5 +1,5 @@
 {
-  "version": "1.4.2",
-  "description": "阅读器顶栏底栏黄色高亮突出 + 全面屏safe-area适配",
+  "version": "1.5.0",
+  "description": "书籍缓存到本地 + 缓存管理 + OTA完成弹窗 + 阅读器全面屏修复",
   "releaseDate": "2026-06-14"
 }

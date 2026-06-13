@@ -201,7 +201,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           flex: 1,
           overflow: 'auto',
           WebkitOverflowScrolling: 'touch',
-          padding: 'calc(var(--safe-top) + 48px) 20px calc(var(--safe-bottom) + 80px)',
+          padding: 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 0px) + 96px)',
           transition: 'background 0.3s'
         }}
         onClick={toggleControls}

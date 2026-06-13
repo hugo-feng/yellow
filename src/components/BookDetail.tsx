@@ -8,9 +8,11 @@ interface Props {
   onStartRead: () => void
   onClose: () => void
   showToast: (msg: string) => void
+  cacheBook?: (book: Book) => void
+  cacheTask?: { bookId: string; title: string; progress: number; current: number; total: number } | null
 }
 
-export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead, onClose, showToast }: Props) {
+export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead, onClose, showToast, cacheBook, cacheTask }: Props) {
   const [expanded, setExpanded] = useState(false)
 
   const chapters = book.chapters || []
@@ -88,6 +90,16 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
               onClick={handleAdd}
             >
               加入书架
+            </button>
+          )}
+          {cacheBook && (
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1, position: 'relative' }}
+              onClick={() => cacheBook(book)}
+              disabled={!!(cacheTask && cacheTask.bookId === book.id)}
+            >
+              {cacheTask && cacheTask.bookId === book.id ? `缓存中 ${cacheTask.progress}%` : '缓存'}
             </button>
           )}
         </div>

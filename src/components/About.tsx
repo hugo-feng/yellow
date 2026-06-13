@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.5.0', date: '2026-06-14', changes: [
+    '书籍详情页新增「缓存」按钮，后台逐章缓存到本地', '设置新增缓存管理二级界面（查看/删除已缓存书籍）', 'OTA更新完成后弹窗提示（不再直接reload）', '阅读器内容区全面屏上下安全区间距修正'
+  ]},
   { version: '1.4.2', date: '2026-06-14', changes: [
     '阅读器顶栏底栏改为黄色高亮突出', '顶栏底栏全面屏safe-area适配', '章节指示条优化'
   ]},
@@ -32,15 +35,16 @@ interface Props {
   currentVersion: string
   showToast: (msg: string) => void
   onClose: () => void
+  onOtaSuccess?: (version: string) => void
 }
 
-export default function About({ currentVersion, showToast, onClose }: Props) {
+export default function About({ currentVersion, showToast, onClose, onOtaSuccess }: Props) {
   const [checking, setChecking] = useState(false)
   const [downloading, setDownloading] = useState(false)
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.4.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
@@ -61,13 +65,17 @@ export default function About({ currentVersion, showToast, onClose }: Props) {
     setDownloading(true)
     const result = await downloadAndApply(getUpdateUrl())
     if (result.success) {
-      showToast('更新已就绪，即将重启...')
-      setTimeout(() => window.location.reload(), 2000)
+      if (onOtaSuccess) {
+        onOtaSuccess(remoteVersion || '')
+      } else {
+        showToast('更新已就绪，即将重启...')
+        setTimeout(() => window.location.reload(), 2000)
+      }
     } else {
       setErrorMsg(result.error || '下载失败')
     }
     setDownloading(false)
-  }, [showToast])
+  }, [showToast, onOtaSuccess, remoteVersion])
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
