@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
-  "description": "后台自动下载APK+自动安装+国内镜像加速",
+  "version": "2.0.1",
+  "description": "阅读进度百分比+翻页DOM实测分页+滚动位置追踪",
   "releaseDate": "2026-06-14"
 }
