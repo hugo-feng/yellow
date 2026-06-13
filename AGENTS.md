@@ -13,12 +13,14 @@
 3. `npm run build`
 4. `npx gh-pages -d dist --dotfiles`
 5. 验证 gh-pages（见下方）
-6. `npx cap sync android`
-7. 构建 APK：在 `android/` 目录执行 `gradlew.bat assembleDebug`，产物在 `android/app/build/outputs/apk/debug/`
-8. `git add -A && git commit -m "vX.Y.Z: 描述"`
-9. `git tag vX.Y.Z`
-10. `git push origin main && git push origin vX.Y.Z`
-11. 创建 GitHub Release：`gh release create vX.Y.Z android/app/build/outputs/apk/debug/yellow-vX.Y.Z.apk --title "vX.Y.Z" --notes "改动描述"`
+6. 删除 `android/app/build` 缓存
+7. `npx cap sync android`（**必须在 build 之后**，否则 APK 用旧 dist）
+8. 构建 APK：在 `android/` 目录执行 `gradlew.bat assembleDebug`
+9. 验证 APK 内嵌版本号：检查 `android/app/src/main/assets/public/assets/index-*.js` 中包含正确版本
+10. `git add -A && git commit -m "vX.Y.Z: 描述"`
+11. `git tag vX.Y.Z`
+12. `git push origin main && git push origin vX.Y.Z`
+13. 创建 GitHub Release
 
 用户通过 app 内「检查更新」获取 OTA 更新，APK 仅用于 GitHub Release 溯源。
 
