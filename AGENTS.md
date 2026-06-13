@@ -16,7 +16,7 @@
 4. `npx gh-pages -d dist --dotfiles`
 5. 验证 gh-pages（见下方）
 6. 删除 `android/app/build` 缓存
-7. `npx cap sync android`（**必须在 build 之后**，否则 APK 用旧 dist）
+7. `npx cap sync android`（**必须在 build 之后，且必须从项目根目录运行**，不能从 android/ 子目录运行）
 8. 构建 APK：在 `android/` 目录执行 `gradlew.bat assembleDebug`
 9. 验证 APK 内嵌版本号：检查 `android/app/src/main/assets/public/assets/index-*.js` 中包含正确版本
 10. `git add -A && git commit -m "vX.Y.Z: 描述"`
