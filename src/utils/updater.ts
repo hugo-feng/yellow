@@ -8,6 +8,13 @@ const VERSION_URLS = [
   'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json'
 ]
 
+export interface UpdateInfo {
+  version: string
+  versionCode?: number
+  downloadUrl: string
+  updateContent: string
+}
+
 export async function waitSWReady() {
   try {
     if ('serviceWorker' in navigator) {
@@ -17,10 +24,6 @@ export async function waitSWReady() {
       ])
     }
   } catch {}
-}
-
-export function getApkUrl(version: string): string {
-  return `https://github.com/hugo-feng/yellow/releases/download/v${version}/yellow-v${version}.apk`
 }
 
 function xhrGet(url: string, timeout = 10000): Promise<any> {
@@ -51,8 +54,7 @@ function xhrGet(url: string, timeout = 10000): Promise<any> {
 
 export async function checkForUpdates(): Promise<{
   hasUpdate: boolean
-  version?: string
-  description?: string
+  updateInfo?: UpdateInfo
   error?: string
 }> {
   const errors: string[] = []
@@ -61,7 +63,17 @@ export async function checkForUpdates(): Promise<{
       const remote = await xhrGet(url)
       if (remote && remote.version) {
         const cmp = compareVersions(remote.version, APP_VERSION)
-        if (cmp > 0) return { hasUpdate: true, version: remote.version, description: remote.description }
+        if (cmp > 0) {
+          return {
+            hasUpdate: true,
+            updateInfo: {
+              version: remote.version,
+              versionCode: remote.versionCode,
+              downloadUrl: remote.downloadUrl || `https://github.com/hugo-feng/yellow/releases/download/v${remote.version}/yellow-v${remote.version}.apk`,
+              updateContent: remote.updateContent || remote.description || '有新的功能和改进可用'
+            }
+          }
+        }
         return { hasUpdate: false }
       }
     } catch (e) { errors.push((e as Error).message) }

@@ -1,8 +1,13 @@
 import { useState, useCallback } from 'react'
-import { checkForUpdates, getApkUrl, APP_VERSION } from '../utils/updater'
+import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '2.2.0', date: '2026-06-14', changes: [
+    'OTA行业标准重构：版本检查+下载链接全部从version.json读取（azhon/AppUpdate标准）',
+    'version.json增加downloadUrl/versionCode/updateContent字段',
+    '下载链接不再硬编码，服务端可随时更换CDN源'
+  ]},
   { version: '2.1.0', date: '2026-06-14', changes: [
     '翻页底层重构：采用CSS Multi-Column分页（epub.js/foliate-js行业标准方案）',
     '文字自动分列：column-width=视口宽度，浏览器自动排版分页',
@@ -163,9 +168,10 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
+  const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('2.1.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('2.2.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
@@ -183,9 +189,10 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
       showToast(`检查失败: ${result.error}`)
       return
     }
-    if (result.hasUpdate) {
-      setRemoteVersion(result.version || null)
-      setRemoteDesc(result.description || '')
+    if (result.hasUpdate && result.updateInfo) {
+      setRemoteVersion(result.updateInfo.version)
+      setRemoteDesc(result.updateInfo.updateContent)
+      setDownloadUrl(result.updateInfo.downloadUrl)
     } else {
       setShowLatest(true)
     }
@@ -196,8 +203,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
     setDownloading(true)
     setDownloadProgress(0)
     try {
-      const url = getApkUrl(remoteVersion)
-      const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${remoteVersion}.apk` })
+      const result = await AppUpdater.downloadAndInstall({ url: downloadUrl, filename: `yellow-v${remoteVersion}.apk` })
       if (result.started) {
         const poll = setInterval(async () => {
           try {

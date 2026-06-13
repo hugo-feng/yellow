@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Component } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
-import { checkForUpdates, waitSWReady, APP_VERSION, getApkUrl } from './utils/updater'
+import { checkForUpdates, waitSWReady, APP_VERSION, UpdateInfo } from './utils/updater'
 import AppUpdater from './plugins/AppUpdater'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import { App as CapApp } from '@capacitor/app'
@@ -47,7 +47,7 @@ function AppInner() {
   const [showAbout, setShowAbout] = useState(false)
   const [showCacheManager, setShowCacheManager] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
-  const [updateInfo, setUpdateInfo] = useState<{ version: string; description: string } | null>(null)
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [showOtaSuccess, setShowOtaSuccess] = useState(false)
   const [otaNewVersion, setOtaNewVersion] = useState('')
   const [downloading, setDownloading] = useState(false)
@@ -87,8 +87,8 @@ function AppInner() {
     waitSWReady().then(async () => {
       try {
         const result = await checkForUpdates()
-        if (result.hasUpdate && result.version) {
-          setUpdateInfo({ version: result.version, description: result.description || '' })
+        if (result.hasUpdate && result.updateInfo) {
+          setUpdateInfo(result.updateInfo)
           setShowUpdateModal(true)
         }
       } catch (e) { console.error('[OTA]', e) }
@@ -294,7 +294,7 @@ function AppInner() {
               发现新版本 v{updateInfo.version}
             </h3>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', textAlign: 'center', marginBottom: 6 }}>
-              {updateInfo.description || '有新的功能和改进可用'}
+              {updateInfo.updateContent || '有新的功能和改进可用'}
             </p>
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20 }}>
               当前 v{currentVersion} → v{updateInfo.version}
@@ -322,7 +322,7 @@ function AppInner() {
                   setDownloading(true)
                   setDownloadProgress(0)
                   try {
-                    const url = getApkUrl(updateInfo.version)
+                    const url = updateInfo.downloadUrl
                     const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${updateInfo.version}.apk` })
                     if (result.started) {
                       const poll = setInterval(async () => {
