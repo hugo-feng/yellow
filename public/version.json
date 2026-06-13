@@ -1,7 +1,7 @@
 {
-  "version": "3.2.0",
-  "versionCode": 320,
-  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v3.2.0/yellow-v3.2.0.apk",
-  "updateContent": "翻页彻底重构：offsetHeight累加分页算法\n用offsetTop定位（不受transform影响）\n修复getBoundingClientRect在translateY下测量错误",
+  "version": "3.3.0",
+  "versionCode": 330,
+  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v3.3.0/yellow-v3.3.0.apk",
+  "updateContent": "修复更新下载：AppUpdater插件不可用时自动回退到系统浏览器下载",
   "releaseDate": "2026-06-14"
 }

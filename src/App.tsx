@@ -324,24 +324,31 @@ function AppInner() {
                   setDownloadProgress(0)
                   try {
                     const url = updateInfo.downloadUrl
-                    const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${updateInfo.version}.apk` })
-                    if (result.started) {
-                      const poll = setInterval(async () => {
-                        try {
-                          const p = await AppUpdater.getProgress()
-                          setDownloadProgress(p.progress)
-                          if (p.status === 'completed') {
-                            clearInterval(poll)
-                          } else if (p.status === 'failed') {
-                            clearInterval(poll)
-                            setDownloading(false)
-                            showToast('下载失败 (code: ' + (p.reason || 'unknown') + ')')
-                          }
-                        } catch (e) { clearInterval(poll) }
-                      }, 500)
-                    } else {
+                    try {
+                      const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${updateInfo.version}.apk` })
+                      if (result.started) {
+                        const poll = setInterval(async () => {
+                          try {
+                            const p = await AppUpdater.getProgress()
+                            setDownloadProgress(p.progress)
+                            if (p.status === 'completed') {
+                              clearInterval(poll)
+                            } else if (p.status === 'failed') {
+                              clearInterval(poll)
+                              setDownloading(false)
+                              showToast('下载失败，正在打开浏览器...')
+                              setTimeout(() => window.open(url, '_system'), 500)
+                            }
+                          } catch (e) { clearInterval(poll) }
+                        }, 500)
+                      } else {
+                        setDownloading(false)
+                        window.open(url, '_system')
+                      }
+                    } catch {
+                      // AppUpdater plugin not available, fall back to browser
                       setDownloading(false)
-                      showToast('下载启动失败')
+                      window.open(url, '_system')
                     }
                   } catch (e) {
                     setDownloading(false)

@@ -3,6 +3,10 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '3.3.0', date: '2026-06-14', changes: [
+    '修复更新下载：AppUpdater插件不可用时自动回退到系统浏览器下载APK',
+    '解决"AppUpdater plugin is not implemented on Android"错误'
+  ]},
   { version: '3.2.0', date: '2026-06-14', changes: [
     '翻页算法彻底重构：offsetHeight累加分页（替代错误的getBoundingClientRect）',
     '用offsetTop定位页面（不受transform:translateY影响）',
@@ -189,7 +193,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('3.2.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('3.3.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
@@ -221,30 +225,36 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
     setDownloading(true)
     setDownloadProgress(0)
     try {
-      const result = await AppUpdater.downloadAndInstall({ url: downloadUrl, filename: `yellow-v${remoteVersion}.apk` })
-      if (result.started) {
-        const poll = setInterval(async () => {
-          try {
-            const p = await AppUpdater.getProgress()
-            setDownloadProgress(p.progress)
-            if (p.status === 'completed') {
-              clearInterval(poll)
-            } else if (p.status === 'failed') {
-              clearInterval(poll)
-              setDownloading(false)
-              showToast('下载失败 (code: ' + (p.reason || 'unknown') + ')')
-            }
-          } catch { clearInterval(poll) }
-        }, 500)
-      } else {
+      try {
+        const result = await AppUpdater.downloadAndInstall({ url: downloadUrl, filename: `yellow-v${remoteVersion}.apk` })
+        if (result.started) {
+          const poll = setInterval(async () => {
+            try {
+              const p = await AppUpdater.getProgress()
+              setDownloadProgress(p.progress)
+              if (p.status === 'completed') {
+                clearInterval(poll)
+              } else if (p.status === 'failed') {
+                clearInterval(poll)
+                setDownloading(false)
+                showToast('下载失败，正在打开浏览器...')
+                setTimeout(() => window.open(downloadUrl, '_system'), 500)
+              }
+            } catch { clearInterval(poll) }
+          }, 500)
+        } else {
+          setDownloading(false)
+          window.open(downloadUrl, '_system')
+        }
+      } catch {
         setDownloading(false)
-        showToast('下载启动失败')
+        window.open(downloadUrl, '_system')
       }
     } catch (e) {
       setDownloading(false)
       showToast('下载失败: ' + (e as Error).message)
     }
-  }, [remoteVersion, downloading, showToast])
+  }, [remoteVersion, downloading, showToast, downloadUrl])
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
