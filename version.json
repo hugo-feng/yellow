@@ -1,7 +1,7 @@
 {
-  "version": "4.3.0",
-  "versionCode": 430,
-  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v4.3.0/yellow-v4.3.0.apk",
-  "updateContent": "阅读界面全面屏适配+去除黄色竖条+进度条整合到底栏\n缓存管理重写(TanStack Query+进度条+存储统计)",
+  "version": "4.4.0",
+  "versionCode": 440,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.4.0/yellow-v4.4.0.apk",
+  "updateContent": "修复OTA下载：改用GitHub直链+添加User-Agent\nDownloadManager原生支持302重定向",
   "releaseDate": "2026-06-14"
 }
