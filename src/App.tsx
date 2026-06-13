@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, Component } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
-import { getCurrentVersion, checkForUpdates, getUpdateUrl } from './utils/updater'
+import { getCurrentVersion, checkForUpdates, getUpdateUrl, waitSWReady } from './utils/updater'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import Bookshelf from './components/Bookshelf'
 import Discover from './components/Discover'
@@ -71,10 +71,9 @@ function AppInner() {
 
   useEffect(() => {
     loadBooks()
-    getCurrentVersion().then(v => setCurrentVersion(v))
-    // 预热 SW + 延迟 2s 后检查更新
-    fetch('version.json').catch(() => {})
-    const timer = setTimeout(async () => {
+    // 等 SW 就绪后再读版本 + 检查更新
+    waitSWReady().then(async () => {
+      await getCurrentVersion().then(v => setCurrentVersion(v))
       try {
         const result = await checkForUpdates(getUpdateUrl())
         if (result.hasUpdate && result.version) {
@@ -82,8 +81,7 @@ function AppInner() {
           setShowUpdateModal(true)
         }
       } catch { /* 静默 */ }
-    }, 2000)
-    return () => clearTimeout(timer)
+    })
   }, [loadBooks])
 
   useEffect(() => { localStorage.setItem('reader-settings', JSON.stringify(readerSettings)) }, [readerSettings])

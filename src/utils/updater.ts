@@ -1,12 +1,26 @@
 let currentVersion = '1.0.0'
 
 const UPDATE_URLS = [
-  'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/version.json',
-  'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json'
+  'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json',
+  'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/version.json'
 ]
 
 let activeBaseUrl = ''
 let activeVersionUrl = ''
+let swReady = false
+
+export async function waitSWReady() {
+  if (swReady) return
+  try {
+    if ('serviceWorker' in navigator) {
+      await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise(r => setTimeout(r, 5000))
+      ])
+    }
+  } catch {}
+  swReady = true
+}
 
 export async function getCurrentVersion(): Promise<string> {
   try {
@@ -55,6 +69,7 @@ export async function checkForUpdates(updateUrl: string): Promise<{
   error?: string
 }> {
   try {
+    await waitSWReady()
     const response = await fetchWithFallback('version.json')
     const remote = await response.json()
     if (compareVersions(remote.version, currentVersion) > 0) {
@@ -68,7 +83,7 @@ export async function checkForUpdates(updateUrl: string): Promise<{
 
 export async function downloadAndApply(updateUrl: string): Promise<{ success: boolean; error?: string }> {
   try {
-    // 下载新版文件
+    await waitSWReady()
     const [htmlResp, verResp] = await Promise.all([
       fetchWithFallback('index.html'),
       fetchWithFallback('version.json')
@@ -80,7 +95,6 @@ export async function downloadAndApply(updateUrl: string): Promise<{ success: bo
     const jsPath = jsMatch[1].replace(/^\.\//, '/')
     const cssMatch = html.match(/["']([./]*\/assets\/index-[^.]+\.css)["']/)
     
-    // 下载 JS 和 CSS
     const dlPromises = [fetchWithFallback(jsPath.startsWith('/') ? jsPath.slice(1) : jsPath)]
     if (cssMatch) {
       const cssPath = cssMatch[1].replace(/^\.\//, '/')
@@ -89,18 +103,14 @@ export async function downloadAndApply(updateUrl: string): Promise<{ success: bo
     const results = await Promise.all(dlPromises)
     for (const r of results) { if (!r.ok) throw new Error(`资源下载失败: ${r.status}`) }
 
-    // 存入 Cache API（Service Worker 会从这里读取）
     if ('caches' in window) {
       const cache = await caches.open('yellow-app-cache')
-      
-      // 缓存所有新资源（路径需要和请求匹配）
       await Promise.all([
         cache.put('/index.html', new Response(html, { headers: { 'Content-Type': 'text/html' } })),
         cache.put('/version.json', verResp.clone()),
         cache.put(jsPath, new Response(await results[0].blob(), { headers: { 'Content-Type': 'application/javascript' } })),
         cssMatch && results.length > 1 ? cache.put(cssMatch[1].replace(/^\.\//, '/'), new Response(await results[1].blob(), { headers: { 'Content-Type': 'text/css' } })) : Promise.resolve()
       ])
-      
       localStorage.setItem('yellow-update-pending', 'true')
     }
 

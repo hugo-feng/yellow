@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.5.7', date: '2026-06-14', changes: [
+    'OTA检查等待ServiceWorker就绪后再发请求（不再首次失败）', 'jsDelivr CDN优先（国内更稳定）', '版本号读取与SW就绪同步'
+  ]},
   { version: '1.5.6', date: '2026-06-14', changes: [
     '修复设置页黑屏：Settings全字段null安全兜底 + ErrorBoundary防崩溃',
     '崩溃时显示错误信息和「清除数据并重启」按钮'
@@ -63,7 +66,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.6')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.7')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
