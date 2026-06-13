@@ -1,7 +1,7 @@
 {
-  "version": "4.7.0",
-  "versionCode": 470,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.7.0/yellow-v4.7.0.apk",
-  "updateContent": "修复更新后显示旧版本：启动时检测版本变化自动清除SW缓存并刷新",
+  "version": "4.8.0",
+  "versionCode": 480,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.8.0/yellow-v4.8.0.apk",
+  "updateContent": "修复OTA下载：标题含版本号+先解析GitHub重定向URL再下载",
   "releaseDate": "2026-06-14"
 }
