@@ -1,5 +1,5 @@
 {
-  "version": "1.9.2",
-  "description": "OTA验证版本",
+  "version": "1.9.3",
+  "description": "OTA调试版：About页直接XHR测试CDN可达性",
   "releaseDate": "2026-06-14"
 }

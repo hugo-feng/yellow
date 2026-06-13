@@ -1,7 +1,19 @@
 import { useState, useCallback } from 'react'
-import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
+import { downloadAndApply, getUpdateUrl } from '../utils/updater'
+
+function compareVersions(v1: string, v2: string): number {
+  const p1 = v1.split('.').map(Number), p2 = v2.split('.').map(Number)
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    if ((p1[i] || 0) > (p2[i] || 0)) return 1
+    if ((p1[i] || 0) < (p2[i] || 0)) return -1
+  }
+  return 0
+}
 
 const changelog = [
+  { version: '1.9.3', date: '2026-06-14', changes: [
+    'OTA调试版：About页直接用XHR测试CDN可达性，显示调试日志'
+  ]},
   { version: '1.9.2', date: '2026-06-14', changes: [
     'OTA验证版本：确认app内检查更新可正常检测到新版本'
   ]},
@@ -113,22 +125,61 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.3')
+  const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
     setErrorMsg('')
     setRemoteVersion(null)
-    console.log('[OTA] 开始检查更新, 当前版本:', currentVersion)
-    const result = await checkForUpdates(getUpdateUrl())
-    console.log('[OTA] 检查结果:', JSON.stringify(result))
-    setChecking(false)
-    if (result.error) { setErrorMsg(result.error); showToast(`检查失败: ${result.error}`); return }
-    if (result.hasUpdate) {
-      setRemoteVersion(result.version || null)
-      setRemoteDesc(result.description || '')
-    } else {
-      setShowLatest(true)
+    setDebugLog(`当前版本: ${currentVersion}\n开始检查...`)
+
+    try {
+      const xhr = new XMLHttpRequest()
+      const url = 'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json?t=' + Date.now()
+      xhr.open('GET', url, true)
+      xhr.timeout = 10000
+
+      const result = await new Promise<{ ok: boolean; data?: any; error?: string }>((resolve) => {
+        xhr.onload = () => {
+          setDebugLog(prev => prev + `\nCDN响应: HTTP ${xhr.status}`)
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText)
+              setDebugLog(prev => prev + `\n远程版本: ${data.version}`)
+              resolve({ ok: true, data })
+            } catch (e) { resolve({ ok: false, error: 'JSON解析失败' }) }
+          } else { resolve({ ok: false, error: `HTTP ${xhr.status}` }) }
+        }
+        xhr.onerror = () => { setDebugLog(prev => prev + '\nCDN网络错误'); resolve({ ok: false, error: '网络错误' }) }
+        xhr.ontimeout = () => { setDebugLog(prev => prev + '\nCDN超时10s'); resolve({ ok: false, error: '超时' }) }
+        xhr.send()
+      })
+
+      setChecking(false)
+
+      if (!result.ok) {
+        setErrorMsg(result.error || '检查失败')
+        showToast(`检查失败: ${result.error}`)
+        return
+      }
+
+      const remote = result.data
+      const cmp = compareVersions(remote.version, currentVersion)
+      setDebugLog(prev => prev + `\n比较: ${remote.version} vs ${currentVersion} = ${cmp}`)
+
+      if (cmp > 0) {
+        setRemoteVersion(remote.version)
+        setRemoteDesc(remote.description || '')
+        setDebugLog(prev => prev + '\n结果: 发现新版本!')
+      } else {
+        setShowLatest(true)
+        setDebugLog(prev => prev + '\n结果: 已是最新版本')
+      }
+    } catch (e: any) {
+      setChecking(false)
+      setErrorMsg(e.message)
+      setDebugLog(prev => prev + `\n异常: ${e.message}`)
     }
   }, [currentVersion, showToast])
 
@@ -213,6 +264,14 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
             }}>{errorMsg}</div>
           )}
         </div>
+
+        {/* OTA调试信息 */}
+        {debugLog && (
+          <div className="card" style={{ padding: 12, marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>OTA调试</div>
+            <pre style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6 }}>{debugLog}</pre>
+          </div>
+        )}
 
         {/* 书源统计 */}
         <div className="card" style={{ padding: 16, marginBottom: 16 }}>
