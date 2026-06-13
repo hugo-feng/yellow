@@ -1,5 +1,5 @@
 {
-  "version": "1.5.3",
-  "description": "OTA更新检查首次失败修复（去掉AbortController+3次递增延迟重试）",
+  "version": "1.5.4",
+  "description": "修复设置页黑屏（旧localStorage缺少新字段导致崩溃）",
   "releaseDate": "2026-06-14"
 }
