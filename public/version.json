@@ -1,5 +1,5 @@
 {
-  "version": "1.5.2",
-  "description": "Reader底栏去掉重复设置按钮 + 设置页去掉存储信息新增内容宽度选项",
+  "version": "1.5.3",
+  "description": "OTA更新检查首次失败修复（去掉AbortController+3次递增延迟重试）",
   "releaseDate": "2026-06-14"
 }

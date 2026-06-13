@@ -49,17 +49,16 @@ function AppInner() {
   useEffect(() => {
     loadBooks()
     getCurrentVersion().then(v => setCurrentVersion(v))
+    // 延迟 3 秒后自动检查更新（等 SW 就绪）
     const timer = setTimeout(async () => {
       try {
         const result = await checkForUpdates(getUpdateUrl())
         if (result.hasUpdate && result.version) {
           setUpdateInfo({ version: result.version, description: result.description || '' })
           setShowUpdateModal(true)
-        } else if (result.error) {
-          showToast(result.error)
         }
-      } catch { showToast('更新检查失败') }
-    }, 2000)
+      } catch { /* 静默 */ }
+    }, 3000)
     return () => clearTimeout(timer)
   }, [loadBooks])
 

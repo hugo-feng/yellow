@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.5.3', date: '2026-06-14', changes: [
+    'OTA更新检查首次失败修复：去掉AbortController超时，改为3次递增延迟重试（2s/4s/6s）'
+  ]},
   { version: '1.5.2', date: '2026-06-14', changes: [
     '阅读底栏去掉重复的「设置」按钮（保留顶栏设置）', '设置页去掉存储信息显示区', '新增阅读内容宽度设置（窄/标准/宽/全屏）'
   ]},
@@ -50,7 +53,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.3')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
