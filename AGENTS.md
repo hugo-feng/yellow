@@ -37,6 +37,7 @@
 - `gh-pages` 命令输出 `Published` 但实际没更新文件（可能是 dist/ 未清理、缓存、或并发部署冲突）
 - `public/.nojekyll` 文件必须存在，否则 GitHub Pages 用 Jekyll 构建会失败
 - Pages 配置必须为 `gh-pages` 分支 + `/` 根目录（不是 `/docs`）
+- **jsDelivr CDN 缓存不刷新**：purge API 无效，版本检查必须用 GitHub API（`api.github.com/repos/.../contents/version.json?ref=gh-pages`）作为首选源
 
 ## 版本管理（强制，每次迭代必做）
 每次代码改动必须同步更新以下三处，不得遗漏：
