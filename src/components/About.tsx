@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.7.0', date: '2026-06-14', changes: [
+    '修复更新后显示旧版本：启动时检测版本变化自动清除所有SW缓存并刷新',
+    'localStorage记录当前版本号，每次启动对比__APP_VERSION__',
+    '版本变化时：清除缓存→注销旧SW→自动刷新页面'
+  ]},
   { version: '4.6.0', date: '2026-06-14', changes: [
     '修复OTA下载后自动安装：添加REQUEST_INSTALL_PACKAGES权限',
     'BroadcastReceiver改用RECEIVER_EXPORTED接收系统下载完成广播',
@@ -233,7 +238,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.6.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.7.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
