@@ -9,7 +9,7 @@ interface SourceDef {
   chapterUrl(bookId: string, chId: string): string
   encoding: 'utf-8' | 'gbk'
   searchParser(html: string, doc: Document): SearchResult[]
-  bookParser(html: string, doc: Document): Partial<Book>
+  bookParser(html: string, doc: Document): Partial<Book> | Promise<Partial<Book>>
   chapterParser(html: string, doc: Document): { title: string; content: string; prev?: string; next?: string }
 }
 
@@ -295,6 +295,86 @@ const SOURCE_DEFS: SourceDef[] = [
     searchParser: (_, doc) => biquSearchParser(doc),
     bookParser: (_, doc) => biquBookParser(doc),
     chapterParser: (_, doc) => biquChapterParser(doc)
+  },
+  // --- 集书阁 (专属解析) ---
+  {
+    id: 'jisge', name: '集书阁', homeUrl: 'https://26b.jisge.com',
+    searchUrl: (q) => `https://26b.jisge.com/list-${encodeURI(q)}.html`,
+    bookUrl: (id) => {
+      if (id.includes('contentlist_')) return `https://26b.jisge.com/${id}.html`
+      return `https://26b.jisge.com/content_${id}.html`
+    },
+    chapterUrl: (bid, cid) => {
+      return `https://26b.jisge.com/content_${bid}_${cid}.html`
+    },
+    encoding: 'utf-8' as const,
+    searchParser: (_html: string, doc: Document): SearchResult[] => {
+      const results: SearchResult[] = []
+      const items = doc.querySelectorAll('ul.ucontent li a')
+      items.forEach((a) => {
+        const titleEl = a.querySelector('.title')
+        const descEl = a.querySelector('.description')
+        const href = a.getAttribute('href') || ''
+        const id = href.replace(/^\//, '').replace(/\.html$/, '')
+        const title = titleEl?.textContent?.trim() || ''
+        if (title && href) {
+          results.push({
+            id, title,
+            author: '',
+            cover: '',
+            description: descEl?.textContent?.trim() || '',
+            sourceId: 'jisge', sourceName: '集书阁',
+            format: 'html', downloadUrl: href
+          })
+        }
+      })
+      return results
+    },
+    bookParser: async (_html: string, doc: Document): Promise<Partial<Book>> => {
+      const titleEl = doc.querySelector('.content-title div:last-child, .book-title')
+      const title = titleEl?.textContent?.trim() || ''
+      const chapters: Chapter[] = []
+      
+      // Case 1: This is a content page with #bookcontent (short story)
+      if (doc.querySelector('#bookcontent p')) {
+        chapters.push({ id: 'ch1', title: title || '正文', index: 0, url: '', cached: false })
+        return { title, author: '', cover: '', description: '', chapters }
+      }
+      
+      // Case 2: Check for chapter list in current page
+      const chLinks = doc.querySelectorAll('ul.ucontent li a')
+      if (chLinks.length > 0) {
+        chLinks.forEach((a, i) => {
+          const chHref = a.getAttribute('href') || ''
+          const chTitle = a.querySelector('.title')?.textContent?.trim() || a.textContent?.trim() || ''
+          if (chHref && chTitle) {
+            chapters.push({ id: chHref.replace(/^\//, '').replace(/\.html$/, ''), title: chTitle, index: i, url: chHref, cached: false })
+          }
+        })
+        if (chapters.length > 0) return { title, author: '', cover: '', description: '', chapters }
+      }
+      
+      // No chapters found, treat as single page
+      chapters.push({ id: 'ch1', title: title || '正文', index: 0, url: '', cached: false })
+      return { title, author: '', cover: '', description: '', chapters }
+    },
+    chapterParser: (_html: string, doc: Document): { title: string; content: string } => {
+      const title = doc.querySelector('.content-title div:last-child')?.textContent?.trim() || ''
+      const paragraphs = doc.querySelectorAll('#bookcontent p')
+      const lines: string[] = []
+      paragraphs.forEach(p => {
+        let text = p.textContent || ''
+        // Clean interference text
+        text = text.replace(/来源[：:]\s*\S+/g, '')
+          .replace(/jishuge\S*/gi, '')
+          .replace(/集书阁\S*/g, '')
+          .replace(/请收藏.*?$/gm, '')
+          .replace(/https?:\/\/\S+/g, '')
+          .trim()
+        if (text.length > 2) lines.push(text)
+      })
+      return { title, content: lines.join('\n\n') }
+    }
   }
 ]
 
@@ -318,7 +398,7 @@ function buildSource(def: SourceDef): BookSource {
     async getBookDetail(bookId: string): Promise<Book> {
       const url = def.bookUrl(bookId)
       const { doc } = await fetchWithEncoding(url, def.encoding)
-      const detail = def.bookParser('', doc)
+      const detail = await def.bookParser('', doc)
       return {
         id: bookId,
         title: detail.title || '未知书名',
