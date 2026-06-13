@@ -3,6 +3,7 @@ import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
 import { getCurrentVersion, checkForUpdates, getUpdateUrl, waitSWReady } from './utils/updater'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
+import { App as CapApp } from '@capacitor/app'
 import Bookshelf from './components/Bookshelf'
 import Discover from './components/Discover'
 import SearchPage from './components/Search'
@@ -109,18 +110,13 @@ function AppInner() {
     const onPopState = () => { goBack() }
     window.addEventListener('popstate', onPopState)
 
-    let capListener: { remove: () => void } | null = null
-    try {
-      import('@capacitor/app').then(({ App: CapApp }) => {
-        CapApp.addListener('backButton', () => {
-          if (!goBack()) CapApp.exitApp()
-        }).then(l => { capListener = l })
-      }).catch(() => {})
-    } catch {}
+    const capListener = CapApp.addListener('backButton', () => {
+      if (!goBack()) CapApp.exitApp()
+    })
 
     return () => {
       window.removeEventListener('popstate', onPopState)
-      capListener?.remove()
+      capListener.then(l => l.remove())
     }
   }, [readingBook, detailBook, showAbout, showCacheManager])
 
