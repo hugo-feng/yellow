@@ -1,7 +1,13 @@
 import { useState, useCallback } from 'react'
-import { checkForUpdates, downloadAndApply, APP_VERSION } from '../utils/updater'
+import { checkForUpdates, findBestMirror, APP_VERSION } from '../utils/updater'
+import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '2.0.0', date: '2026-06-14', changes: [
+    '更新机制重写：后台自动下载APK+下载完成后自动拉起安装',
+    '国内镜像加速：ghfast.top/ghproxy.cn/mirror.ghproxy.com 优先',
+    '原生Capacitor插件：Android DownloadManager下载+FileProvider安装'
+  ]},
   { version: '1.9.9', date: '2026-06-14', changes: [
     '更新机制改为跳转GitHub Release下载APK（OTA热更新在SW架构下不可靠）',
     '修复更新描述乱码：GitHub API base64中文UTF-8解码',
@@ -137,11 +143,12 @@ interface Props {
 export default function About({ currentVersion, showToast, onClose, onOtaSuccess }: Props) {
   const [checking, setChecking] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.9')
+  const [expandedVer, setExpandedVer] = useState<string | null>('2.0.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
@@ -167,9 +174,36 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
     }
   }, [showToast])
 
-  const startDownload = useCallback(() => {
-    window.open(`https://github.com/hugo-feng/yellow/releases/tag/v${remoteVersion}`, '_system')
-  }, [remoteVersion])
+  const startDownload = useCallback(async () => {
+    if (downloading || !remoteVersion) return
+    setDownloading(true)
+    setDownloadProgress(0)
+    try {
+      const url = await findBestMirror(remoteVersion)
+      const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${remoteVersion}.apk` })
+      if (result.started) {
+        const poll = setInterval(async () => {
+          try {
+            const p = await AppUpdater.getProgress()
+            setDownloadProgress(p.progress)
+            if (p.status === 'completed' || p.status === 'failed') {
+              clearInterval(poll)
+              if (p.status === 'failed') {
+                setDownloading(false)
+                showToast('下载失败')
+              }
+            }
+          } catch { clearInterval(poll) }
+        }, 1000)
+      } else {
+        setDownloading(false)
+        showToast('下载启动失败')
+      }
+    } catch (e) {
+      setDownloading(false)
+      showToast('下载失败: ' + (e as Error).message)
+    }
+  }, [remoteVersion, downloading, showToast])
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
@@ -223,8 +257,13 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
                 className="btn btn-primary btn-sm" style={{ marginTop: 10, width: '100%' }}
                 onClick={startDownload} disabled={downloading}
               >
-                {downloading ? '下载中...' : '立即更新'}
+                {downloading ? `下载中 ${downloadProgress}%` : '立即更新'}
               </button>
+              {downloading && (
+                <div style={{ marginTop: 8, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${downloadProgress}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 0.3s' }} />
+                </div>
+              )}
             </div>
           )}
 

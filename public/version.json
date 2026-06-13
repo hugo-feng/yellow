@@ -1,5 +1,5 @@
 {
-  "version": "1.9.9",
-  "description": "更新机制改为跳转GitHub Release下载APK",
+  "version": "2.0.0",
+  "description": "后台自动下载APK+自动安装+国内镜像加速",
   "releaseDate": "2026-06-14"
 }

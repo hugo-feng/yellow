@@ -8,6 +8,13 @@ const VERSION_URLS = [
   'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json'
 ]
 
+const APK_MIRRORS = [
+  'https://ghfast.top/',
+  'https://ghproxy.cn/',
+  'https://mirror.ghproxy.com/',
+  ''
+]
+
 export async function waitSWReady() {
   try {
     if ('serviceWorker' in navigator) {
@@ -23,8 +30,9 @@ export async function getCurrentVersion(): Promise<string> {
   return APP_VERSION
 }
 
-export function getUpdateUrl(): string {
-  return VERSION_URLS[0]
+export function getApkDownloadUrls(version: string): string[] {
+  const base = `https://github.com/hugo-feng/yellow/releases/download/v${version}/yellow-v${version}.apk`
+  return APK_MIRRORS.map(m => m + base)
 }
 
 function xhrGet(url: string, timeout = 10000): Promise<any> {
@@ -53,6 +61,29 @@ function xhrGet(url: string, timeout = 10000): Promise<any> {
   })
 }
 
+function xhrHead(url: string, timeout = 5000): Promise<boolean> {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('HEAD', url, true)
+    xhr.timeout = timeout
+    xhr.onload = () => resolve(xhr.status >= 200 && xhr.status < 400)
+    xhr.onerror = () => resolve(false)
+    xhr.ontimeout = () => resolve(false)
+    xhr.send()
+  })
+}
+
+export async function findBestMirror(version: string): Promise<string> {
+  const urls = getApkDownloadUrls(version)
+  for (const url of urls) {
+    try {
+      const ok = await xhrHead(url)
+      if (ok) return url
+    } catch {}
+  }
+  return urls[urls.length - 1]
+}
+
 export async function checkForUpdates(): Promise<{
   hasUpdate: boolean
   version?: string
@@ -71,14 +102,6 @@ export async function checkForUpdates(): Promise<{
     } catch (e) { errors.push((e as Error).message) }
   }
   return { hasUpdate: false, error: '更新源不可达: ' + errors.join(', ') }
-}
-
-export function getDownloadUrl(version: string): string {
-  return `https://github.com/hugo-feng/yellow/releases/tag/v${version}`
-}
-
-export async function downloadAndApply(): Promise<{ success: boolean; error?: string }> {
-  return { success: false, error: '请从 GitHub Release 下载 APK 安装' }
 }
 
 function compareVersions(v1: string, v2: string): number {

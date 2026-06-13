@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef, Component } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
-import { getCurrentVersion, checkForUpdates, waitSWReady, APP_VERSION } from './utils/updater'
+import { getCurrentVersion, checkForUpdates, waitSWReady, APP_VERSION, findBestMirror } from './utils/updater'
+import AppUpdater from './plugins/AppUpdater'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import { App as CapApp } from '@capacitor/app'
 import Bookshelf from './components/Bookshelf'
@@ -49,6 +50,8 @@ function AppInner() {
   const [updateInfo, setUpdateInfo] = useState<{ version: string; description: string } | null>(null)
   const [showOtaSuccess, setShowOtaSuccess] = useState(false)
   const [otaNewVersion, setOtaNewVersion] = useState('')
+  const [downloading, setDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
   const [cacheTask, setCacheTask] = useState<CacheTask | null>(null)
   const [currentVersion, setCurrentVersion] = useState(APP_VERSION)
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => {
@@ -280,7 +283,7 @@ function AppInner() {
       {toast && <div className="toast scale-in">{toast}</div>}
 
       {showUpdateModal && updateInfo && (
-        <div className="modal-overlay" onClick={() => setShowUpdateModal(false)}>
+        <div className="modal-overlay">
           <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 20px' }}>
             <div style={{ width: 48, height: 48, borderRadius: 24, background: 'var(--accent-glow)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -296,18 +299,64 @@ function AppInner() {
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 20 }}>
               当前 v{currentVersion} → v{updateInfo.version}
             </p>
+            {downloading && (
+              <div style={{ width: '100%', marginBottom: 16 }}>
+                <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${downloadProgress}%`, background: 'var(--accent)', borderRadius: 3, transition: 'width 0.3s' }} />
+                </div>
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 6 }}>
+                  {downloadProgress < 100 ? `下载中 ${downloadProgress}%` : '下载完成，正在安装...'}
+                </p>
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 10, width: '100%' }}>
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowUpdateModal(false)}>稍后提醒</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { 
-                setShowUpdateModal(false)
-                window.open(`https://github.com/hugo-feng/yellow/releases/tag/v${updateInfo.version}`, '_system')
-              }}>去下载</button>
+              {!downloading && (
+                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowUpdateModal(false)}>稍后提醒</button>
+              )}
+              <button
+                className="btn btn-primary"
+                style={{ flex: 1, opacity: downloading ? 0.6 : 1 }}
+                disabled={downloading}
+                onClick={async () => {
+                  if (downloading) return
+                  setDownloading(true)
+                  setDownloadProgress(0)
+                  try {
+                    const url = await findBestMirror(updateInfo.version)
+                    const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${updateInfo.version}.apk` })
+                    if (result.started) {
+                      const poll = setInterval(async () => {
+                        try {
+                          const p = await AppUpdater.getProgress()
+                          setDownloadProgress(p.progress)
+                          if (p.status === 'completed' || p.status === 'failed') {
+                            clearInterval(poll)
+                            if (p.status === 'failed') {
+                              setDownloading(false)
+                              showToast('下载失败，请手动安装')
+                              window.open(`https://github.com/hugo-feng/yellow/releases/tag/v${updateInfo.version}`, '_system')
+                            }
+                          }
+                        } catch { clearInterval(poll) }
+                      }, 1000)
+                    } else {
+                      setDownloading(false)
+                      showToast('下载启动失败')
+                    }
+                  } catch (e) {
+                    setDownloading(false)
+                    showToast('下载失败: ' + (e as Error).message)
+                  }
+                }}
+              >
+                {downloading ? '下载中...' : '立即更新'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {showOtaSuccess && (
+      {showOtaSuccess && false && (
         <div className="modal-overlay" onClick={() => setShowOtaSuccess(false)}>
           <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 20px' }}>
             <div style={{ width: 48, height: 48, borderRadius: 24, background: 'rgba(76,175,132,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>

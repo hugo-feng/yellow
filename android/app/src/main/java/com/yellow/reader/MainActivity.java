@@ -11,6 +11,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        registerPlugin(AppUpdater.class);
         Window window = getWindow();
         WindowCompat.setDecorFitsSystemWindows(window, false);
         window.setFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
