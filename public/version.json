@@ -1,7 +1,7 @@
 {
-  "version": "3.0.0",
-  "versionCode": 300,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v3.0.0/yellow-v3.0.0.apk",
-  "updateContent": "行业标准重构：Dexie.js/sonner/react-error-boundary/DOMPurify\nAGENTS.md嵌入完整流程标准",
+  "version": "3.1.0",
+  "versionCode": 310,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v3.1.0/yellow-v3.1.0.apk",
+  "updateContent": "翻页重写：overflow:hidden+translateY（替代错误的CSS Multi-Column）\n文本保持垂直排列，通过translateY翻动视口",
   "releaseDate": "2026-06-14"
 }

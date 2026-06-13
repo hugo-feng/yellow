@@ -19,7 +19,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const [showSettings, setShowSettings] = useState(false)
   const [loading, setLoading] = useState(false)
   const [content, setContent] = useState('')
-  const containerRef = useRef<HTMLDivElement>(null)
+  const viewportRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
 
@@ -73,44 +73,62 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const chapterWeights = book.chapters.map(ch => (ch.content?.length || 1000))
   const totalWeight = chapterWeights.reduce((a, b) => a + b, 0)
 
-  // ── Swipe pagination (CSS Multi-Column) ──
+  // ── Swipe pagination: overflow:hidden + translateY ──
   const [page, setPage] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
+  const [pageOffsets, setPageOffsets] = useState<number[]>([0])
   const [swipeX, setSwipeX] = useState(0)
   const [isSwiping, setIsSwiping] = useState(false)
   const touchRef = useRef<{ x: number; y: number; t: number; locked: boolean; dir: string | null } | null>(null)
 
-  // Calculate total pages after content renders
+  const totalPages = pageOffsets.length
+
+  // Measure paragraph heights and calculate page offsets
   useEffect(() => {
-    if (!isSwipe) return
-    const container = containerRef.current
+    if (!isSwipe || paragraphs.length === 0) { setPageOffsets([0]); return }
+
+    const viewport = viewportRef.current
     const contentEl = contentRef.current
-    if (!container || !contentEl) return
+    if (!viewport || !contentEl) return
 
     const recalc = () => {
-      const w = container.clientWidth
-      if (w <= 0) return
-      const sw = contentEl.scrollWidth
-      const pages = Math.max(1, Math.round(sw / w))
-      setTotalPages(pages)
-      if (page >= pages) {
-        const newP = Math.max(0, pages - 1)
-        setPage(newP)
+      const viewportH = viewport.clientHeight
+      if (viewportH <= 0) return
+
+      const paraEls = contentEl.querySelectorAll('p[data-p]')
+      if (paraEls.length === 0) return
+
+      const offsets: number[] = [0]
+      let usedH = 0
+
+      for (let i = 0; i < paraEls.length; i++) {
+        const el = paraEls[i] as HTMLElement
+        const rect = el.getBoundingClientRect()
+        const contentRect = contentEl.getBoundingClientRect()
+        const paraTop = rect.top - contentRect.top
+        const paraH = rect.height
+
+        // If this paragraph would overflow the viewport from the current page
+        if (paraTop + paraH > (offsets.length) * viewportH) {
+          // Page break at the top of this paragraph
+          if (paraTop > (offsets.length - 1) * viewportH) {
+            offsets.push(paraTop)
+          }
+        }
       }
+
+      setPageOffsets(offsets)
+      if (page >= offsets.length) setPage(Math.max(0, offsets.length - 1))
     }
 
-    // Recalculate after layout
-    requestAnimationFrame(() => {
-      requestAnimationFrame(recalc)
-    })
-  }, [isSwipe, content, settings.fontSize, settings.lineHeight, settings.paragraphSpacing, settings.maxWidth])
+    requestAnimationFrame(() => requestAnimationFrame(recalc))
+  }, [isSwipe, content, settings.fontSize, settings.lineHeight, settings.paragraphSpacing, settings.maxWidth, chapterIdx])
 
   // ── Scroll progress ──
   const [scrollProgress, setScrollProgress] = useState(0)
 
   const handleScroll = useCallback(() => {
     if (isSwipe) return
-    const el = containerRef.current
+    const el = viewportRef.current
     if (!el) return
     const max = el.scrollHeight - el.clientHeight
     setScrollProgress(max > 0 ? el.scrollTop / max : 0)
@@ -128,7 +146,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       setChapterIdx(next)
       setScrollProgress(0)
       setPage(0)
-      if (containerRef.current) containerRef.current.scrollTop = 0
+      if (viewportRef.current) viewportRef.current.scrollTop = 0
     }
   }, [chapterIdx, book.chapters.length])
 
@@ -136,7 +154,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     onClose({
       bookId: book.id,
       chapterIndex: chapterIdx,
-      scrollPosition: containerRef.current?.scrollTop ?? 0,
+      scrollPosition: viewportRef.current?.scrollTop ?? 0,
       updatedAt: Date.now()
     })
   }, [book.id, chapterIdx, onClose])
@@ -145,7 +163,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     onSettingsChange({ ...settings, [k]: v })
   }, [settings, onSettingsChange])
 
-  // ── Touch handlers for swipe pagination ──
+  // ── Touch handlers ──
   const goToPage = useCallback((p: number) => {
     if (p < 0) {
       if (hasPrev) { goChapter(-1); setTimeout(() => setPage(9999), 50) }
@@ -170,7 +188,6 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     const dx = t.clientX - touchRef.current.x
     const dy = t.clientY - touchRef.current.y
 
-    // Lock direction on first significant move
     if (!touchRef.current.locked) {
       if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
         touchRef.current.locked = true
@@ -249,7 +266,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       {/* Content */}
       {isSwipe ? (
         <div
-          ref={containerRef}
+          ref={viewportRef}
           style={{
             flex: 1, overflow: 'hidden', position: 'relative',
             touchAction: 'none',
@@ -264,14 +281,10 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             ref={contentRef}
             style={{
               ...textStyle,
-              height: '100%',
               padding: contentPadding,
-              columnWidth: '100vw',
-              columnGap: 0,
-              columnFill: 'auto',
-              overflow: 'visible',
-              transform: `translateX(${-page * 100 + (swipeX / (containerRef.current?.clientWidth || 1)) * 100}vw)`,
+              transform: `translate(${swipeX}px, ${-(pageOffsets[page] || 0)}px)`,
               transition: isSwiping ? 'none' : 'transform 0.3s ease',
+              willChange: 'transform',
               maxWidth: settings.maxWidth > 0 ? `${settings.maxWidth}px` : undefined,
               margin: settings.maxWidth > 0 ? '0 auto' : undefined
             }}
@@ -279,7 +292,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             {loading && <div style={{ textAlign: 'center', padding: 40 }}><div className="spinner" style={{ margin: '0 auto' }} /><p style={{ marginTop: 12, color: 'var(--text-muted)' }}>加载中...</p></div>}
             {!loading && paragraphs.length === 0 && <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>暂无内容</div>}
             {paragraphs.map((p, i) => (
-              <p key={i} style={{ margin: `0 0 ${settings.paragraphSpacing}em`, textIndent: '2em' }}>{p}</p>
+              <p key={i} data-p="1" style={{ margin: `0 0 ${settings.paragraphSpacing}em`, textIndent: '2em' }}>{p}</p>
             ))}
           </div>
           {/* Page indicator */}
@@ -291,7 +304,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         </div>
       ) : (
         <div
-          ref={containerRef}
+          ref={viewportRef}
           style={{ flex: 1, overflow: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch', padding: contentPadding, filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined }}
           onClick={toggleControls}
           onScroll={handleScroll}

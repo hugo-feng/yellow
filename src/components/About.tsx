@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '3.1.0', date: '2026-06-14', changes: [
+    '翻页彻底重写：overflow:hidden+translateY（中文阅读器标准方案）',
+    '文本保持正常垂直排列，通过translateY(-offset)翻动视口显示当前页',
+    'DOM实测分页：遍历段落getBoundingClientRect计算真实分页点',
+    '滑动手势：水平位移同时跟随手指，松手后snap到目标页'
+  ]},
   { version: '3.0.0', date: '2026-06-14', changes: [
     '行业标准重构：集成Dexie.js(12k⭐)/sonner(19k⭐)/react-error-boundary(7k⭐)/DOMPurify(14k⭐)',
     'IndexedDB用Dexie.js重写：类型安全查询+批量操作+自动事务管理',
@@ -179,7 +185,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('3.0.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('3.1.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
