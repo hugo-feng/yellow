@@ -5,9 +5,6 @@ import App from './App'
 import { Toaster } from 'sonner'
 import './styles/index.css'
 
-declare const __APP_VERSION__: string
-const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -19,32 +16,15 @@ const queryClient = new QueryClient({
   }
 })
 
-// Version change detection: clear SW cache on app update
-const lastVersion = localStorage.getItem('yellow-app-version')
-if (lastVersion && lastVersion !== APP_VERSION) {
-  console.log(`[App] Version changed: ${lastVersion} → ${APP_VERSION}, clearing caches...`)
-  if ('caches' in window) {
-    caches.keys().then(keys => {
-      const deletions = keys.map(k => caches.delete(k))
-      Promise.all(deletions).then(() => {
-        localStorage.setItem('yellow-app-version', APP_VERSION)
-        // Unregister old SW and reload
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(regs => {
-            regs.forEach(r => r.unregister())
-            window.location.reload()
-          })
-        }
-      })
-    })
-  }
-} else {
-  localStorage.setItem('yellow-app-version', APP_VERSION)
-}
-
-// Register Service Worker
+// Remove old ServiceWorker and caches (from versions that used SW caching)
+// Capacitor WebView loads directly from APK assets, no SW needed
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(r => r.unregister())
+  })
+}
+if ('caches' in window) {
+  caches.keys().then(keys => keys.forEach(k => caches.delete(k)))
 }
 
 // Full screen safe area detection

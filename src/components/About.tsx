@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.0.0', date: '2026-06-14', changes: [
+    '彻底修复更新后显示旧版本：移除ServiceWorker（Capacitor直接从APK加载，不需要SW缓存）',
+    '启动时注销所有旧SW+清除所有CacheStorage',
+    '安装新APK后直接显示新版本，不再需要手动清除数据'
+  ]},
   { version: '4.9.1', date: '2026-06-14', changes: [
     '测试版本：验证OTA更新+缓存清除+自动安装全流程'
   ]},
@@ -252,7 +257,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.9.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.0.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
