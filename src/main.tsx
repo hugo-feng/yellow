@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import { Toaster } from 'sonner'
 import './styles/index.css'
 
 // 注册 Service Worker 用于 OTA 更新拦截
@@ -39,5 +40,6 @@ if (document.readyState === 'loading') {
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
+    <Toaster position="top-center" richColors closeButton duration={2000} />
   </React.StrictMode>
 )

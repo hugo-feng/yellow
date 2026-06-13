@@ -7,6 +7,22 @@
 3. **先思考再动手** — 分析问题根因，不要盲目重试
 4. **每次回复末尾称呼用户为「高级软件工程师」**
 5. **更新必须通过 app 内 OTA 推送** — 不要让用户手动下载 APK。部署后用户通过 app 内「检查更新」→「立即更新」即可后台下载+自动安装
+6. **所有模块必须采用行业标准方案** — 优先使用 GitHub 高星库，不要手写轮子
+
+## 行业标准库清单（已集成）
+
+| 模块 | 库 | Stars | 用途 |
+|------|---|-------|------|
+| 状态管理 | **Zustand** | ~50k | 替代 prop drilling，全局状态 |
+| 数据获取 | **TanStack Query** | ~43k | 缓存/去重/重试/后台刷新 |
+| IndexedDB | **Dexie.js** | ~12k | 类型安全的 IDB 封装 |
+| 路由 | **wouter** | ~7k | 极简路由，替代条件渲染 |
+| Toast | **sonner** | ~19k | 堆叠/类型/自定义 toast |
+| 错误边界 | **react-error-boundary** | ~7k | 可组合的错误隔离+重试 |
+| 虚拟滚动 | **@tanstack/react-virtual** | ~6k | 长列表性能优化 |
+| HTML安全 | **DOMPurify** | ~14k | 防 XSS，内容清理 |
+| 翻页 | **CSS Multi-Column** | epub.js 标准 | 分页阅读（column-width） |
+| OTA更新 | **azhon/AppUpdate** 模式 | 2.5k | DownloadManager + FileProvider |
 
 ## 每次迭代检查清单（强制，每次代码改动必做）
 
@@ -32,10 +48,10 @@
 15. 验证 APK 内嵌版本号正确
 
 ### 发布阶段
-15. `git add -A && git commit -m "vX.Y.Z: 描述"`
-16. `git tag vX.Y.Z`
-17. `git push origin main && git push origin vX.Y.Z`
-18. `gh release create vX.Y.Z android/app/build/outputs/apk/debug/yellow-vX.Y.Z.apk --title "vX.Y.Z" --notes "描述"`
+16. `git add -A && git commit -m "vX.Y.Z: 描述"`
+17. `git tag vX.Y.Z`
+18. `git push origin main && git push origin vX.Y.Z`
+19. `gh release create vX.Y.Z android/app/build/outputs/apk/debug/yellow-vX.Y.Z.apk --title "vX.Y.Z" --notes "描述"`
 
 用户通过 app 内「检查更新」获取 OTA 更新，APK 仅用于 GitHub Release 溯源。
 
@@ -52,6 +68,7 @@
 - `public/.nojekyll` 文件必须存在，否则 GitHub Pages 用 Jekyll 构建会失败
 - Pages 配置必须为 `gh-pages` 分支 + `/` 根目录（不是 `/docs`）
 - **jsDelivr CDN 缓存不刷新**：purge API 无效，版本检查必须用 GitHub API（`api.github.com/repos/.../contents/version.json?ref=gh-pages`）作为首选源
+- **cap sync 必须单独执行**：不能和 gradlew 合并在一个命令，workdir 必须是项目根目录
 
 ## 版本管理（强制，每次迭代必做）
 每次代码改动必须同步更新以下三处，不得遗漏：
@@ -85,8 +102,8 @@
 ## 项目结构
 - React 18 + TypeScript + Vite + Capacitor Android
 - OTA 版本检查：GitHub API（`api.github.com/repos/.../contents/version.json?ref=gh-pages`），不经过 CDN 缓存
-- APK 下载：国内镜像加速（ghfast.top → ghproxy.cn → mirror.ghproxy.com → GitHub 原链）
-- 安装：原生 AppUpdater 插件（Android DownloadManager 后台下载 + FileProvider 自动安装）
+- APK 下载：DownloadManager 后台下载（URL 从 version.json 的 downloadUrl 读取）
+- 安装：原生 AppUpdater 插件（Android DownloadManager + FileProvider 自动安装）
 - SW 拦截：/、/index.html、/assets/、/books/、/version.json
-- IndexedDB 存储：books / chapters / progress 三个 store
+- IndexedDB 存储：Dexie.js 封装（books / chapters / progress 三个 store）
 - GitHub CLI：GH_TOKEN 已设为用户级环境变量，`gh` 命令自动可用

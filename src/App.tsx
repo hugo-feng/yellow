@@ -1,9 +1,11 @@
-import { useState, useEffect, useCallback, useRef, Component } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
 import { checkForUpdates, waitSWReady, APP_VERSION, UpdateInfo } from './utils/updater'
 import AppUpdater from './plugins/AppUpdater'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
+import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
+import { toast } from 'sonner'
 import { App as CapApp } from '@capacitor/app'
 import Bookshelf from './components/Bookshelf'
 import Discover from './components/Discover'
@@ -18,24 +20,23 @@ interface CacheTask {
   bookId: string; title: string; progress: number; current: number; total: number
 }
 
-class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: string | null }> {
-  state = { error: null as string | null }
-  static getDerivedStateFromError(err: Error) { return { error: err.message } }
-  render() {
-    if (this.state.error) {
-      return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0f0f1a', color: '#e8e8f0', padding: 24, textAlign: 'center' }}>
-          <h2 style={{ color: '#f0c040', marginBottom: 12 }}>出现错误</h2>
-          <p style={{ color: '#9a9ab0', fontSize: 13, marginBottom: 20 }}>{this.state.error}</p>
-          <button onClick={() => { localStorage.clear(); window.location.reload() }}
-            style={{ background: '#f0c040', color: '#1a1a2e', border: 'none', padding: '10px 24px', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
-            清除数据并重启
-          </button>
-        </div>
-      )
-    }
-    return this.props.children
-  }
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0f0f1a', color: '#e8e8f0', padding: 24, textAlign: 'center' }}>
+      <h2 style={{ color: '#f0c040', marginBottom: 12 }}>出现错误</h2>
+      <p style={{ color: '#9a9ab0', fontSize: 13, marginBottom: 20 }}>{String(error)}</p>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button onClick={resetErrorBoundary}
+          style={{ background: '#f0c040', color: '#1a1a2e', border: 'none', padding: '10px 24px', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+          重试
+        </button>
+        <button onClick={() => { localStorage.clear(); window.location.reload() }}
+          style={{ background: 'rgba(255,255,255,0.1)', color: '#e8e8f0', border: '1px solid rgba(255,255,255,0.2)', padding: '10px 24px', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+          清除数据并重启
+        </button>
+      </div>
+    </div>
+  )
 }
 
 function AppInner() {
@@ -373,7 +374,7 @@ function AppInner() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
+    <ErrorBoundary FallbackComponent={ErrorFallback} onReset={() => window.location.reload()}>
       <ThemeProvider>
         <AppInner />
       </ThemeProvider>

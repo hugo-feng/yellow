@@ -3,6 +3,14 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '3.0.0', date: '2026-06-14', changes: [
+    '行业标准重构：集成Dexie.js(12k⭐)/sonner(19k⭐)/react-error-boundary(7k⭐)/DOMPurify(14k⭐)',
+    'IndexedDB用Dexie.js重写：类型安全查询+批量操作+自动事务管理',
+    'Toast系统改为sonner：支持堆叠/类型/自定义持续时间',
+    '错误边界改为react-error-boundary：支持重试+局部隔离',
+    '内容渲染添加DOMPurify防XSS',
+    'AGENTS.md嵌入完整流程标准+行业标准库清单'
+  ]},
   { version: '2.2.0', date: '2026-06-14', changes: [
     'OTA行业标准重构：版本检查+下载链接全部从version.json读取（azhon/AppUpdate标准）',
     'version.json增加downloadUrl/versionCode/updateContent字段',
@@ -171,7 +179,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('2.2.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('3.0.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

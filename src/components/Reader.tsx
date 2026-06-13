@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import DOMPurify from 'dompurify'
 import type { Book, Chapter, ReaderSettings, ReadingProgress } from '../types'
 import { saveChapter, getChapter } from '../utils/db'
 import { getBookContent } from '../utils/sources'
@@ -62,7 +63,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       } catch { c = '加载失败，请检查网络后重试。' }
     }
     if (c) chapter.content = c
-    setContent(c || '')
+    setContent(c ? DOMPurify.sanitize(c, { ALLOWED_TAGS: [] }) : '')
     setLoading(false)
   }, [chapterIdx, book.id, book.sourceId])
 
