@@ -1,5 +1,5 @@
 {
-  "version": "2.0.2",
-  "description": "修复下载进度+移除不可靠的镜像测速+DownloadManager原生下载",
+  "version": "2.1.0",
+  "description": "翻页底层重构：CSS Multi-Column分页(epub.js方案)",
   "releaseDate": "2026-06-14"
 }
