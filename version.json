@@ -1,7 +1,7 @@
 {
-  "version": "2.2.0",
-  "versionCode": 220,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v2.2.0/yellow-v2.2.0.apk",
-  "updateContent": "OTA行业标准流程重构\n版本检查+下载链接全部从version.json读取\n下载完成后通知栏提示",
+  "version": "3.0.0",
+  "versionCode": 300,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v3.0.0/yellow-v3.0.0.apk",
+  "updateContent": "行业标准重构：Dexie.js/sonner/react-error-boundary/DOMPurify\nAGENTS.md嵌入完整流程标准",
   "releaseDate": "2026-06-14"
 }
