@@ -16,7 +16,7 @@ interface SourceDef {
 async function fetchWithEncoding(url: string, encoding: 'utf-8' | 'gbk'): Promise<{ html: string; doc: Document }> {
   const response = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36' },
-    signal: AbortSignal.timeout(15000)
+    signal: AbortSignal.timeout(8000)
   })
   if (!response.ok) throw new Error(`HTTP ${response.status}`)
   
@@ -442,26 +442,37 @@ export async function searchAcrossSources(
     ? sourceIds.map(id => allSources[id]).filter(Boolean)
     : Object.values(allSources).filter(s => s.enabled)
 
-  // 限制并发数
-  const batchSize = 5
   const allResults: SearchResult[] = []
   
-  for (let i = 0; i < sources.length; i += batchSize) {
-    const batch = sources.slice(i, i + batchSize)
+  // 第一批：快速并发 10 个源
+  const first = sources.slice(0, 10)
+  const firstResults = await Promise.allSettled(
+    first.map(async source => {
+      try { return await source.searchBooks(query) } catch { return [] as SearchResult[] }
+    })
+  )
+  for (const r of firstResults) {
+    if (r.status === 'fulfilled') allResults.push(...r.value)
+  }
+
+  // 如果已有足够结果或只剩少量源，直接返回
+  if (allResults.length >= 20 || sources.length <= 10) return allResults
+
+  // 第二批：剩余源
+  const rest = sources.slice(10)
+  const batchSize = 5
+  for (let i = 0; i < rest.length; i += batchSize) {
+    const batch = rest.slice(i, i + batchSize)
     const batchResults = await Promise.allSettled(
       batch.map(async source => {
-        try {
-          return await source.searchBooks(query)
-        } catch {
-          return [] as SearchResult[]
-        }
+        try { return await source.searchBooks(query) } catch { return [] as SearchResult[] }
       })
     )
-    for (const result of batchResults) {
-      if (result.status === 'fulfilled') {
-        allResults.push(...result.value)
-      }
+    for (const r of batchResults) {
+      if (r.status === 'fulfilled') allResults.push(...r.value)
     }
+    // 如果已经有足够结果，提前终止
+    if (allResults.length >= 30) break
   }
 
   return allResults

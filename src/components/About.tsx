@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.1.0', date: '2026-06-13', changes: [
+    '新增发现页：热门分类推荐、书籍卡片浏览', '暗黑/白天模式切换', '全面屏沉浸式适配', '搜索性能大幅优化（8s超时、并发提速）', '启动自动检查OTA更新并弹窗提醒', '书源增加到21个（含集书阁）'
+  ]},
   { version: '1.0.0', date: '2026-06-13', changes: [
     '首个正式版发布', '内置20+中文小说书源', '多源搜索与换源', '书架管理与本地缓存', '沉浸式阅读器（主题/字体调节）', 'OTA热更新支持', '迭代日志'
   ]},

@@ -58,4 +58,4 @@ export interface ReaderSettings {
   maxWidth: number
 }
 
-export type TabKey = 'bookshelf' | 'search' | 'settings'
+export type TabKey = 'discover' | 'bookshelf' | 'search' | 'settings'
