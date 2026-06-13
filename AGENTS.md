@@ -96,7 +96,7 @@
 
 - `version`: 语义化版本号（显示用）
 - `versionCode`: 整数版本号（比较用，递增）
-- `downloadUrl`: APK 下载链接（可随时更换 CDN 源）
+- `downloadUrl`: APK 下载链接（**必须用国内镜像代理**，如 `https://ghfast.top/https://github.com/...`）
 - `updateContent`: 更新描述（显示在更新弹窗中）
 
 ## 项目结构
