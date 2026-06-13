@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Book, Chapter, ReaderSettings, ReadingProgress } from '../types'
 import { saveChapter, getChapter, saveProgress, getBookChapters, saveBook } from '../utils/db'
 import { getBookContent } from '../utils/sources'
@@ -137,11 +137,13 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
 
   const isSwipeMode = settings.pageMode === 'swipe'
 
-  const pages = useMemo(() => {
-    if (!isSwipeMode || paragraphs.length === 0) return [paragraphs]
+  const [pages, setPages] = useState<string[][]>([[]])
+
+  useEffect(() => {
+    if (!isSwipeMode || paragraphs.length === 0) { setPages([paragraphs]); return }
     const el = contentRef.current
-    if (!el) return [paragraphs]
-    const containerH = el.clientHeight - 20
+    if (!el) { setPages([paragraphs]); return }
+    const containerH = el.clientHeight
     const lineHeightPx = settings.fontSize * settings.lineHeight
     const paraSpacingPx = settings.fontSize * settings.paragraphSpacing
     const charW = settings.fontSize * 0.55
@@ -167,8 +169,8 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       usedH += pH
     }
     if (curPage.length > 0) result.push(curPage)
-    return result.length > 0 ? result : [paragraphs]
-  }, [isSwipeMode, paragraphs, settings.fontSize, settings.lineHeight, settings.paragraphSpacing, settings.maxWidth])
+    setPages(result.length > 0 ? result : [paragraphs])
+  }, [isSwipeMode, paragraphs, settings.fontSize, settings.lineHeight, settings.paragraphSpacing, settings.maxWidth, currentChapterIdx])
 
   useEffect(() => {
     setPageCount(pages.length)
@@ -292,7 +294,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           overflow: isSwipeMode ? 'hidden' : 'auto',
           overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
-          padding: 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 0px) + 96px)',
+          padding: 'calc(var(--safe-top, 24px) + 56px) 20px calc(var(--safe-bottom, 34px) + 108px)',
           filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined,
           transition: isSwipeMode
             ? (isSwiping ? 'background 0.3s, filter 0.3s' : 'background 0.3s, filter 0.3s, transform 0.3s ease')

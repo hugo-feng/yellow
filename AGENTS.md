@@ -1,5 +1,11 @@
 # Yellow 项目指令
 
+## 工作规则（强制）
+
+1. **每次开始工作前必须先读取本文件** — 任何代码改动、部署、思考之前，先 `read AGENTS.md`
+2. **每次迭代必须推送到 OTA** — 代码改完后必须执行完整部署流程（见下方），确保用户 app 能通过「检查更新」获取最新版本
+3. **先思考再动手** — 分析问题根因，不要盲目重试
+
 ## 部署流程（强制，每次代码改动必做）
 
 1. 更新 `public/version.json`（版本号+描述）
@@ -42,3 +48,4 @@
 - OTA 更新源：raw.githubusercontent.com + cdn.jsdelivr.net CDN 回退
 - SW 拦截：/、/index.html、/assets/、/books/、/version.json
 - IndexedDB 存储：books / chapters / progress 三个 store
+- GitHub CLI：GH_TOKEN 已设为用户级环境变量，`gh` 命令自动可用

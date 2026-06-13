@@ -1,5 +1,5 @@
 {
-  "version": "1.8.0",
-  "description": "左右翻页分页模式/详情页tag/无封面完整书名",
+  "version": "1.8.1",
+  "description": "修复翻页分页计算+底部安全距离+OTA流程规范化",
   "releaseDate": "2026-06-14"
 }

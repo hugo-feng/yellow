@@ -2,6 +2,11 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.8.1', date: '2026-06-14', changes: [
+    '修复翻页分页：用useEffect替代useMemo，确保ref就绪后计算页数',
+    '修复底部安全距离：文字不再被全面屏手势条挡住',
+    '规范化OTA部署流程写入AGENTS.md'
+  ]},
   { version: '1.8.0', date: '2026-06-14', changes: [
     '左右翻页改为分页模式：文字自动切割成页，左右滑动翻页（非逐章切换）',
     '书籍详情页显示内容标签（短篇/校园/情感等），移除格式标签',
@@ -100,7 +105,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.8.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.8.1')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
