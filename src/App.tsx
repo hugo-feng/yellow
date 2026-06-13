@@ -328,7 +328,7 @@ function AppInner() {
                   setDownloadProgress(0)
                   try {
                     const url = updateInfo.downloadUrl
-                    await nativeDownload(url, `yellow-v${updateInfo.version}.apk`)
+                    await nativeDownload(url, `yellow-v${updateInfo.version}.apk`, updateInfo.version)
                     const poll = setInterval(() => {
                       const p = getNativeProgress()
                       if (p >= 0 && p <= 100) setDownloadProgress(p)

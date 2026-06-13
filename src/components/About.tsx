@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.8.0', date: '2026-06-14', changes: [
+    '修复OTA下载失败：先用HEAD请求解析GitHub 302重定向URL，再传给DownloadManager',
+    '下载通知标题包含版本号（如"Yellow v4.8.0 更新"）',
+    '下载通知描述改为"正在下载，请稍候..."'
+  ]},
   { version: '4.7.0', date: '2026-06-14', changes: [
     '修复更新后显示旧版本：启动时检测版本变化自动清除所有SW缓存并刷新',
     'localStorage记录当前版本号，每次启动对比__APP_VERSION__',
@@ -238,7 +243,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.7.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.8.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
@@ -274,7 +279,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
     setDownloading(true)
     setDownloadProgress(0)
     try {
-      await nativeDownload(downloadUrl, `yellow-v${remoteVersion}.apk`)
+      await nativeDownload(downloadUrl, `yellow-v${remoteVersion}.apk`, remoteVersion)
       const poll = setInterval(() => {
         const p = getNativeProgress()
         if (p >= 0 && p <= 100) setDownloadProgress(p)

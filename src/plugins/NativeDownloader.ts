@@ -1,7 +1,7 @@
 declare global {
   interface Window {
     NativeDownloader?: {
-      download(url: string, filename: string): void
+      download(url: string, filename: string, version: string): void
       getProgress(): number
     }
     __nativeDownloadCallback?: (status: string) => void
@@ -12,7 +12,7 @@ export function isNativeDownloaderAvailable(): boolean {
   return !!window.NativeDownloader
 }
 
-export function nativeDownload(url: string, filename: string): Promise<void> {
+export function nativeDownload(url: string, filename: string, version: string): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!window.NativeDownloader) {
       reject(new Error('NativeDownloader not available'))
@@ -24,7 +24,7 @@ export function nativeDownload(url: string, filename: string): Promise<void> {
       else if (status === 'failed') reject(new Error('下载失败'))
     }
 
-    window.NativeDownloader.download(url, filename)
+    window.NativeDownloader.download(url, filename, version)
   })
 }
 
