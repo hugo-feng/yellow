@@ -3,16 +3,11 @@ import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/update
 
 const changelog = [
   { version: '1.7.2', date: '2026-06-14', changes: [
+    '新增左右滑动翻页模式（带滑动动画），默认翻页方式改为滑动',
+    '阅读底栏显示当前章节进度（N/M）',
+    '阅读设置新增翻页模式切换（左右滑动/上下滚动）',
     '修复OTA更新检查：fetch添加10秒超时保护，防止WebView中无限挂起',
     'OTA检查失败时弹toast提示，不再静默吞错'
-  ]},
-  { version: '1.7.1', date: '2026-06-14', changes: [
-    '修复OTA部署：Reader滑动翻页+底栏进度显示重新构建发布'
-  ]},
-  { version: '1.7.0', date: '2026-06-14', changes: [
-    '新增左右滑动翻页模式（带滑动动画），默认翻页方式改为滑动', '阅读底栏显示当前章节进度（N/M）',
-    '书籍详情页根据内容自动生成标签（短篇/校园/家庭/情感等）', '主页分类标签改为横向滚动+按标签筛选',
-    'index.json每本书新增tags字段', '阅读设置新增翻页模式切换（左右滑动/上下滚动）'
   ]},
   { version: '1.6.6', date: '2026-06-14', changes: [
     '彻查清理垃圾代码：删除scripts/爬虫脚本、占位书籍、无用组件、临时文件',
