@@ -3,6 +3,12 @@ import { checkForUpdates, findBestMirror, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '2.0.1', date: '2026-06-14', changes: [
+    '阅读进度：基于章节权重+滚动/翻页位置计算全书百分比',
+    '翻页分页：用隐藏测量div获取真实段落高度，不再依赖字符估算',
+    '顶栏+底栏+内容区底部均显示进度百分比',
+    '底部常驻进度条'
+  ]},
   { version: '2.0.0', date: '2026-06-14', changes: [
     '更新机制重写：后台自动下载APK+下载完成后自动拉起安装',
     '国内镜像加速：ghfast.top/ghproxy.cn/mirror.ghproxy.com 优先',
@@ -148,7 +154,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('2.0.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('2.0.1')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
