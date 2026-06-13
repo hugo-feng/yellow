@@ -21,7 +21,6 @@
 | 错误边界 | **react-error-boundary** | ~7k | 可组合的错误隔离+重试 |
 | 虚拟滚动 | **@tanstack/react-virtual** | ~6k | 长列表性能优化 |
 | HTML安全 | **DOMPurify** | ~14k | 防 XSS，内容清理 |
-| 翻页 | **overflow:hidden+translateY** | 中文阅读器标准 | 文本垂直排列，translateY翻页 |
 | OTA更新 | **azhon/AppUpdate** 模式 | 2.5k | DownloadManager + FileProvider |
 
 ## 每次迭代检查清单（强制，每次代码改动必做）
