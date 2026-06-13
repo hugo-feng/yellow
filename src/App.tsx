@@ -8,12 +8,14 @@ import Discover from './components/Discover'
 import SearchPage from './components/Search'
 import Settings from './components/Settings'
 import Reader from './components/Reader'
+import BookDetail from './components/BookDetail'
 import About from './components/About'
 
 function AppInner() {
   const [activeTab, setActiveTab] = useState<TabKey>('discover')
   const [books, setBooks] = useState<Book[]>([])
   const [readingBook, setReadingBook] = useState<Book | null>(null)
+  const [detailBook, setDetailBook] = useState<Book | null>(null)
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null)
   const [showAbout, setShowAbout] = useState(false)
   const [showUpdateModal, setShowUpdateModal] = useState(false)
@@ -84,6 +86,23 @@ function AppInner() {
     )
   }
 
+  if (detailBook) {
+    return (
+      <BookDetail
+        book={detailBook}
+        isInShelf={books.some(b => b.id === detailBook.id)}
+        onAddToShelf={() => { handleAddBook(detailBook); setDetailBook(null) }}
+        onStartRead={() => {
+          if (!books.some(b => b.id === detailBook.id)) handleAddBook(detailBook)
+          handleReadBook(detailBook)
+          setDetailBook(null)
+        }}
+        onClose={() => setDetailBook(null)}
+        showToast={showToast}
+      />
+    )
+  }
+
   if (showAbout) {
     return (
       <About currentVersion={currentVersion} showToast={showToast}
@@ -100,7 +119,7 @@ function AppInner() {
 
       <div className="page-content fade-in" key={activeTab}>
         {activeTab === 'discover' && (
-          <Discover onAddBook={handleAddBook} onRead={handleReadBook} showToast={showToast} books={books} />
+          <Discover onViewDetail={setDetailBook} showToast={showToast} books={books} />
         )}
         {activeTab === 'bookshelf' && (
           <Bookshelf books={books} onRead={handleReadBook} onDelete={handleDeleteBook} onRefresh={loadBooks} />

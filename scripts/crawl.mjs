@@ -1,11 +1,13 @@
 import { writeFileSync, mkdirSync, existsSync } from 'fs'
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const BASE = 'https://26b.jisge.com'
-const BOOKS_DIR = join(import.meta.dirname, '..', 'public', 'books')
-const DELAY_MS = 500 // 请求间隔
-const MAX_BOOKS = 1000
-const CONCURRENCY = 4 // 并发数
+const BOOKS_DIR = join(__dirname, '..', 'public', 'books')
+const DELAY_MS = 600
+const MAX_BOOKS = 40
+const CONCURRENCY = 4
 
 // 确保目录存在
 for (let i = 0; i < 10; i++) {
@@ -14,7 +16,7 @@ for (let i = 0; i < 10; i++) {
 }
 
 let savedCount = 0
-let crawledUrls = new Set<string>()
+let crawledUrls = new Set()
 
 async function fetchPage(url, retries = 3) {
   for (let i = 0; i < retries; i++) {
@@ -98,12 +100,14 @@ async function crawlBook(url) {
 }
 
 async function crawlListPage(pageNum) {
-  const url = `${BASE}/list_1_${pageNum}.html`
+  const url = pageNum === 1 
+    ? `${BASE}/list_1.html`
+    : `${BASE}/list_1_${pageNum}.html`
   const html = await fetchPage(url)
   if (!html) return []
   
   const links = []
-  const regex = /href="(\/content_\w+\.html)"/gi
+  const regex = /href="(content_\w+\.html)"/gi
   let match
   while ((match = regex.exec(html)) !== null) {
     links.push(match[1])
@@ -153,8 +157,8 @@ async function main() {
   
   let pageLinks = []
   // 爬取前 60 页列表（每页约 20 本 = 1200 本候选）
-  for (let page = 1; page <= 60; page++) {
-    console.log(`获取列表第 ${page}/60 页...`)
+  for (let page = 1; page <= 20; page++) {
+    console.log(`获取列表第 ${page}/20 页...`)
     const links = await crawlListPage(page)
     pageLinks.push(...links)
     if (pageLinks.length >= 1500) break

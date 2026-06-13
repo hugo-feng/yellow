@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Book, Chapter } from '../types'
-import { saveBook } from '../utils/db'
 
 interface DiscoverItem {
   id: string; title: string; author: string; cover: string; description: string
@@ -8,8 +7,7 @@ interface DiscoverItem {
 }
 
 interface Props {
-  onAddBook: (book: Book) => void
-  onRead: (book: Book) => void
+  onViewDetail: (book: Book) => void
   showToast: (msg: string) => void
   books: Book[]
 }
@@ -23,7 +21,7 @@ const REMOTE_BOOKS_URL = 'https://raw.githubusercontent.com/hugo-feng/yellow/gh-
 
 const HOT_CATEGORIES = ['玄幻', '都市', '穿越', '重生', '系统', '修仙', '武侠', '言情', '悬疑', '网游', '末日', '神医']
 
-export default function Discover({ onAddBook, onRead, showToast, books }: Props) {
+export default function Discover({ onViewDetail, showToast, books }: Props) {
   const [localBooks, setLocalBooks] = useState<DiscoverItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -95,9 +93,13 @@ export default function Discover({ onAddBook, onRead, showToast, books }: Props)
 
   useEffect(() => { fetchLocalBooks() }, [fetchLocalBooks])
 
-  const handleAdd = useCallback(async (item: DiscoverItem) => {
+  const handleClick = useCallback(async (item: DiscoverItem) => {
+    // 检查是否已在书架中
     const existing = books.find(b => b.id === item.id)
-    if (existing) { onRead(existing); return }
+    if (existing) {
+      onViewDetail(existing)
+      return
+    }
     
     try {
       // 优先从本地加载书籍内容
@@ -143,28 +145,13 @@ export default function Discover({ onAddBook, onRead, showToast, books }: Props)
           })),
           cached: false
         }
-        await saveBook(book)
-        onAddBook(book)
-        showToast(`已添加：${book.title}`)
+        onViewDetail(book)
         return
       }
 
-      // 回退：尝试从在线书源加载（WebView 上可能失败）
-      try {
-        const { allSources } = await import('../utils/sources')
-        const source = allSources[item.sourceId]
-        if (source) {
-          const book = await source.getBookDetail(item.id)
-          await saveBook(book)
-          onAddBook(book)
-          showToast(`已添加：${book.title}`)
-          return
-        }
-      } catch { /* 在线加载也失败 */ }
-      
       showToast('加载失败，请检查网络')
-    } catch { showToast('添加失败') }
-  }, [books, onAddBook, onRead, showToast])
+    } catch { showToast('加载失败') }
+  }, [books, onViewDetail, showToast])
 
   return (
     <div style={{ padding: 12 }}>
@@ -214,7 +201,7 @@ export default function Discover({ onAddBook, onRead, showToast, books }: Props)
               key={`${item.sourceId}-${item.id}`}
               className="discover-card fade-in"
               style={{ animationDelay: `${i * 0.03}s` }}
-              onClick={() => handleAdd(item)}
+              onClick={() => handleClick(item)}
             >
               <div className="discover-cover">
                 {item.cover ? (
