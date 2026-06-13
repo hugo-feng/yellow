@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.5.0', date: '2026-06-14', changes: [
+    '书籍详情页：加入书架/缓存后停留在详情页不退出，显示toast反馈',
+    '阅读界面全面屏适配：安全区用主题背景色填充，不再遮挡状态栏和底部手势条',
+    '修复字间距：text-align改为left（justify在中文中会把字拉开）'
+  ]},
   { version: '4.4.0', date: '2026-06-14', changes: [
     '修复OTA下载失败：改用GitHub直链（DownloadManager原生支持302重定向）',
     '添加User-Agent请求头（防止GitHub拒绝无UA请求）',
@@ -222,7 +227,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.4.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.5.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

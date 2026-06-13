@@ -219,7 +219,7 @@ function AppInner() {
       <BookDetail
         book={detailBook}
         isInShelf={books.some(b => b.id === detailBook.id)}
-        onAddToShelf={() => { handleAddBook(detailBook); setDetailBook(null) }}
+        onAddToShelf={() => { handleAddBook(detailBook) }}
         onStartRead={() => {
           if (!books.some(b => b.id === detailBook.id)) handleAddBook(detailBook)
           handleReadBook(detailBook)

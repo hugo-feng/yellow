@@ -120,19 +120,36 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     ? Math.round((completedWeight + currentWeight * scrollProgress) / totalWeight * 100)
     : 0
 
+  const safeTop = 'var(--safe-top, 24px)'
+  const safeBottom = 'var(--safe-bottom, 0px)'
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg }}>
-      {/* Top bar - respects safe area */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg, position: 'relative' }}>
+      {/* Top safe area background */}
       <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20,
-        paddingTop: 'env(safe-area-inset-top, 24px)',
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 21,
+        height: safeTop, background: showControls ? 'rgba(0,0,0,0.85)' : theme.bg,
+        transition: 'background 0.25s'
+      }} />
+
+      {/* Bottom safe area background */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 21,
+        height: safeBottom, background: showControls ? 'rgba(0,0,0,0.85)' : theme.bg,
+        transition: 'background 0.25s'
+      }} />
+
+      {/* Top bar */}
+      <div style={{
+        position: 'fixed', top: safeTop, left: 0, right: 0, zIndex: 20,
+        height: 48,
         background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
-        transition: 'opacity 0.25s', minHeight: 'calc(env(safe-area-inset-top, 24px) + 48px)'
+        transition: 'opacity 0.25s'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', padding: '8px 16px', width: '100%', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', width: '100%', justifyContent: 'space-between' }}>
           <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 20, padding: '8px 16px', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={handleClose}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
             返回
@@ -144,14 +161,14 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         </div>
       </div>
 
-      {/* Content - full screen with proper safe area padding */}
+      {/* Content */}
       <div
         ref={scrollRef}
         style={{
           flex: 1, overflow: 'auto', overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
-          paddingTop: 'calc(env(safe-area-inset-top, 24px) + 48px)',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 60px)',
+          paddingTop: `calc(${safeTop} + 48px)`,
+          paddingBottom: `calc(${safeBottom} + 60px)`,
           paddingLeft: 16,
           paddingRight: 16,
           filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined
@@ -166,7 +183,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           color: theme.text,
           maxWidth: settings.maxWidth > 0 ? settings.maxWidth : undefined,
           margin: '0 auto',
-          textAlign: 'justify',
+          textAlign: 'left',
           wordBreak: 'break-word',
           userSelect: 'text',
           WebkitUserSelect: 'text'
@@ -191,12 +208,12 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         </div>
       </div>
 
-      {/* Bottom bar - respects bottom gesture area */}
+      {/* Bottom bar */}
       <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 20,
+        position: 'fixed', bottom: safeBottom, left: 0, right: 0, zIndex: 20,
+        height: 'auto',
         background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
         transition: 'opacity 0.25s'
       }}>
