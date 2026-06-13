@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Component } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
-import { getCurrentVersion, checkForUpdates, getUpdateUrl, waitSWReady } from './utils/updater'
+import { getCurrentVersion, checkForUpdates, waitSWReady, APP_VERSION } from './utils/updater'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import { App as CapApp } from '@capacitor/app'
 import Bookshelf from './components/Bookshelf'
@@ -50,7 +50,7 @@ function AppInner() {
   const [showOtaSuccess, setShowOtaSuccess] = useState(false)
   const [otaNewVersion, setOtaNewVersion] = useState('')
   const [cacheTask, setCacheTask] = useState<CacheTask | null>(null)
-  const [currentVersion, setCurrentVersion] = useState('1.0.0')
+  const [currentVersion, setCurrentVersion] = useState(APP_VERSION)
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => {
     const defaults: ReaderSettings = { fontSize: 18, lineHeight: 1.8, theme: 'dark', fontFamily: 'system', maxWidth: 720, brightness: 100, paragraphSpacing: 1.2, pageMode: 'swipe' }
     try {
@@ -72,16 +72,22 @@ function AppInner() {
 
   useEffect(() => {
     loadBooks()
+    setCurrentVersion(APP_VERSION)
+
+    if ('caches' in window) {
+      caches.keys().then(keys => {
+        keys.filter(k => !k.startsWith('yellow-')).forEach(k => caches.delete(k))
+      })
+    }
+
     waitSWReady().then(async () => {
-      await getCurrentVersion().then(v => setCurrentVersion(v))
       try {
-        const result = await checkForUpdates(getUpdateUrl())
-        console.log('[OTA] 启动自动检查结果:', JSON.stringify(result))
+        const result = await checkForUpdates()
         if (result.hasUpdate && result.version) {
           setUpdateInfo({ version: result.version, description: result.description || '' })
           setShowUpdateModal(true)
         }
-      } catch (e) { console.error('[OTA] 启动检查异常:', e) }
+      } catch (e) { console.error('[OTA]', e) }
     })
   }, [loadBooks])
 

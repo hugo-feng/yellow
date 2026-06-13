@@ -1,5 +1,5 @@
 {
-  "version": "1.9.3",
-  "description": "OTA调试版：About页直接XHR测试CDN可达性",
+  "version": "1.9.4",
+  "description": "OTA根治: 版本化SW缓存+纯XHR+启动清理旧缓存",
   "releaseDate": "2026-06-14"
 }
