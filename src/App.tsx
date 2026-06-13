@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Component } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
 import { getCurrentVersion, checkForUpdates, getUpdateUrl } from './utils/updater'
@@ -14,6 +14,26 @@ import CacheManager from './components/CacheManager'
 
 interface CacheTask {
   bookId: string; title: string; progress: number; current: number; total: number
+}
+
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { error: string | null }> {
+  state = { error: null as string | null }
+  static getDerivedStateFromError(err: Error) { return { error: err.message } }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0f0f1a', color: '#e8e8f0', padding: 24, textAlign: 'center' }}>
+          <h2 style={{ color: '#f0c040', marginBottom: 12 }}>出现错误</h2>
+          <p style={{ color: '#9a9ab0', fontSize: 13, marginBottom: 20 }}>{this.state.error}</p>
+          <button onClick={() => { localStorage.clear(); window.location.reload() }}
+            style={{ background: '#f0c040', color: '#1a1a2e', border: 'none', padding: '10px 24px', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>
+            清除数据并重启
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
 
 function AppInner() {
@@ -267,9 +287,11 @@ function AppInner() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppInner />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AppInner />
+      </ThemeProvider>
+    </ErrorBoundary>
   )
 }
 

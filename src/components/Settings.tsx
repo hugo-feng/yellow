@@ -16,9 +16,11 @@ interface Props {
 export default function Settings({ books, showToast, onOpenAbout, cacheTask, onOpenCacheManager, readerSettings, onReaderSettingsChange }: Props) {
   const { theme, toggle: toggleTheme } = useTheme()
 
+  const rs = readerSettings || { fontSize: 18, lineHeight: 1.8, theme: 'dark' as const, fontFamily: 'system', maxWidth: 720, brightness: 100, paragraphSpacing: 1.2 }
+
   const updateReader = <K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) => {
-    if (readerSettings && onReaderSettingsChange) {
-      onReaderSettingsChange({ ...readerSettings, [key]: value })
+    if (onReaderSettingsChange) {
+      onReaderSettingsChange({ ...rs, [key]: value })
     }
   }
 
@@ -39,40 +41,38 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
       {/* 阅读设置 */}
       <h3 style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 12 }}>阅读设置</h3>
       <div className="card" style={{ padding: '14px 16px', marginBottom: 24 }}>
-        {readerSettings && (
-          <>
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
-                <span>字体大小</span><span style={{ fontWeight: 600 }}>{readerSettings.fontSize}px</span>
+                <span>字体大小</span><span style={{ fontWeight: 600 }}>{rs.fontSize}px</span>
               </label>
-              <input type="range" min="14" max="28" value={readerSettings.fontSize}
+              <input type="range" min="14" max="28" value={rs.fontSize}
                 onChange={e => updateReader('fontSize', Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--accent)' }} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
-                <span>行间距</span><span style={{ fontWeight: 600 }}>{readerSettings.lineHeight.toFixed(1)}</span>
+                <span>行间距</span><span style={{ fontWeight: 600 }}>{rs.lineHeight.toFixed(1)}</span>
               </label>
-              <input type="range" min="1.3" max="2.5" step="0.1" value={readerSettings.lineHeight}
+              <input type="range" min="1.3" max="2.5" step="0.1" value={rs.lineHeight}
                 onChange={e => updateReader('lineHeight', Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--accent)' }} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
-                <span>段间距</span><span style={{ fontWeight: 600 }}>{readerSettings.paragraphSpacing.toFixed(1)}em</span>
+                <span>段间距</span><span style={{ fontWeight: 600 }}>{rs.paragraphSpacing.toFixed(1)}em</span>
               </label>
-              <input type="range" min="0.4" max="2.0" step="0.1" value={readerSettings.paragraphSpacing}
+              <input type="range" min="0.4" max="2.0" step="0.1" value={rs.paragraphSpacing}
                 onChange={e => updateReader('paragraphSpacing', Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--accent)' }} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
-                <span>亮度</span><span style={{ fontWeight: 600 }}>{readerSettings.brightness}%</span>
+                <span>亮度</span><span style={{ fontWeight: 600 }}>{rs.brightness}%</span>
               </label>
-              <input type="range" min="30" max="100" value={readerSettings.brightness}
+              <input type="range" min="30" max="100" value={rs.brightness}
                 onChange={e => updateReader('brightness', Number(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--accent)' }} />
             </div>
@@ -83,10 +83,10 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
                 {(['dark', 'light', 'sepia'] as const).map(t => (
                   <button key={t} onClick={() => updateReader('theme', t)} style={{
                     flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
-                    border: readerSettings.theme === t ? '2px solid var(--accent)' : '2px solid var(--border)',
+                    border: rs.theme === t ? '2px solid var(--accent)' : '2px solid var(--border)',
                     background: t === 'dark' ? '#1a1a2e' : t === 'light' ? '#f5f5f0' : '#f4ecd8',
                     color: t === 'dark' ? '#ddd' : t === 'light' ? '#333' : '#5a4738',
-                    fontSize: 12, cursor: 'pointer', fontWeight: readerSettings.theme === t ? 700 : 400, transition: 'all 0.2s'
+                    fontSize: 12, cursor: 'pointer', fontWeight: rs.theme === t ? 700 : 400, transition: 'all 0.2s'
                   }}>
                     {t === 'dark' ? '暗黑' : t === 'light' ? '明亮' : '护眼'}
                   </button>
@@ -100,9 +100,9 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
                 {[{ key: 'system', label: '系统' }, { key: 'serif', label: '衬线' }, { key: 'mono', label: '等宽' }].map(f => (
                   <button key={f.key} onClick={() => updateReader('fontFamily', f.key)} style={{
                     flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
-                    border: readerSettings.fontFamily === f.key ? '2px solid var(--accent)' : '2px solid var(--border)',
+                    border: rs.fontFamily === f.key ? '2px solid var(--accent)' : '2px solid var(--border)',
                     background: 'var(--bg-card)', color: 'var(--text-primary)',
-                    fontSize: 12, cursor: 'pointer', fontWeight: readerSettings.fontFamily === f.key ? 700 : 400, transition: 'all 0.2s'
+                    fontSize: 12, cursor: 'pointer', fontWeight: rs.fontFamily === f.key ? 700 : 400, transition: 'all 0.2s'
                   }}>
                     {f.label}
                   </button>
@@ -116,17 +116,15 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
                 {[{ key: 600, label: '窄' }, { key: 720, label: '标准' }, { key: 900, label: '宽' }, { key: 0, label: '全屏' }].map(w => (
                   <button key={w.key} onClick={() => updateReader('maxWidth', w.key)} style={{
                     flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
-                    border: readerSettings.maxWidth === w.key ? '2px solid var(--accent)' : '2px solid var(--border)',
+                    border: rs.maxWidth === w.key ? '2px solid var(--accent)' : '2px solid var(--border)',
                     background: 'var(--bg-card)', color: 'var(--text-primary)',
-                    fontSize: 12, cursor: 'pointer', fontWeight: readerSettings.maxWidth === w.key ? 700 : 400, transition: 'all 0.2s'
+                    fontSize: 12, cursor: 'pointer', fontWeight: rs.maxWidth === w.key ? 700 : 400, transition: 'all 0.2s'
                   }}>
                     {w.label}
                   </button>
                 ))}
               </div>
             </div>
-          </>
-        )}
       </div>
 
       {/* 其他 */}
