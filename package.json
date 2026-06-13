@@ -12,7 +12,9 @@
     "cap:add": "npx cap add android",
     "cap:sync": "npx cap sync",
     "cap:open": "npx cap open android",
-    "cap:build": "npm run build && npx cap sync && npx cap open android"
+    "cap:build": "npm run build && npx cap sync && npx cap open android",
+    "deploy:ota": "npm run build && npx gh-pages -d dist -m \"deploy: OTA update [skip ci]\"",
+    "deploy:full": "npm run build && npx cap sync android && npx gh-pages -d dist -m \"deploy: full release [skip ci]\" && npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
