@@ -1,5 +1,5 @@
 {
-  "version": "1.6.1",
-  "description": "检查更新无新版本时弹窗显示当前已是最新",
+  "version": "1.6.2",
+  "description": "二级页面支持系统右滑返回手势（不再直接退出App）",
   "releaseDate": "2026-06-14"
 }

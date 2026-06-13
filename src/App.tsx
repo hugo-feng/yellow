@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, Component } from 'react'
+import { useState, useEffect, useCallback, useRef, Component } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
 import { getCurrentVersion, checkForUpdates, getUpdateUrl, waitSWReady } from './utils/updater'
@@ -85,6 +85,28 @@ function AppInner() {
   }, [loadBooks])
 
   useEffect(() => { localStorage.setItem('reader-settings', JSON.stringify(readerSettings)) }, [readerSettings])
+
+  // Android 系统返回手势：二级页面返回而非退出 App
+  const pushedRef = useRef(false)
+  const hasSubPage = readingBook || detailBook || showAbout || showCacheManager
+  useEffect(() => {
+    if (hasSubPage && !pushedRef.current) {
+      history.pushState({ sub: true }, '')
+      pushedRef.current = true
+    }
+    if (!hasSubPage) pushedRef.current = false
+  }, [hasSubPage])
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (readingBook) { handleCloseReader(); return }
+      if (detailBook) { setDetailBook(null); return }
+      if (showAbout) { setShowAbout(false); return }
+      if (showCacheManager) { setShowCacheManager(false); return }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [readingBook, detailBook, showAbout, showCacheManager])
 
   const handleReadBook = useCallback(async (book: Book) => {
     const progress = await getProgress(book.id)

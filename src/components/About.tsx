@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.6.2', date: '2026-06-14', changes: [
+    '二级页面（关于/书籍详情/缓存管理/阅读器）支持系统右滑返回手势'
+  ]},
   { version: '1.6.1', date: '2026-06-14', changes: [
     '检查更新无新版本时弹窗显示「当前已是最新版本 vX.Y.Z」'
   ]},
@@ -75,7 +78,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.2')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
