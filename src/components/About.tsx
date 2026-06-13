@@ -3,11 +3,15 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '3.2.0', date: '2026-06-14', changes: [
+    '翻页算法彻底重构：offsetHeight累加分页（替代错误的getBoundingClientRect）',
+    '用offsetTop定位页面（不受transform:translateY影响）',
+    '分页逻辑：累加段落高度+margin，超过视口高度时在段落顶部断页',
+    '双重rAF确保DOM渲染完成后再计算分页'
+  ]},
   { version: '3.1.0', date: '2026-06-14', changes: [
-    '翻页彻底重写：overflow:hidden+translateY（中文阅读器标准方案）',
-    '文本保持正常垂直排列，通过translateY(-offset)翻动视口显示当前页',
-    'DOM实测分页：遍历段落getBoundingClientRect计算真实分页点',
-    '下载链接改用ghfast.top国内镜像代理（解决GitHub下载失败）'
+    '翻页重写：overflow:hidden+translateY（中文阅读器标准方案）',
+    '下载链接改用ghfast.top国内镜像代理'
   ]},
   { version: '3.0.0', date: '2026-06-14', changes: [
     '行业标准重构：集成Dexie.js(12k⭐)/sonner(19k⭐)/react-error-boundary(7k⭐)/DOMPurify(14k⭐)',
@@ -185,7 +189,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('3.1.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('3.2.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

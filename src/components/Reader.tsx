@@ -73,7 +73,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   const chapterWeights = book.chapters.map(ch => (ch.content?.length || 1000))
   const totalWeight = chapterWeights.reduce((a, b) => a + b, 0)
 
-  // ── Swipe pagination: overflow:hidden + translateY ──
+  // ── Swipe pagination ──
   const [page, setPage] = useState(0)
   const [pageOffsets, setPageOffsets] = useState<number[]>([0])
   const [swipeX, setSwipeX] = useState(0)
@@ -82,45 +82,45 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
 
   const totalPages = pageOffsets.length
 
-  // Measure paragraph heights and calculate page offsets
+  // Pagination algorithm: accumulate paragraph heights, break when exceeding viewport
   useEffect(() => {
-    if (!isSwipe || paragraphs.length === 0) { setPageOffsets([0]); return }
+    if (!isSwipe || paragraphs.length === 0) { setPageOffsets([0]); setPage(0); return }
 
     const viewport = viewportRef.current
     const contentEl = contentRef.current
     if (!viewport || !contentEl) return
 
-    const recalc = () => {
+    const calc = () => {
       const viewportH = viewport.clientHeight
       if (viewportH <= 0) return
 
-      const paraEls = contentEl.querySelectorAll('p[data-p]')
+      const paraEls = contentEl.querySelectorAll('[data-p]')
       if (paraEls.length === 0) return
 
       const offsets: number[] = [0]
-      let usedH = 0
+      let accumulated = 0
 
       for (let i = 0; i < paraEls.length; i++) {
         const el = paraEls[i] as HTMLElement
-        const rect = el.getBoundingClientRect()
-        const contentRect = contentEl.getBoundingClientRect()
-        const paraTop = rect.top - contentRect.top
-        const paraH = rect.height
+        const style = getComputedStyle(el)
+        const marginBottom = parseFloat(style.marginBottom) || 0
+        const paraH = el.offsetHeight + marginBottom
 
-        // If this paragraph would overflow the viewport from the current page
-        if (paraTop + paraH > (offsets.length) * viewportH) {
-          // Page break at the top of this paragraph
-          if (paraTop > (offsets.length - 1) * viewportH) {
-            offsets.push(paraTop)
-          }
+        if (accumulated + paraH > viewportH && accumulated > 0) {
+          // Current paragraph doesn't fit, page break at its offsetTop
+          offsets.push(el.offsetTop)
+          accumulated = paraH
+        } else {
+          accumulated += paraH
         }
       }
 
       setPageOffsets(offsets)
-      if (page >= offsets.length) setPage(Math.max(0, offsets.length - 1))
+      setPage(p => Math.min(p, offsets.length - 1))
     }
 
-    requestAnimationFrame(() => requestAnimationFrame(recalc))
+    // Need two rAF: first ensures DOM is painted, second ensures layout is stable
+    requestAnimationFrame(() => requestAnimationFrame(calc))
   }, [isSwipe, content, settings.fontSize, settings.lineHeight, settings.paragraphSpacing, settings.maxWidth, chapterIdx])
 
   // ── Scroll progress ──
