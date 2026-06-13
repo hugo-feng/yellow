@@ -106,13 +106,17 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     const el = scrollRef.current
     if (!el || el.clientHeight <= 0) return
 
-    const containerH = el.clientHeight
+    const padTop = settings.fontSize * settings.lineHeight * 2 + 56
+    const padBot = settings.fontSize * settings.lineHeight + 108
+    const containerH = el.clientHeight - padTop - padBot
+    if (containerH <= 0) { setPages([paragraphs]); return }
+
     const fontSize = settings.fontSize
     const lh = settings.lineHeight
     const spacing = settings.paragraphSpacing
-    const charW = fontSize * 0.55
+    const charW = fontSize * 0.95
     const contentW = Math.min(el.clientWidth - 40, settings.maxWidth || 9999)
-    const cpl = Math.floor(contentW / charW) || 20
+    const cpl = Math.floor(contentW / charW) || 10
 
     const result: string[][] = []
     let cur: string[] = []

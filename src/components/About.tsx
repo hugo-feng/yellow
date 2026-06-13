@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, APP_VERSION } from '../utils/updater'
 
 const changelog = [
+  { version: '1.9.8', date: '2026-06-14', changes: [
+    '修复翻页分页：中文字符宽度从0.55修正为0.95，扣除padding计算可用高度'
+  ]},
   { version: '1.9.7', date: '2026-06-14', changes: [
     'OTA终极修复：用GitHub API获取版本（绕过jsDelivr和raw.githubusercontent.com的CDN缓存）'
   ]},
@@ -133,7 +136,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.7')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.8')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
