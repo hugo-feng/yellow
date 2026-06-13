@@ -1,20 +1,20 @@
 # Yellow 项目指令
 
-## 部署方式（强制）
-**只用 OTA 热更新，禁止构建 APK。** 用户通过 app 内「检查更新」获取新版本，不需要重新安装 APK。
-
-每次代码改动后执行 OTA 流程：
+## 部署流程（强制，每次代码改动必做）
 
 1. 更新 `public/version.json`（版本号+描述）
 2. 更新 `src/components/About.tsx`（changelog 新条目 + expandedVer 默认值）
 3. `npm run build`
 4. `npx gh-pages -d dist --dotfiles`
 5. 验证 gh-pages（见下方）
-6. `git add -A && git commit -m "vX.Y.Z: 描述"`
-7. `git tag vX.Y.Z`
-8. `git push origin main && git push origin vX.Y.Z`
+6. `npx cap sync android`
+7. 构建 APK：在 `android/` 目录执行 `gradlew.bat assembleDebug`，产物在 `android/app/build/outputs/apk/debug/`
+8. `git add -A && git commit -m "vX.Y.Z: 描述"`
+9. `git tag vX.Y.Z`
+10. `git push origin main && git push origin vX.Y.Z`
+11. 创建 GitHub Release：`gh release create vX.Y.Z android/app/build/outputs/apk/debug/yellow-vX.Y.Z.apk --title "vX.Y.Z" --notes "改动描述"`
 
-**不要执行** `npx cap sync`、`gradlew assembleDebug` 或任何 APK 构建命令。
+用户通过 app 内「检查更新」获取 OTA 更新，APK 仅用于 GitHub Release 溯源。
 
 ## 部署后验证（强制，每次必做）
 部署完必须验证 gh-pages 确实更新了，不能只看 `Published` 输出：
@@ -30,7 +30,7 @@
 
 1. **版本号** `public/version.json` — 递增版本号（patch/minor/major），写清本次改动描述
 2. **迭代日志** `src/components/About.tsx` — changelog 数组头部插入新版本条目（版本号+日期+改动列表），同时更新 `expandedVer` 默认值为最新版本号
-3. **Git tag** — 打 `vX.Y.Z` tag 与版本号对应
+3. **Git tag + GitHub Release** — 打 `vX.Y.Z` tag，创建 Release 并附带 APK
 
 版本号规范：
 - patch（1.6.5→1.6.6）：bug修复、小改动
