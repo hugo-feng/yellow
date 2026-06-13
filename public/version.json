@@ -1,7 +1,7 @@
 {
-  "version": "4.8.0",
-  "versionCode": 480,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.8.0/yellow-v4.8.0.apk",
-  "updateContent": "修复OTA下载：标题含版本号+先解析GitHub重定向URL再下载",
+  "version": "4.9.0",
+  "versionCode": 490,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.9.0/yellow-v4.9.0.apk",
+  "updateContent": "终极修复：原生层启动时清除WebView+SW缓存，确保每次打开加载最新代码",
   "releaseDate": "2026-06-14"
 }

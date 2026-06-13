@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.9.0', date: '2026-06-14', changes: [
+    '终极修复更新后显示旧版本：原生层MainActivity启动时清除WebView+SW缓存',
+    '清除SW CacheStorage/HTTP Cache/Code Cache三个目录',
+    '保留IndexedDB（用户书籍数据）和localStorage（用户设置）',
+    '每次打开app都加载APK内最新代码，不再依赖SW缓存检测'
+  ]},
   { version: '4.8.0', date: '2026-06-14', changes: [
     '修复OTA下载失败：先用HEAD请求解析GitHub 302重定向URL，再传给DownloadManager',
     '下载通知标题包含版本号（如"Yellow v4.8.0 更新"）',
@@ -243,7 +249,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.8.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.9.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
