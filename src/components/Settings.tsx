@@ -14,10 +14,7 @@ interface Props {
 }
 
 export default function Settings({ books, showToast, onOpenAbout, cacheTask, onOpenCacheManager, readerSettings, onReaderSettingsChange }: Props) {
-  const [storageInfo, setStorageInfo] = useState({ books: 0, chapters: 0, size: '0 B' })
   const { theme, toggle: toggleTheme } = useTheme()
-
-  useEffect(() => { getStorageInfo().then(setStorageInfo) }, [books])
 
   const updateReader = <K extends keyof ReaderSettings>(key: K, value: ReaderSettings[K]) => {
     if (readerSettings && onReaderSettingsChange) {
@@ -97,7 +94,7 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
               </div>
             </div>
 
-            <div>
+            <div style={{ marginBottom: 14 }}>
               <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>字体</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 {[{ key: 'system', label: '系统' }, { key: 'serif', label: '衬线' }, { key: 'mono', label: '等宽' }].map(f => (
@@ -108,6 +105,22 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
                     fontSize: 12, cursor: 'pointer', fontWeight: readerSettings.fontFamily === f.key ? 700 : 400, transition: 'all 0.2s'
                   }}>
                     {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8, display: 'block' }}>内容宽度</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[{ key: 600, label: '窄' }, { key: 720, label: '标准' }, { key: 900, label: '宽' }, { key: 0, label: '全屏' }].map(w => (
+                  <button key={w.key} onClick={() => updateReader('maxWidth', w.key)} style={{
+                    flex: 1, padding: '10px', borderRadius: 'var(--radius-sm)',
+                    border: readerSettings.maxWidth === w.key ? '2px solid var(--accent)' : '2px solid var(--border)',
+                    background: 'var(--bg-card)', color: 'var(--text-primary)',
+                    fontSize: 12, cursor: 'pointer', fontWeight: readerSettings.maxWidth === w.key ? 700 : 400, transition: 'all 0.2s'
+                  }}>
+                    {w.label}
                   </button>
                 ))}
               </div>
@@ -133,7 +146,7 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontWeight: 600 }}>缓存管理</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {cacheTask ? `正在缓存: ${cacheTask.title} ${cacheTask.progress}%` : `${storageInfo.books}本 · ${storageInfo.chapters}章 · ${storageInfo.size}`}
+                {cacheTask ? `正在缓存: ${cacheTask.title} ${cacheTask.progress}%` : '管理已缓存书籍和存储空间'}
               </div>
             </div>
           </div>

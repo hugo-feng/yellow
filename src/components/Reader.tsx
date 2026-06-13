@@ -214,7 +214,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             lineHeight: settings.lineHeight,
             fontFamily: fontFamilyMap[settings.fontFamily] || fontFamilyMap.system,
             color: theme.text,
-            maxWidth: settings.maxWidth,
+            maxWidth: settings.maxWidth > 0 ? settings.maxWidth : undefined,
             margin: '0 auto',
             textAlign: 'justify',
             wordBreak: 'break-word',
@@ -283,7 +283,8 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             fontSize: 14,
             fontWeight: 700,
             cursor: hasPrev ? 'pointer' : 'default',
-            opacity: hasPrev ? 1 : 0.4
+            opacity: hasPrev ? 1 : 0.4,
+            flex: 1
           }}
           onClick={handlePrevChapter}
           disabled={!hasPrev}
@@ -300,24 +301,9 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             color: '#1a1a2e',
             fontSize: 14,
             fontWeight: 700,
-            cursor: 'pointer'
-          }}
-          onClick={() => setShowSettings(true)}
-        >
-          设置
-        </button>
-
-        <button
-          style={{
-            background: 'rgba(0,0,0,0.2)',
-            border: 'none',
-            borderRadius: 20,
-            padding: '8px 20px',
-            color: '#1a1a2e',
-            fontSize: 14,
-            fontWeight: 700,
             cursor: hasNext ? 'pointer' : 'default',
-            opacity: hasNext ? 1 : 0.4
+            opacity: hasNext ? 1 : 0.4,
+            flex: 1
           }}
           onClick={handleNextChapter}
           disabled={!hasNext}

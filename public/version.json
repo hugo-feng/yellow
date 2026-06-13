@@ -1,5 +1,5 @@
 {
-  "version": "1.5.1",
-  "description": "OTA首次检查重试修复 + 设置页阅读器设置 + 亮度/段间距控制 + 滚动条适配",
+  "version": "1.5.2",
+  "description": "Reader底栏去掉重复设置按钮 + 设置页去掉存储信息新增内容宽度选项",
   "releaseDate": "2026-06-14"
 }
