@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
-  "description": "全局全面屏安全区自适应修复 + 书籍详情页完善 + JS安全区兜底检测",
+  "version": "1.4.1",
+  "description": "OTA更新源双路回退(raw+jsDelivr CDN) + 自动检查失败提示 + HTML解析适配相对路径",
   "releaseDate": "2026-06-14"
 }
