@@ -1,7 +1,7 @@
 {
-  "version": "4.4.0",
-  "versionCode": 440,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.4.0/yellow-v4.4.0.apk",
-  "updateContent": "修复OTA下载：改用GitHub直链+添加User-Agent\nDownloadManager原生支持302重定向",
+  "version": "4.5.0",
+  "versionCode": 450,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.5.0/yellow-v4.5.0.apk",
+  "updateContent": "书籍详情页加入书架/缓存后停留不退出\n阅读界面全面屏适配(安全区背景色)\n修复字间距(text-align:left替代justify)",
   "releaseDate": "2026-06-14"
 }
