@@ -82,7 +82,6 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
           placeholder="搜索书名、作者..."
           value={query}
           onChange={e => handleSearch(e.target.value)}
-          autoFocus
         />
         {loading && (
           <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>
