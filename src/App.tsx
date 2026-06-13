@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
 import { checkForUpdates, waitSWReady, APP_VERSION, UpdateInfo } from './utils/updater'
-import AppUpdater from './plugins/AppUpdater'
+import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from './plugins/NativeDownloader'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { toast } from 'sonner'
@@ -320,36 +320,26 @@ function AppInner() {
                 disabled={downloading}
                 onClick={async () => {
                   if (downloading) return
+                  if (!isNativeDownloaderAvailable()) {
+                    showToast('下载组件未加载，请重启app')
+                    return
+                  }
                   setDownloading(true)
                   setDownloadProgress(0)
                   try {
                     const url = updateInfo.downloadUrl
-                    try {
-                      const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${updateInfo.version}.apk` })
-                      if (result.started) {
-                        const poll = setInterval(async () => {
-                          try {
-                            const p = await AppUpdater.getProgress()
-                            setDownloadProgress(p.progress)
-                            if (p.status === 'completed') {
-                              clearInterval(poll)
-                            } else if (p.status === 'failed') {
-                              clearInterval(poll)
-                              setDownloading(false)
-                              showToast('下载失败，正在打开浏览器...')
-                              setTimeout(() => window.open(url, '_system'), 500)
-                            }
-                          } catch (e) { clearInterval(poll) }
-                        }, 500)
-                      } else {
-                        setDownloading(false)
-                        window.open(url, '_system')
+                    await nativeDownload(url, `yellow-v${updateInfo.version}.apk`)
+                    const poll = setInterval(() => {
+                      const p = getNativeProgress()
+                      if (p >= 0 && p <= 100) setDownloadProgress(p)
+                      if (p === 100 || p === -1) {
+                        clearInterval(poll)
+                        if (p === -1) {
+                          setDownloading(false)
+                          showToast('下载失败')
+                        }
                       }
-                    } catch {
-                      // AppUpdater plugin not available, fall back to browser
-                      setDownloading(false)
-                      window.open(url, '_system')
-                    }
+                    }, 500)
                   } catch (e) {
                     setDownloading(false)
                     showToast('下载失败: ' + (e as Error).message)

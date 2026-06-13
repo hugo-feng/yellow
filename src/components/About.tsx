@@ -1,8 +1,13 @@
 import { useState, useCallback } from 'react'
 import { checkForUpdates, APP_VERSION } from '../utils/updater'
-import AppUpdater from '../plugins/AppUpdater'
+import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.1.0', date: '2026-06-14', changes: [
+    '修复更新下载：改用WebView原生桥接(NativeDownloader)替代失效的Capacitor插件',
+    '后台下载+进度条+下载完自动拉起系统安装界面',
+    '删除左右翻页模式(上一版本)，Reader精简到200行'
+  ]},
   { version: '4.0.0', date: '2026-06-14', changes: [
     '删除左右翻页模式，只保留上下滚动阅读（行业标准阅读方式）',
     '优化滚动体验：WebkitOverflowScrolling平滑滚动',
@@ -200,7 +205,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.0.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.1.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
@@ -229,34 +234,25 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
 
   const startDownload = useCallback(async () => {
     if (downloading || !remoteVersion) return
+    if (!isNativeDownloaderAvailable()) {
+      showToast('下载组件未加载，请重启app')
+      return
+    }
     setDownloading(true)
     setDownloadProgress(0)
     try {
-      try {
-        const result = await AppUpdater.downloadAndInstall({ url: downloadUrl, filename: `yellow-v${remoteVersion}.apk` })
-        if (result.started) {
-          const poll = setInterval(async () => {
-            try {
-              const p = await AppUpdater.getProgress()
-              setDownloadProgress(p.progress)
-              if (p.status === 'completed') {
-                clearInterval(poll)
-              } else if (p.status === 'failed') {
-                clearInterval(poll)
-                setDownloading(false)
-                showToast('下载失败，正在打开浏览器...')
-                setTimeout(() => window.open(downloadUrl, '_system'), 500)
-              }
-            } catch { clearInterval(poll) }
-          }, 500)
-        } else {
-          setDownloading(false)
-          window.open(downloadUrl, '_system')
+      await nativeDownload(downloadUrl, `yellow-v${remoteVersion}.apk`)
+      const poll = setInterval(() => {
+        const p = getNativeProgress()
+        if (p >= 0 && p <= 100) setDownloadProgress(p)
+        if (p === 100 || p === -1) {
+          clearInterval(poll)
+          if (p === -1) {
+            setDownloading(false)
+            showToast('下载失败')
+          }
         }
-      } catch {
-        setDownloading(false)
-        window.open(downloadUrl, '_system')
-      }
+      }, 500)
     } catch (e) {
       setDownloading(false)
       showToast('下载失败: ' + (e as Error).message)
