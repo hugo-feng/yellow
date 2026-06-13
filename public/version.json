@@ -1,5 +1,5 @@
 {
-  "version": "1.7.1",
-  "description": "Reader滑动翻页+底栏进度显示重新构建部署",
+  "version": "1.7.2",
+  "description": "修复OTA更新检查：fetch超时保护+错误提示可见",
   "releaseDate": "2026-06-14"
 }

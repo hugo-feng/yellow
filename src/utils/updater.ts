@@ -37,29 +37,39 @@ export function getUpdateUrl(): string {
   return activeVersionUrl || UPDATE_URLS[0]
 }
 
+function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<Response> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`请求超时(${timeoutMs / 1000}s)`)), timeoutMs)
+    fetch(url, { cache: 'no-cache' })
+      .then(resp => { clearTimeout(timer); resolve(resp) })
+      .catch(err => { clearTimeout(timer); reject(err) })
+  })
+}
+
 async function fetchWithFallback(path: string): Promise<Response> {
   if (activeBaseUrl) {
     try {
-      const resp = await fetch(`${activeBaseUrl}/${path}`, { cache: 'no-cache' })
+      const resp = await fetchWithTimeout(`${activeBaseUrl}/${path}`)
       if (resp.ok) return resp
-    } catch {}
+    } catch (e) { console.warn('[OTA] 活跃源失败:', (e as Error).message) }
   }
-  
+
   for (let attempt = 0; attempt < 3; attempt++) {
     for (const url of UPDATE_URLS) {
       try {
         const base = url.replace(/\/version\.json$/, '')
-        const resp = await fetch(`${base}/${path}`, { cache: 'no-cache' })
+        const resp = await fetchWithTimeout(`${base}/${path}`)
         if (resp.ok) {
           activeBaseUrl = base
           activeVersionUrl = `${base}/version.json`
           return resp
         }
-      } catch {}
+        console.warn(`[OTA] ${url} 响应 ${resp.status}`)
+      } catch (e) { console.warn(`[OTA] ${url} 失败:`, (e as Error).message) }
     }
     if (attempt < 2) await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
   }
-  throw new Error('所有更新源不可达')
+  throw new Error('所有更新源不可达（已重试3次）')
 }
 
 export async function checkForUpdates(updateUrl: string): Promise<{

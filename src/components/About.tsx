@@ -2,6 +2,10 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.7.2', date: '2026-06-14', changes: [
+    '修复OTA更新检查：fetch添加10秒超时保护，防止WebView中无限挂起',
+    'OTA检查失败时弹toast提示，不再静默吞错'
+  ]},
   { version: '1.7.1', date: '2026-06-14', changes: [
     '修复OTA部署：Reader滑动翻页+底栏进度显示重新构建发布'
   ]},
@@ -101,22 +105,24 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.7.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.7.2')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
     setErrorMsg('')
     setRemoteVersion(null)
+    console.log('[OTA] 开始检查更新, 当前版本:', currentVersion)
     const result = await checkForUpdates(getUpdateUrl())
+    console.log('[OTA] 检查结果:', JSON.stringify(result))
     setChecking(false)
-    if (result.error) { setErrorMsg(result.error); return }
+    if (result.error) { setErrorMsg(result.error); showToast(`检查失败: ${result.error}`); return }
     if (result.hasUpdate) {
       setRemoteVersion(result.version || null)
       setRemoteDesc(result.description || '')
     } else {
       setShowLatest(true)
     }
-  }, [showToast])
+  }, [currentVersion, showToast])
 
   const startDownload = useCallback(async () => {
     setDownloading(true)
