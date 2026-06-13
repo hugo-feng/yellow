@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.6.0', date: '2026-06-14', changes: [
+    '修复OTA下载后自动安装：添加REQUEST_INSTALL_PACKAGES权限',
+    'BroadcastReceiver改用RECEIVER_EXPORTED接收系统下载完成广播',
+    '下载完成后延迟500ms启动安装（确保JS回调处理完毕）',
+    '添加安装日志（Log.d）便于排查问题'
+  ]},
   { version: '4.5.0', date: '2026-06-14', changes: [
     '书籍详情页：加入书架/缓存后停留在详情页不退出，显示toast反馈',
     '阅读界面全面屏适配：安全区用主题背景色填充，不再遮挡状态栏和底部手势条',
@@ -227,7 +233,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.5.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.6.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

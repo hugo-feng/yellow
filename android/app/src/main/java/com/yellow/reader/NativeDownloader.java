@@ -8,16 +8,18 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.webkit.JavascriptInterface;
+import android.util.Log;
 import androidx.core.content.FileProvider;
 import java.io.File;
 
 public class NativeDownloader {
+    private static final String TAG = "NativeDownloader";
     private final Context context;
     private long downloadId = -1;
     private BroadcastReceiver downloadReceiver;
-    private String callbackName;
 
     public NativeDownloader(Context context) {
         this.context = context;
@@ -25,6 +27,8 @@ public class NativeDownloader {
 
     @JavascriptInterface
     public void download(String url, String filename) {
+        Log.d(TAG, "download: " + url);
+
         File dir = new File(context.getExternalFilesDir(null), "updates");
         if (!dir.exists()) dir.mkdirs();
         File file = new File(dir, filename);
@@ -42,6 +46,7 @@ public class NativeDownloader {
 
         DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
         downloadId = dm.enqueue(request);
+        Log.d(TAG, "download started, id=" + downloadId);
 
         if (downloadReceiver != null) {
             try { context.unregisterReceiver(downloadReceiver); } catch (Exception ignored) {}
@@ -51,6 +56,7 @@ public class NativeDownloader {
             @Override
             public void onReceive(Context ctx, Intent intent) {
                 long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                Log.d(TAG, "onReceive: downloadId=" + id + ", ourId=" + downloadId);
                 if (id != downloadId) return;
 
                 DownloadManager.Query query = new DownloadManager.Query();
@@ -60,12 +66,22 @@ public class NativeDownloader {
                 if (cursor != null && cursor.moveToFirst()) {
                     int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
                     cursor.close();
+                    Log.d(TAG, "download status=" + status);
+
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        installApk(file);
+                        Log.d(TAG, "download successful, launching install...");
                         notifyJs("completed");
+                        // Delay install to ensure JS callback is processed
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            installApk(file);
+                        }, 500);
                     } else {
+                        Log.e(TAG, "download failed, status=" + status);
                         notifyJs("failed");
                     }
+                } else {
+                    Log.e(TAG, "cursor is null or empty");
+                    notifyJs("failed");
                 }
 
                 try { context.unregisterReceiver(downloadReceiver); } catch (Exception ignored) {}
@@ -73,8 +89,9 @@ public class NativeDownloader {
             }
         };
 
+        // Use RECEIVER_EXPORTED to receive system broadcast (ACTION_DOWNLOAD_COMPLETE)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_NOT_EXPORTED);
+            context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED);
         } else {
             context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         }
@@ -106,18 +123,25 @@ public class NativeDownloader {
     }
 
     private void installApk(File file) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            Log.d(TAG, "installApk: " + file.getAbsolutePath() + " exists=" + file.exists() + " size=" + file.length());
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Uri uri = FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", file);
-            intent.setDataAndType(uri, "application/vnd.android.package-archive");
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        } else {
-            intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                Uri uri = FileProvider.getUriForFile(context, context.getPackageName() + ".fileprovider", file);
+                intent.setDataAndType(uri, "application/vnd.android.package-archive");
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } else {
+                intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+            }
+
+            context.startActivity(intent);
+            Log.d(TAG, "installApk: startActivity called");
+        } catch (Exception e) {
+            Log.e(TAG, "installApk failed", e);
         }
-
-        context.startActivity(intent);
     }
 
     private void notifyJs(String status) {
@@ -127,9 +151,13 @@ public class NativeDownloader {
                 ((MainActivity) context).runOnUiThread(() -> {
                     try {
                         ((MainActivity) context).getBridge().getWebView().evaluateJavascript(js, null);
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        Log.e(TAG, "notifyJs failed", e);
+                    }
                 });
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            Log.e(TAG, "notifyJs failed", e);
+        }
     }
 }
