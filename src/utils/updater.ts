@@ -8,13 +8,6 @@ const VERSION_URLS = [
   'https://cdn.jsdelivr.net/gh/hugo-feng/yellow@gh-pages/version.json'
 ]
 
-const APK_MIRRORS = [
-  'https://ghfast.top/',
-  'https://ghproxy.cn/',
-  'https://mirror.ghproxy.com/',
-  ''
-]
-
 export async function waitSWReady() {
   try {
     if ('serviceWorker' in navigator) {
@@ -26,13 +19,8 @@ export async function waitSWReady() {
   } catch {}
 }
 
-export async function getCurrentVersion(): Promise<string> {
-  return APP_VERSION
-}
-
-export function getApkDownloadUrls(version: string): string[] {
-  const base = `https://github.com/hugo-feng/yellow/releases/download/v${version}/yellow-v${version}.apk`
-  return APK_MIRRORS.map(m => m + base)
+export function getApkUrl(version: string): string {
+  return `https://github.com/hugo-feng/yellow/releases/download/v${version}/yellow-v${version}.apk`
 }
 
 function xhrGet(url: string, timeout = 10000): Promise<any> {
@@ -59,29 +47,6 @@ function xhrGet(url: string, timeout = 10000): Promise<any> {
     xhr.ontimeout = () => reject(new Error('超时' + timeout / 1000 + 's'))
     xhr.send()
   })
-}
-
-function xhrHead(url: string, timeout = 5000): Promise<boolean> {
-  return new Promise((resolve) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('HEAD', url, true)
-    xhr.timeout = timeout
-    xhr.onload = () => resolve(xhr.status >= 200 && xhr.status < 400)
-    xhr.onerror = () => resolve(false)
-    xhr.ontimeout = () => resolve(false)
-    xhr.send()
-  })
-}
-
-export async function findBestMirror(version: string): Promise<string> {
-  const urls = getApkDownloadUrls(version)
-  for (const url of urls) {
-    try {
-      const ok = await xhrHead(url)
-      if (ok) return url
-    } catch {}
-  }
-  return urls[urls.length - 1]
 }
 
 export async function checkForUpdates(): Promise<{

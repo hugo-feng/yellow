@@ -8,23 +8,12 @@ import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Environment;
 import androidx.core.content.FileProvider;
 import com.getcapacitor.*;
 import com.getcapacitor.annotation.CapacitorPlugin;
-import com.getcapacitor.annotation.Permission;
-import com.getcapacitor.annotation.PermissionCallback;
 import java.io.File;
 
-@CapacitorPlugin(
-    name = "AppUpdater",
-    permissions = {
-        @Permission(
-            alias = "download",
-            strings = { android.Manifest.permission.WRITE_EXTERNAL_STORAGE }
-        )
-    }
-)
+@CapacitorPlugin(name = "AppUpdater")
 public class AppUpdater extends Plugin {
     private long downloadId = -1;
     private BroadcastReceiver downloadReceiver;
@@ -53,6 +42,7 @@ public class AppUpdater extends Plugin {
         request.setDestinationInExternalFilesDir(ctx, DOWNLOAD_DIR, filename);
         request.setAllowedOverMetered(true);
         request.setAllowedOverRoaming(true);
+        request.setMimeType("application/vnd.android.package-archive");
 
         DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
         downloadId = dm.enqueue(request);
@@ -73,19 +63,9 @@ public class AppUpdater extends Plugin {
 
                 if (cursor != null && cursor.moveToFirst()) {
                     int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                    cursor.close();
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        cursor.close();
                         installApk(context, file);
-                        JSObject ret = new JSObject();
-                        ret.put("success", true);
-                        call.resolve(ret);
-                    } else {
-                        int reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
-                        cursor.close();
-                        JSObject ret = new JSObject();
-                        ret.put("success", false);
-                        ret.put("error", "Download failed, reason: " + reason);
-                        call.resolve(ret);
                     }
                 }
 
@@ -102,6 +82,7 @@ public class AppUpdater extends Plugin {
 
         JSObject ret = new JSObject();
         ret.put("started", true);
+        ret.put("downloadId", downloadId);
         call.resolve(ret);
     }
 
@@ -120,20 +101,28 @@ public class AppUpdater extends Plugin {
         query.setFilterById(downloadId);
         Cursor cursor = dm.query(query);
 
+        JSObject ret = new JSObject();
         if (cursor != null && cursor.moveToFirst()) {
             int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
             long total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
             long downloaded = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+            int reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
             cursor.close();
 
-            JSObject ret = new JSObject();
             switch (status) {
+                case DownloadManager.STATUS_PENDING:
+                    ret.put("status", "pending");
+                    ret.put("progress", 0);
+                    break;
                 case DownloadManager.STATUS_RUNNING:
-                case DownloadManager.STATUS_PAUSED:
                     ret.put("status", "downloading");
                     ret.put("progress", total > 0 ? (int) (downloaded * 100 / total) : 0);
                     ret.put("downloaded", downloaded);
                     ret.put("total", total);
+                    break;
+                case DownloadManager.STATUS_PAUSED:
+                    ret.put("status", "paused");
+                    ret.put("progress", total > 0 ? (int) (downloaded * 100 / total) : 0);
                     break;
                 case DownloadManager.STATUS_SUCCESSFUL:
                     ret.put("status", "completed");
@@ -142,18 +131,18 @@ public class AppUpdater extends Plugin {
                 case DownloadManager.STATUS_FAILED:
                     ret.put("status", "failed");
                     ret.put("progress", 0);
+                    ret.put("reason", reason);
                     break;
                 default:
-                    ret.put("status", "pending");
+                    ret.put("status", "unknown");
                     ret.put("progress", 0);
+                    ret.put("statusCode", status);
             }
-            call.resolve(ret);
         } else {
-            JSObject ret = new JSObject();
             ret.put("status", "completed");
             ret.put("progress", 100);
-            call.resolve(ret);
         }
+        call.resolve(ret);
     }
 
     private void installApk(Context context, File file) {

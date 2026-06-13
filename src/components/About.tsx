@@ -1,8 +1,13 @@
 import { useState, useCallback } from 'react'
-import { checkForUpdates, findBestMirror, APP_VERSION } from '../utils/updater'
+import { checkForUpdates, getApkUrl, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '2.0.2', date: '2026-06-14', changes: [
+    '修复下载进度不动：移除不可靠的镜像HEAD测速，直接用GitHub原链',
+    'DownloadManager原生支持HTTP重定向，自动走GitHub CDN',
+    '修复Java插件call.resolve重复调用bug，进度轮询改为500ms'
+  ]},
   { version: '2.0.1', date: '2026-06-14', changes: [
     '阅读进度：基于章节权重+滚动/翻页位置计算全书百分比',
     '翻页分页：用隐藏测量div获取真实段落高度，不再依赖字符估算',
@@ -154,7 +159,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('2.0.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('2.0.2')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
@@ -185,22 +190,22 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
     setDownloading(true)
     setDownloadProgress(0)
     try {
-      const url = await findBestMirror(remoteVersion)
+      const url = getApkUrl(remoteVersion)
       const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${remoteVersion}.apk` })
       if (result.started) {
         const poll = setInterval(async () => {
           try {
             const p = await AppUpdater.getProgress()
             setDownloadProgress(p.progress)
-            if (p.status === 'completed' || p.status === 'failed') {
+            if (p.status === 'completed') {
               clearInterval(poll)
-              if (p.status === 'failed') {
-                setDownloading(false)
-                showToast('下载失败')
-              }
+            } else if (p.status === 'failed') {
+              clearInterval(poll)
+              setDownloading(false)
+              showToast('下载失败 (code: ' + (p.reason || 'unknown') + ')')
             }
           } catch { clearInterval(poll) }
-        }, 1000)
+        }, 500)
       } else {
         setDownloading(false)
         showToast('下载启动失败')

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, Component } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
-import { getCurrentVersion, checkForUpdates, waitSWReady, APP_VERSION, findBestMirror } from './utils/updater'
+import { checkForUpdates, waitSWReady, APP_VERSION, getApkUrl } from './utils/updater'
 import AppUpdater from './plugins/AppUpdater'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import { App as CapApp } from '@capacitor/app'
@@ -322,23 +322,22 @@ function AppInner() {
                   setDownloading(true)
                   setDownloadProgress(0)
                   try {
-                    const url = await findBestMirror(updateInfo.version)
+                    const url = getApkUrl(updateInfo.version)
                     const result = await AppUpdater.downloadAndInstall({ url, filename: `yellow-v${updateInfo.version}.apk` })
                     if (result.started) {
                       const poll = setInterval(async () => {
                         try {
                           const p = await AppUpdater.getProgress()
                           setDownloadProgress(p.progress)
-                          if (p.status === 'completed' || p.status === 'failed') {
+                          if (p.status === 'completed') {
                             clearInterval(poll)
-                            if (p.status === 'failed') {
-                              setDownloading(false)
-                              showToast('下载失败，请手动安装')
-                              window.open(`https://github.com/hugo-feng/yellow/releases/tag/v${updateInfo.version}`, '_system')
-                            }
+                          } else if (p.status === 'failed') {
+                            clearInterval(poll)
+                            setDownloading(false)
+                            showToast('下载失败 (code: ' + (p.reason || 'unknown') + ')')
                           }
-                        } catch { clearInterval(poll) }
-                      }, 1000)
+                        } catch (e) { clearInterval(poll) }
+                      }, 500)
                     } else {
                       setDownloading(false)
                       showToast('下载启动失败')

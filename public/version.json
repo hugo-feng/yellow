@@ -1,5 +1,5 @@
 {
-  "version": "2.0.1",
-  "description": "阅读进度百分比+翻页DOM实测分页+滚动位置追踪",
+  "version": "2.0.2",
+  "description": "修复下载进度+移除不可靠的镜像测速+DownloadManager原生下载",
   "releaseDate": "2026-06-14"
 }
