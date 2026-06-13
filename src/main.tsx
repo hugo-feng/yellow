@@ -1,8 +1,20 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
 import { Toaster } from 'sonner'
 import './styles/index.css'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      gcTime: 30 * 60 * 1000,
+      retry: 1,
+      refetchOnWindowFocus: false,
+    }
+  }
+})
 
 // 注册 Service Worker 用于 OTA 更新拦截
 if ('serviceWorker' in navigator) {
@@ -39,7 +51,9 @@ if (document.readyState === 'loading') {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
     <Toaster position="top-center" richColors closeButton duration={2000} />
   </React.StrictMode>
 )

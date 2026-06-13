@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '4.2.0', date: '2026-06-14', changes: [
+    '发现页优化：TanStack Query缓存(10分钟新鲜+1小时GC)，页面切换不再重新加载',
+    'QueryClientProvider全局注入，所有数据请求自动缓存/去重/重试',
+    '移除左右翻页模式(上一版本)，Reader精简到200行'
+  ]},
   { version: '4.1.0', date: '2026-06-14', changes: [
     '修复更新下载：改用WebView原生桥接(NativeDownloader)替代失效的Capacitor插件',
     '后台下载+进度条+下载完自动拉起系统安装界面',
@@ -205,7 +210,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('4.1.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.2.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
