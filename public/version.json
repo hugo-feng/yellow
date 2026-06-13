@@ -1,5 +1,5 @@
 {
-  "version": "1.5.4",
-  "description": "修复设置页黑屏（旧localStorage缺少新字段导致崩溃）",
+  "version": "1.5.5",
+  "description": "启动时预热SW+2s后弹窗提示更新",
   "releaseDate": "2026-06-14"
 }

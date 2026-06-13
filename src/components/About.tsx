@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.5.5', date: '2026-06-14', changes: [
+    '启动时预热ServiceWorker，2秒后弹窗提示有新版本可更新'
+  ]},
   { version: '1.5.4', date: '2026-06-14', changes: [
     '修复设置页黑屏：旧localStorage缺少brightness/paragraphSpacing字段时用默认值兜底'
   ]},
@@ -56,7 +59,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.4')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.5')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
