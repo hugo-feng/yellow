@@ -64,6 +64,23 @@
 - minor（1.6.x→1.7.0）：新功能、UI重构
 - major（1.x.x→2.0.0）：架构变更、破坏性更新
 
+## version.json 格式（行业标准，参考 azhon/AppUpdate 2.5k stars）
+
+```json
+{
+  "version": "2.2.0",
+  "versionCode": 220,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v2.2.0/yellow-v2.2.0.apk",
+  "updateContent": "1. 更新说明\n2. 修复问题",
+  "releaseDate": "2026-06-14"
+}
+```
+
+- `version`: 语义化版本号（显示用）
+- `versionCode`: 整数版本号（比较用，递增）
+- `downloadUrl`: APK 下载链接（可随时更换 CDN 源）
+- `updateContent`: 更新描述（显示在更新弹窗中）
+
 ## 项目结构
 - React 18 + TypeScript + Vite + Capacitor Android
 - OTA 版本检查：GitHub API（`api.github.com/repos/.../contents/version.json?ref=gh-pages`），不经过 CDN 缓存
