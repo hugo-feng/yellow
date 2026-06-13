@@ -2,6 +2,9 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.2.0', date: '2026-06-13', changes: [
+    '发现页改为本地加载预缓存书籍（解决Android WebView无法访问原创网站的问题）', '预置7本小说本地缓存（JSON格式含全文）', '支持OTA远程获取新增书籍到发现页', '搜索页增加本地书籍索引搜索', '优化书籍内容加载（优先本地→OTA远程→在线书源三级回退）'
+  ]},
   { version: '1.1.0', date: '2026-06-13', changes: [
     '新增发现页：热门分类推荐、书籍卡片浏览', '暗黑/白天模式切换', '全面屏沉浸式适配', '搜索性能大幅优化（8s超时、并发提速）', '启动自动检查OTA更新并弹窗提醒', '书源增加到21个（含集书阁）'
   ]},

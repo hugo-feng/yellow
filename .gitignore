@@ -8,3 +8,5 @@ android/captures/
 android/local.properties
 *.local
 .env
+tmp/
+tsconfig.tsbuildinfo

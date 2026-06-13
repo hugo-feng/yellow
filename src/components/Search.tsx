@@ -10,16 +10,24 @@ interface Props {
   books: Book[]
 }
 
+interface LocalBookIndex {
+  id: string; title: string; author: string; sourceId: string; sourceName: string; description: string
+}
+
 export default function SearchPage({ onAddBook, onRead, showToast, books }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
-  const [activeSourceIds, setActiveSourceIds] = useState<string[]>(
-    Object.values(allSources).filter(s => s.enabled).map(s => s.id)
-  )
-  const [showSourcePicker, setShowSourcePicker] = useState(false)
   const [loadingBookId, setLoadingBookId] = useState<string | null>(null)
+  const [localIndex, setLocalIndex] = useState<LocalBookIndex[]>([])
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>()
+
+  // 加载本地书籍索引
+  useEffect(() => {
+    fetch('books/index.json').then(r => r.json()).then((data: LocalBookIndex[]) => {
+      setLocalIndex(data)
+    }).catch(() => {})
+  }, [])
 
   const handleSearch = useCallback(async (q: string) => {
     setQuery(q)
@@ -32,16 +40,49 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
 
     searchTimeout.current = setTimeout(async () => {
       setLoading(true)
-      try {
-        const res = await searchAcrossSources(q.trim(), activeSourceIds)
-        setResults(res)
-      } catch {
-        showToast('搜索失败，请检查网络')
-        setResults([])
+      const allResults: SearchResult[] = []
+      const seen = new Set<string>()
+
+      // 1. 先搜索本地预缓存书籍
+      if (localIndex.length > 0) {
+        const kw = q.trim().toLowerCase()
+        for (const book of localIndex) {
+          if (book.title.toLowerCase().includes(kw) || book.description.toLowerCase().includes(kw) || book.author.toLowerCase().includes(kw)) {
+            const key = `${book.sourceId}-${book.id}`
+            if (!seen.has(key)) {
+              seen.add(key)
+              allResults.push({
+                id: book.id,
+                title: book.title,
+                author: book.author || '未知',
+                cover: '',
+                description: book.description || '',
+                sourceId: book.sourceId,
+                sourceName: book.sourceName,
+                format: 'html',
+                downloadUrl: ''
+              })
+            }
+          }
+        }
       }
+
+      // 2. 再搜索在线书源
+      try {
+        const onlineResults = await searchAcrossSources(q.trim())
+        for (const r of onlineResults) {
+          const key = `${r.sourceId}-${r.id}`
+          if (!seen.has(key)) {
+            seen.add(key)
+            allResults.push(r)
+          }
+        }
+      } catch { /* 在线搜索失败，仅展示本地结果 */ }
+
+      setResults(allResults)
       setLoading(false)
     }, 400)
-  }, [activeSourceIds, showToast])
+  }, [localIndex])
 
   const handleAddOrRead = useCallback(async (result: SearchResult) => {
     const existing = books.find(b => b.id === result.id && b.sourceId === result.sourceId)
@@ -52,6 +93,78 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
 
     setLoadingBookId(result.id)
     try {
+      // 检查是否为本地预缓存书籍
+      if (result.sourceId === 'jisge' || result.sourceId === '') {
+        try {
+          const localResp = await fetch(`books/${result.id}.json`)
+          if (localResp.ok) {
+            const bookData = await localResp.json()
+            const book: Book = {
+              id: bookData.id || result.id,
+              title: bookData.title || result.title,
+              author: bookData.author || result.author || '未知',
+              cover: bookData.cover || '',
+              description: bookData.description || result.description || '',
+              sourceId: bookData.sourceId || result.sourceId || 'jisge',
+              sourceName: bookData.sourceName || result.sourceName || '集书阁',
+              format: 'html',
+              downloadUrl: bookData.chapters?.[0]?.url || '',
+              chapters: (bookData.chapters || []).map((ch: any, i: number) => ({
+                id: ch.id || `${result.id}-ch-${i}`,
+                title: ch.title || '正文',
+                index: i,
+                url: ch.url || '',
+                content: ch.content || '',
+                cached: false
+              })),
+              cached: false
+            }
+            await saveBook(book)
+            onAddBook(book)
+            showToast(`已添加：${book.title}`)
+            setLoadingBookId(null)
+            return
+          }
+        } catch { /* 本地没有，尝试远程OTA */ }
+
+        // 尝试远程OTA
+        try {
+          const remoteResp = await fetch(`https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/books/${result.id}.json`, {
+            signal: AbortSignal.timeout(8000),
+            cache: 'no-cache'
+          })
+          if (remoteResp.ok) {
+            const bookData = await remoteResp.json()
+            const book: Book = {
+              id: bookData.id || result.id,
+              title: bookData.title || result.title,
+              author: bookData.author || result.author || '未知',
+              cover: bookData.cover || '',
+              description: bookData.description || result.description || '',
+              sourceId: bookData.sourceId || result.sourceId || 'jisge',
+              sourceName: bookData.sourceName || result.sourceName || '集书阁',
+              format: 'html',
+              downloadUrl: bookData.chapters?.[0]?.url || '',
+              chapters: (bookData.chapters || []).map((ch: any, i: number) => ({
+                id: ch.id || `${result.id}-ch-${i}`,
+                title: ch.title || '正文',
+                index: i,
+                url: ch.url || '',
+                content: ch.content || '',
+                cached: false
+              })),
+              cached: false
+            }
+            await saveBook(book)
+            onAddBook(book)
+            showToast(`已添加：${book.title}`)
+            setLoadingBookId(null)
+            return
+          }
+        } catch { /* OTA 也失败 */ }
+      }
+
+      // 回退到在线书源加载
       const book = await getBookContent(result.id, result.sourceId)
       await saveBook(book)
       onAddBook(book)
@@ -61,17 +174,6 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
     }
     setLoadingBookId(null)
   }, [books, onAddBook, onRead, showToast])
-
-  const toggleSource = useCallback((sourceId: string) => {
-    setActiveSourceIds(prev =>
-      prev.includes(sourceId)
-        ? prev.filter(id => id !== sourceId)
-        : [...prev, sourceId]
-    )
-    if (query.trim()) {
-      handleSearch(query)
-    }
-  }, [query, handleSearch])
 
   return (
     <div style={{ padding: 12 }}>
@@ -90,21 +192,11 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>书源：</span>
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={() => setShowSourcePicker(true)}
-          style={{ fontSize: 12 }}
-        >
-          {activeSourceIds.length} 个源已选
-        </button>
-        {activeSourceIds.map(id => (
-          <span key={id} className="badge" style={{ fontSize: 10 }}>
-            {getSourceName(id)}
-          </span>
-        ))}
-      </div>
+      {localIndex.length > 0 && (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, padding: '0 4px' }}>
+          {localIndex.length} 本本地缓存 · 21 个在线书源
+        </div>
+      )}
 
       {results.length > 0 && (
         <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, padding: '0 4px' }}>
@@ -119,7 +211,7 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
             <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <h3>搜索你喜欢的书</h3>
-          <p style={{ marginTop: 4, fontSize: 13 }}>支持 Project Gutenberg 和 Open Library</p>
+          <p style={{ marginTop: 4, fontSize: 13 }}>支持本地缓存书籍和在线书源搜索</p>
         </div>
       )}
 
@@ -141,7 +233,7 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
       {!loading && query.trim() && results.length === 0 && (
         <div className="empty-state" style={{ paddingTop: 40 }}>
           <h3>未找到相关书籍</h3>
-          <p style={{ marginTop: 4, fontSize: 13 }}>试试更换搜索词或切换书源</p>
+          <p style={{ marginTop: 4, fontSize: 13 }}>试试更换搜索词或检查网络连接</p>
         </div>
       )}
 
@@ -149,6 +241,7 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {results.map((result, idx) => {
             const isAdded = books.some(b => b.id === result.id && b.sourceId === result.sourceId)
+            const isLocal = result.sourceId === 'jisge'
             return (
               <div
                 key={`${result.sourceId}-${result.id}`}
@@ -191,6 +284,11 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
                     <span className="badge" style={{ fontSize: 10 }}>
                       {result.sourceName}
                     </span>
+                    {isLocal && (
+                      <span className="badge" style={{ background: 'rgba(76,175,132,0.15)', color: 'var(--success)', fontSize: 10 }}>
+                        离线可读
+                      </span>
+                    )}
                     {isAdded && (
                       <span className="badge" style={{ background: 'rgba(76,175,132,0.15)', color: 'var(--success)', fontSize: 10 }}>
                         已添加
@@ -212,65 +310,6 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
               </div>
             )
           })}
-        </div>
-      )}
-
-      {showSourcePicker && (
-        <div className="modal-overlay" onClick={() => setShowSourcePicker(false)}>
-          <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()}>
-            <div className="modal-handle" />
-            <h3 style={{ fontSize: 16, marginBottom: 14, color: 'var(--accent)' }}>选择书源</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {Object.values(allSources).map(source => (
-                <div
-                  key={source.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '14px 16px',
-                    background: activeSourceIds.includes(source.id) ? 'var(--bg-hover)' : 'var(--bg-card)',
-                    borderRadius: 'var(--radius-sm)',
-                    cursor: 'pointer',
-                    border: activeSourceIds.includes(source.id) ? '1px solid var(--accent)' : '1px solid var(--border)',
-                    transition: 'all 0.2s'
-                  }}
-                  onClick={() => toggleSource(source.id)}
-                >
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>{source.name}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{source.baseUrl}</div>
-                  </div>
-                  <div
-                    style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: 11,
-                      background: activeSourceIds.includes(source.id) ? 'var(--accent)' : 'var(--bg-input)',
-                      border: activeSourceIds.includes(source.id) ? 'none' : '2px solid var(--border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    {activeSourceIds.includes(source.id) && (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1a1a2e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button
-              className="btn btn-primary btn-block"
-              style={{ marginTop: 16 }}
-              onClick={() => setShowSourcePicker(false)}
-            >
-              确定
-            </button>
-          </div>
         </div>
       )}
     </div>

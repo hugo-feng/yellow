@@ -20,7 +20,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
   --tab-height: 64px;
-  --header-height: 56px;
+  --header-height: 44px;
 }
 
 .theme-light {
@@ -102,9 +102,10 @@ body {
 }
 
 .header {
-  height: calc(var(--header-height) + var(--safe-top));
+  height: var(--header-height);
+  padding-top: var(--safe-top);
   display: flex; align-items: center;
-  padding: var(--safe-top) 16px 0;
+  padding-left: 16px; padding-right: 16px;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0; z-index: 10;
