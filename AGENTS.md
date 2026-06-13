@@ -26,10 +26,14 @@
 部署完必须验证 gh-pages 确实更新了，不能只看 `Published` 输出：
 
 1. `git fetch origin gh-pages && git show origin/gh-pages:version.json` — 确认版本号是刚部署的
-2. 如版本号不对，重新执行 `npx gh-pages -d dist --dotfiles` 再验证
-3. 验证通过后才执行 git commit/tag/push
+2. 验证 Pages 构建成功：`gh run list --limit 3` — 确认 `pages build and deployment` 为 success
+3. 如版本号不对，重新执行 `npx gh-pages -d dist --dotfiles` 再验证
+4. 验证通过后才执行 git commit/tag/push
 
-常见坑：`gh-pages` 命令输出 `Published` 但实际没更新文件（可能是 dist/ 未清理、缓存、或并发部署冲突）。
+常见坑：
+- `gh-pages` 命令输出 `Published` 但实际没更新文件（可能是 dist/ 未清理、缓存、或并发部署冲突）
+- `public/.nojekyll` 文件必须存在，否则 GitHub Pages 用 Jekyll 构建会失败
+- Pages 配置必须为 `gh-pages` 分支 + `/` 根目录（不是 `/docs`）
 
 ## 版本管理（强制，每次迭代必做）
 每次代码改动必须同步更新以下三处，不得遗漏：
