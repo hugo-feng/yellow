@@ -1,7 +1,7 @@
 {
-  "version": "3.1.0",
-  "versionCode": 310,
-  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v3.1.0/yellow-v3.1.0.apk",
-  "updateContent": "翻页重写：overflow:hidden+translateY（中文阅读器标准方案）\n文本保持垂直排列，通过translateY翻动视口",
+  "version": "3.2.0",
+  "versionCode": 320,
+  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v3.2.0/yellow-v3.2.0.apk",
+  "updateContent": "翻页彻底重构：offsetHeight累加分页算法\n用offsetTop定位（不受transform影响）\n修复getBoundingClientRect在translateY下测量错误",
   "releaseDate": "2026-06-14"
 }
