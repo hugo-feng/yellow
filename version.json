@@ -1,7 +1,7 @@
 {
-  "version": "4.9.1",
-  "versionCode": 491,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v4.9.1/yellow-v4.9.1.apk",
-  "updateContent": "测试版本：验证OTA更新+缓存清除+自动安装全流程",
+  "version": "5.0.0",
+  "versionCode": 500,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.0.0/yellow-v5.0.0.apk",
+  "updateContent": "彻底修复更新后显示旧版本：移除ServiceWorker，启动时清除旧缓存",
   "releaseDate": "2026-06-14"
 }
