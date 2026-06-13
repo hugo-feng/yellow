@@ -1,5 +1,5 @@
 {
-  "version": "1.5.7",
-  "description": "OTA检查等SW就绪再发请求+jsDelivr优先+版本读取同步",
+  "version": "1.6.0",
+  "description": "设置页重构：全局设置替代阅读设置（深色模式/自动更新/缓存管理/清除数据/设备信息）",
   "releaseDate": "2026-06-14"
 }

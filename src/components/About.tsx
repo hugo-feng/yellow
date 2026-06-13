@@ -2,6 +2,11 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.6.0', date: '2026-06-14', changes: [
+    '设置页重构：去掉阅读设置（保留在阅读界面右上角），改为全局设置',
+    '新增：自动检查更新开关、刷新页面、清除所有数据、设备信息',
+    '设置项分组展示（通用/存储/关于）+ iOS风格列表样式'
+  ]},
   { version: '1.5.7', date: '2026-06-14', changes: [
     'OTA检查等待ServiceWorker就绪后再发请求（不再首次失败）', 'jsDelivr CDN优先（国内更稳定）', '版本号读取与SW就绪同步'
   ]},
@@ -66,7 +71,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteVersion, setRemoteVersion] = useState<string | null>(null)
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.5.7')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
