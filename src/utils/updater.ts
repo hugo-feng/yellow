@@ -27,7 +27,7 @@ async function fetchWithFallback(path: string): Promise<Response> {
   // 如果有已探测成功的 URL，直接用
   if (activeBaseUrl) {
     try {
-      const resp = await fetch(`${activeBaseUrl}/${path}`)
+      const resp = await fetch(`${activeBaseUrl}/${path}`, { cache: 'no-cache' })
       if (resp.ok) return resp
     } catch {}
   }
@@ -39,7 +39,7 @@ async function fetchWithFallback(path: string): Promise<Response> {
       const fullUrl = `${base}/${path}`
       const ctrl = new AbortController()
       const tm = setTimeout(() => ctrl.abort(), 8000)
-      const resp = await fetch(fullUrl, { signal: ctrl.signal })
+      const resp = await fetch(fullUrl, { signal: ctrl.signal, cache: 'no-cache' })
       clearTimeout(tm)
       if (resp.ok) {
         activeBaseUrl = base
