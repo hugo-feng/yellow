@@ -2,6 +2,11 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, getUpdateUrl } from '../utils/updater'
 
 const changelog = [
+  { version: '1.6.6', date: '2026-06-14', changes: [
+    '彻查清理垃圾代码：删除scripts/爬虫脚本、占位书籍、无用组件、临时文件',
+    '修复db.ts未使用导入，index.json移除无效书籍条目',
+    '重建APK确保版本号正确'
+  ]},
   { version: '1.6.5', date: '2026-06-14', changes: [
     '修复系统右滑返回：cap sync注册@capacitor/app插件（capacitor.plugins.json为空导致插件未加载）',
     '重新构建APK，删除设置页刷新按钮，OTA更新时清理旧缓存'
@@ -88,7 +93,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.5')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.6.6')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

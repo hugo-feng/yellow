@@ -1,4 +1,4 @@
-import type { Book, BookSource, Chapter, ReadingProgress, SearchResult } from '../types'
+import type { Book, Chapter, ReadingProgress } from '../types'
 
 const BOOKS_STORE = 'books'
 const CHAPTERS_STORE = 'chapters'
