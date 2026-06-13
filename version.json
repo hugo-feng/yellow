@@ -1,5 +1,5 @@
 {
-  "version": "1.9.6",
-  "description": "OTA修复: GitHub raw优先(jsDelivr缓存过期)",
+  "version": "1.9.7",
+  "description": "OTA终极修复: GitHub API获取版本(绕过CDN缓存)",
   "releaseDate": "2026-06-14"
 }
