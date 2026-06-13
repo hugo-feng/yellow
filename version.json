@@ -1,5 +1,5 @@
 {
-  "version": "1.9.5",
-  "description": "Reader彻底重写: 翻页/滚动模式完全分离",
+  "version": "1.9.6",
+  "description": "OTA修复: GitHub raw优先(jsDelivr缓存过期)",
   "releaseDate": "2026-06-14"
 }
