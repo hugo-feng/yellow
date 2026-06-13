@@ -1,5 +1,5 @@
 {
-  "version": "1.6.4",
-  "description": "删除刷新页面按钮+OTA更新时清理旧缓存防止版本倒退",
+  "version": "1.6.5",
+  "description": "修复系统右滑返回（cap sync注册@capacitor/app插件）+ 重新构建APK",
   "releaseDate": "2026-06-14"
 }
