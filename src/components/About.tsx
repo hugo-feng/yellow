@@ -2,6 +2,12 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, APP_VERSION } from '../utils/updater'
 
 const changelog = [
+  { version: '1.9.5', date: '2026-06-14', changes: [
+    'Reader彻底重写：翻页模式和滚动模式完全分离，不再共用容器',
+    '翻页模式：overflow:hidden + translateX滑动 + 字符估算分页',
+    '滚动模式：overflow:auto 正常上下滚动',
+    '切换模式时容器属性完全切换，不再互相干扰'
+  ]},
   { version: '1.9.4', date: '2026-06-14', changes: [
     'OTA根治：版本化SW缓存（activate清除旧缓存）+ 纯XHR检查 + 启动清理',
     '安装新版本后自动清除旧缓存，保留用户设置',
@@ -121,7 +127,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.4')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.5')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
