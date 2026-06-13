@@ -1,7 +1,7 @@
 {
-  "version": "3.3.0",
-  "versionCode": 330,
-  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v3.3.0/yellow-v3.3.0.apk",
-  "updateContent": "修复更新下载：AppUpdater插件不可用时自动回退到系统浏览器下载",
+  "version": "4.0.0",
+  "versionCode": 400,
+  "downloadUrl": "https://ghfast.top/https://github.com/hugo-feng/yellow/releases/download/v4.0.0/yellow-v4.0.0.apk",
+  "updateContent": "删除左右翻页模式，只保留上下滚动阅读\n优化滚动体验+章节切换滚动位置恢复\n删除翻页模式设置项",
   "releaseDate": "2026-06-14"
 }

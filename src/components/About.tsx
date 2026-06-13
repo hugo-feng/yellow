@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import AppUpdater from '../plugins/AppUpdater'
 
 const changelog = [
+  { version: '4.0.0', date: '2026-06-14', changes: [
+    '删除左右翻页模式，只保留上下滚动阅读（行业标准阅读方式）',
+    '优化滚动体验：WebkitOverflowScrolling平滑滚动',
+    '章节切换时自动恢复滚动位置',
+    '删除翻页模式设置项，简化阅读设置面板',
+    'Reader组件从400行精简到200行'
+  ]},
   { version: '3.3.0', date: '2026-06-14', changes: [
     '修复更新下载：AppUpdater插件不可用时自动回退到系统浏览器下载APK',
     '解决"AppUpdater plugin is not implemented on Android"错误'
@@ -193,7 +200,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('3.3.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('4.0.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
