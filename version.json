@@ -1,7 +1,7 @@
 {
-  "version": "5.0.0",
-  "versionCode": 500,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.0.0/yellow-v5.0.0.apk",
-  "updateContent": "彻底修复更新后显示旧版本：移除ServiceWorker，启动时清除旧缓存",
+  "version": "5.0.1",
+  "versionCode": 501,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.0.1/yellow-v5.0.1.apk",
+  "updateContent": "修复加入书架后重启丢失：handleAddBook添加saveBook持久化",
   "releaseDate": "2026-06-14"
 }
