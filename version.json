@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
-  "description": "新增发现页、暗黑模式、全面屏适配、搜索加速",
+  "version": "1.2.0",
+  "description": "预缓存7本在线书籍 + 发现页本地加载 + OTA书籍扩展 + 搜索优化",
   "releaseDate": "2026-06-13"
 }

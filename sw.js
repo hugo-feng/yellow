@@ -12,7 +12,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url)
   
   // 只拦截应用自身的资源请求
-  if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('.html') || url.pathname.includes('/assets/') || url.pathname === '/version.json') {
+  if (url.pathname === '/' || url.pathname === '/index.html' || url.pathname.endsWith('.html') || url.pathname.includes('/assets/') || url.pathname.includes('/books/') || url.pathname === '/version.json') {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
         // 对根路径也尝试匹配 index.html
