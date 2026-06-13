@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { checkForUpdates, getCurrentVersion, getUpdateUrl } from '../utils/updater'
+import { checkForUpdates, downloadAndApply, getCurrentVersion, getUpdateUrl } from '../utils/updater'
 
 interface Props {
   showToast: (msg: string) => void
@@ -42,27 +42,16 @@ export default function UpdateChecker({ showToast, currentVersion }: Props) {
 
   const startDownload = useCallback(async () => {
     setDownloading(true)
-    const downloadZipUrl = getUpdateUrl().replace('version.json', 'update.zip')
-    try {
-      const response = await fetch(downloadZipUrl)
-      if (!response.ok) throw new Error(`下载失败 (${response.status})`)
-      const blob = await response.blob()
-
-      // 使用 Cache API 缓存更新包
-      if ('caches' in window) {
-        const cache = await caches.open('yellow-update-cache')
-        await cache.put('/update-pending', new Response(blob))
-        showToast('更新已就绪，重启应用后生效')
-        setTimeout(() => window.location.reload(), 2000)
-      } else {
-        throw new Error('浏览器不支持 Cache API')
-      }
-    } catch (err: any) {
-      setErrorMsg(err.message || '下载失败')
+    const url = getUpdateUrl()
+    const result = await downloadAndApply(url)
+    if (result.success) {
+      showToast('更新已就绪，重启应用后生效')
+      setTimeout(() => window.location.reload(), 2000)
+    } else {
+      setErrorMsg(result.error || '下载失败')
       showToast('更新失败')
-    } finally {
-      setDownloading(false)
     }
+    setDownloading(false)
   }, [showToast])
 
   const hasUpdate = remoteVersion !== null

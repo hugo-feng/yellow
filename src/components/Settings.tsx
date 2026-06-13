@@ -57,7 +57,7 @@ export default function Settings({ books, showToast }: Props) {
             <input
               className="input"
               type="text"
-              placeholder="https://yourname.github.io/yellow/version.json"
+              placeholder="https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/version.json"
               value={updateServerUrl}
               onChange={e => setUpdateServerUrl(e.target.value)}
               style={{ flex: 1, fontSize: 13 }}
@@ -70,7 +70,7 @@ export default function Settings({ books, showToast }: Props) {
             </button>
           </div>
           <div style={{ marginTop: 8, fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            使用说明：每次发布新版本后，将 dist 目录和 version.json 上传到静态服务器，旧版 App 即可检测并下载更新，无需重新安装 APK。
+            默认使用 raw.githubusercontent.com（国内可访问）。每次 push 代码后 CI 自动更新 gh-pages 分支，App 即可检测。
           </div>
         </div>
       </div>
