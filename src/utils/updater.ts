@@ -37,7 +37,10 @@ function xhrGet(url: string, timeout = 10000): Promise<any> {
         try {
           const data = JSON.parse(xhr.responseText)
           if (data.content && data.encoding === 'base64') {
-            resolve(JSON.parse(atob(data.content.replace(/\s/g, ''))))
+            const binary = atob(data.content.replace(/\s/g, ''))
+            const bytes = new Uint8Array(binary.length)
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+            resolve(JSON.parse(new TextDecoder('utf-8').decode(bytes)))
           } else {
             resolve(data)
           }
@@ -70,29 +73,12 @@ export async function checkForUpdates(): Promise<{
   return { hasUpdate: false, error: '更新源不可达: ' + errors.join(', ') }
 }
 
+export function getDownloadUrl(version: string): string {
+  return `https://github.com/hugo-feng/yellow/releases/tag/v${version}`
+}
+
 export async function downloadAndApply(): Promise<{ success: boolean; error?: string }> {
-  try {
-    const htmlUrl = 'https://raw.githubusercontent.com/hugo-feng/yellow/gh-pages/index.html?_t=' + Date.now()
-    const xhr = new XMLHttpRequest()
-    xhr.open('GET', htmlUrl, true)
-    xhr.timeout = 15000
-    const html = await new Promise<string>((resolve, reject) => {
-      xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.responseText) : reject(new Error('HTTP ' + xhr.status))
-      xhr.onerror = () => reject(new Error('网络错误'))
-      xhr.ontimeout = () => reject(new Error('超时'))
-      xhr.send()
-    })
-
-    if ('caches' in window) {
-      const cache = await caches.open('yellow-' + APP_VERSION)
-      await cache.put('/index.html', new Response(html, { headers: { 'Content-Type': 'text/html' } }))
-      localStorage.setItem('yellow-update-pending', 'true')
-    }
-
-    return { success: true }
-  } catch (err: any) {
-    return { success: false, error: err.message }
-  }
+  return { success: false, error: '请从 GitHub Release 下载 APK 安装' }
 }
 
 function compareVersions(v1: string, v2: string): number {

@@ -73,6 +73,7 @@ function AppInner() {
   useEffect(() => {
     loadBooks()
     setCurrentVersion(APP_VERSION)
+    localStorage.removeItem('yellow-update-pending')
 
     if ('caches' in window) {
       caches.keys().then(keys => {
@@ -299,8 +300,8 @@ function AppInner() {
               <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowUpdateModal(false)}>稍后提醒</button>
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => { 
                 setShowUpdateModal(false)
-                setShowAbout(true)
-              }}>查看详情</button>
+                window.open(`https://github.com/hugo-feng/yellow/releases/tag/v${updateInfo.version}`, '_system')
+              }}>去下载</button>
             </div>
           </div>
         </div>

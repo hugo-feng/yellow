@@ -2,6 +2,11 @@ import { useState, useCallback } from 'react'
 import { checkForUpdates, downloadAndApply, APP_VERSION } from '../utils/updater'
 
 const changelog = [
+  { version: '1.9.9', date: '2026-06-14', changes: [
+    '更新机制改为跳转GitHub Release下载APK（OTA热更新在SW架构下不可靠）',
+    '修复更新描述乱码：GitHub API base64中文UTF-8解码',
+    '修复重启后重复弹更新：启动时清除update-pending标记'
+  ]},
   { version: '1.9.8', date: '2026-06-14', changes: [
     '修复翻页分页：中文字符宽度从0.55修正为0.95，扣除padding计算可用高度'
   ]},
@@ -136,7 +141,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.8')
+  const [expandedVer, setExpandedVer] = useState<string | null>('1.9.9')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
@@ -162,21 +167,9 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
     }
   }, [showToast])
 
-  const startDownload = useCallback(async () => {
-    setDownloading(true)
-    const result = await downloadAndApply()
-    if (result.success) {
-      if (onOtaSuccess) {
-        onOtaSuccess(remoteVersion || '')
-      } else {
-        showToast('更新已就绪，即将重启...')
-        setTimeout(() => window.location.reload(), 2000)
-      }
-    } else {
-      setErrorMsg(result.error || '下载失败')
-    }
-    setDownloading(false)
-  }, [showToast, onOtaSuccess, remoteVersion])
+  const startDownload = useCallback(() => {
+    window.open(`https://github.com/hugo-feng/yellow/releases/tag/v${remoteVersion}`, '_system')
+  }, [remoteVersion])
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
