@@ -7,7 +7,7 @@ const changelog = [
     '翻页彻底重写：overflow:hidden+translateY（中文阅读器标准方案）',
     '文本保持正常垂直排列，通过translateY(-offset)翻动视口显示当前页',
     'DOM实测分页：遍历段落getBoundingClientRect计算真实分页点',
-    '滑动手势：水平位移同时跟随手指，松手后snap到目标页'
+    '下载链接改用ghfast.top国内镜像代理（解决GitHub下载失败）'
   ]},
   { version: '3.0.0', date: '2026-06-14', changes: [
     '行业标准重构：集成Dexie.js(12k⭐)/sonner(19k⭐)/react-error-boundary(7k⭐)/DOMPurify(14k⭐)',
