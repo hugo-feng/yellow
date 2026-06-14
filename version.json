@@ -1,7 +1,7 @@
 {
-  "version": "5.18.0",
-  "versionCode": 5180,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.18.0/yellow-v5.18.0.apk",
-  "updateContent": "下载更新后显示安装按钮，避免误触导致无法安装\n可多次点击安装按钮重试安装",
+  "version": "5.19.0",
+  "versionCode": 5190,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.19.0/yellow-v5.19.0.apk",
+  "updateContent": "恢复下载后自动安装+保留手动安装按钮\n修复注册失败（只插入必需字段）\n二级页面返回主界面增加退出动画\n迭代日志大版本(x.0.0)标金色边框",
   "releaseDate": "2026-06-15"
 }
