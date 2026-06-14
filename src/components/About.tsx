@@ -3,6 +3,9 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.9.8', date: '2026-06-15', changes: [
+    '应用图标：纯黑背景+白色Yellow居中+Impact方正字体+去掉READER'
+  ]},
   { version: '5.9.7', date: '2026-06-15', changes: [
     '应用图标：Yellow字样缩小一倍+READER副标题+渐变装饰线',
     '彻查底部遮挡：根因是内层div height:100%吃掉padding-bottom，已移除',
@@ -400,7 +403,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.7')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.8')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

@@ -10,23 +10,14 @@ const sizes = {
 };
 
 function makeSvg(size, round) {
-  const rx = round ? size / 2 : size * 0.2;
+  const rxAttr = round ? '' : `rx="${size * 0.2}"`;
   const clip = round ? `<clipPath id="c"><circle cx="${size/2}" cy="${size/2}" r="${size/2}"/></clipPath><g clip-path="url(#c)">` : '';
   const clipEnd = round ? '</g>' : '';
-  const rxAttr = round ? '' : `rx="${size * 0.2}"`;
-  
+
   return `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#f5d060"/>
-        <stop offset="100%" stop-color="#c89030"/>
-      </linearGradient>
-    </defs>
     ${clip}
-    <rect width="${size}" height="${size}" ${rxAttr} fill="white"/>
-    <text x="${size/2}" y="${size * 0.42}" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="${size * 0.18}" fill="url(#g)" letter-spacing="${-size * 0.005}">Yellow</text>
-    <rect x="${size * 0.3}" y="${size * 0.5}" width="${size * 0.4}" height="${size * 0.025}" rx="${size * 0.0125}" fill="#f0c040" opacity="0.5"/>
-    <text x="${size/2}" y="${size * 0.7}" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="400" font-size="${size * 0.1}" fill="#c89030" opacity="0.6">READER</text>
+    <rect width="${size}" height="${size}" ${rxAttr} fill="#000000"/>
+    <text x="${size/2}" y="${size * 0.55}" text-anchor="middle" dominant-baseline="central" font-family="Impact,Arial Black,Haettenschweiler,'Arial Narrow Bold',sans-serif" font-weight="900" font-size="${size * 0.28}" fill="#FFFFFF" letter-spacing="${size * 0.02}">Yellow</text>
     ${clipEnd}
   </svg>`;
 }
@@ -34,7 +25,7 @@ function makeSvg(size, round) {
 async function generate() {
   for (const [dir, size] of Object.entries(sizes)) {
     const base = path.join('android/app/src/main/res', dir);
-    
+
     const svg1 = makeSvg(size, false);
     await sharp(Buffer.from(svg1)).png().toFile(path.join(base, 'ic_launcher.png'));
     console.log(`Generated ${dir}/ic_launcher.png (${size}x${size})`);
