@@ -1,7 +1,7 @@
 {
-  "version": "5.7.1",
-  "versionCode": 571,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.7.1/yellow-v5.7.1.apk",
-  "updateContent": "修复移动数据下载失败+下载失败弹窗保留+浏览器下载兜底",
+  "version": "5.7.2",
+  "versionCode": 572,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.7.2/yellow-v5.7.2.apk",
+  "updateContent": "修复键盘弹出底栏上移+扩大二级页面顶部安全区",
   "releaseDate": "2026-06-14"
 }
