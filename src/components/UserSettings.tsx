@@ -31,9 +31,11 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
         if (prog) progressList.push(prog)
       }
       const settings = localStorage.getItem('reader-settings')
+      const theme = localStorage.getItem('theme') || 'light'
       const { error } = await uploadToCloud({
         books: allBooks, progress: progressList,
         readerSettings: settings ? JSON.parse(settings) : null,
+        theme,
         syncedAt: new Date().toISOString()
       })
       if (!error) {
@@ -54,6 +56,10 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     for (const book of data.books) await saveBook(book)
     for (const p of data.progress) await saveProgress(p)
     if (data.readerSettings) localStorage.setItem('reader-settings', JSON.stringify(data.readerSettings))
+    if (data.theme) {
+      localStorage.setItem('theme', data.theme)
+      document.documentElement.className = `theme-${data.theme}`
+    }
     onSyncComplete(await getAllBooks())
     return true
   }, [onSyncComplete])

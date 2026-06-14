@@ -12,6 +12,7 @@ export interface SyncData {
   books: any[]
   progress: any[]
   readerSettings: any
+  theme?: string
   syncedAt: string
 }
 
@@ -112,6 +113,7 @@ export async function uploadToCloud(data: SyncData): Promise<{ error?: string }>
     books: data.books,
     progress: data.progress,
     reader_settings: data.readerSettings,
+    theme: data.theme || 'light',
     synced_at: new Date().toISOString()
   }).eq('id', profile.userId)
 
@@ -124,7 +126,7 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
   if (!profile) return { error: '未登录' }
 
   const { data, error } = await supabase.from('yellow_users')
-    .select('books, progress, reader_settings, synced_at')
+    .select('books, progress, reader_settings, theme, synced_at')
     .eq('id', profile.userId)
     .single()
 
@@ -136,6 +138,7 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
       books: data.books || [],
       progress: data.progress || [],
       readerSettings: data.reader_settings,
+      theme: data.theme || 'light',
       syncedAt: data.synced_at
     }
   }

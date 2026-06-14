@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.9.0', date: '2026-06-14', changes: [
+    '默认光明模式（首次安装不再强制暗黑）',
+    '主题设置同步到云端（备份/恢复时包含暗黑模式开关）',
+    'Tab切换不重新渲染（去掉key={activeTab}，避免书架/发现页每次切换刷新）',
+    '需在Supabase执行: ALTER TABLE yellow_users ADD COLUMN IF NOT EXISTS theme text'
+  ]},
   { version: '5.8.7', date: '2026-06-14', changes: [
     'toast弹窗大幅下移：CSS覆盖sonner默认位置(距顶部108px)',
     '搜索页键盘防抖：100dvh+transform:translateY(0)防止底栏被顶起',
@@ -354,7 +360,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.7')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

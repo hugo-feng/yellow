@@ -266,7 +266,7 @@ function AppInner() {
         <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--text-muted)' }}>v{currentVersion}</span>
       </div>
 
-      <div className="page-content fade-in" key={activeTab}>
+      <div className="page-content">
         {activeTab === 'discover' && (
           <Discover onViewDetail={setDetailBook} showToast={showToast} books={books} />
         )}
