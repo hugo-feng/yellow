@@ -1,7 +1,7 @@
 {
-  "version": "5.16.0",
-  "versionCode": 5160,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.16.0/yellow-v5.16.0.apk",
-  "updateContent": "修复昵称修改后无法登录的严重bug\n头像更新改为选择后确认\n下载超时改为15秒\n昵称重复检查\n搜索页添加书籍后直接查看详情\n邀请码可重新激活\n删除13本无内容测试书籍",
+  "version": "5.17.0",
+  "versionCode": 5170,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.17.0/yellow-v5.17.0.apk",
+  "updateContent": "修复注册失败bug（移除avatar_index列依赖）\n头像扩展至60个+滚动选择+X关闭按钮\n昵称不能改回当前昵称\n注册时间精确到秒\n当前昵称缩进修复",
   "releaseDate": "2026-06-15"
 }

@@ -68,7 +68,6 @@ export async function register(nickname: string, password: string, inviteCodeAct
     nickname,
     password_hash: passwordHash,
     avatar_color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    avatar_index: 0,
     books: [],
     progress: [],
     invite_code_activated: inviteCodeActivated || false,

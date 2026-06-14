@@ -3,7 +3,14 @@ import { getStoredProfile, storeProfile, changeNickname, changePassword, updateA
 import { hasInviteCode, setInviteCode, isInviteCodeValid } from '../utils/invite'
 import { getAllBooks, getProgress } from '../utils/db'
 
-const AVATARS = ['🐉', '🦅', '🐺', '🦁', '🐯', '🦈', '🐙', '🦂', '🦖', '👻', '🤖', '👽', '🦊', '🐲', '🦋']
+const AVATARS = [
+  '🐉','🦅','🐺','🦁','🐯','🦈','🐙','🦂','🦖','👻',
+  '🤖','👽','🦊','🐲','🦋','🦇','🕷️','🐍','🐊','🐢',
+  '🦎','🦑','🦐','🦀','🐬','🐳','🐋','🐆','🐅','🐃',
+  '🦌','🐪','🐫','🦙','🦒','🐘','🦏','🦛','🐓','🦃',
+  '🦅','🐧','🦚','🦜','🦢','🦩','🐝','🐛','🐌','🐜',
+  '🐞','🦗','🪲','🪳','🦟','🪰','🪱','🦠','💀','🎃'
+]
 
 interface Props {
   showToast: (msg: string) => void
@@ -65,6 +72,7 @@ export default function ProfilePage({ showToast, onClose }: Props) {
     if (!profile) return
     const name = newNickname.trim()
     if (!name) { showToast('请输入新昵称'); return }
+    if (name === profile.nickname) { showToast('新昵称不能与当前昵称相同'); return }
     if (name.length < 2 || name.length > 12) { showToast('昵称2-12个字符'); return }
     if (!canChangeNickname()) { showToast(`冷却中，${getNextChangeTime()}可改`); return }
 
@@ -174,7 +182,7 @@ export default function ProfilePage({ showToast, onClose }: Props) {
   const entryStyle: React.CSSProperties = {
     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
     padding: '14px 16px', marginBottom: 2, cursor: 'pointer', background: 'var(--bg-card)',
-    border: 'none', color: 'var(--text-primary)', fontSize: 14
+    border: 'none', color: 'var(--text-primary)', fontSize: 14, textAlign: 'left'
   }
 
   return (
@@ -204,8 +212,13 @@ export default function ProfilePage({ showToast, onClose }: Props) {
 
         {showAvatarPicker && (
           <div className="card" style={{ padding: 16, marginBottom: 20 }}>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>选择头像</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>选择头像</span>
+              <button onClick={() => { setShowAvatarPicker(false); setPendingAvatar(null) }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: 4, display: 'flex' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, maxHeight: 280, overflowY: 'auto', padding: '0 4px' }}>
               {AVATARS.map((emoji, i) => (
                 <button
                   key={i}
@@ -309,7 +322,7 @@ export default function ProfilePage({ showToast, onClose }: Props) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>注册时间</span>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{new Date(profile.createdAt).toLocaleDateString()}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{new Date(profile.createdAt).toLocaleString()}</span>
           </div>
         </div>
 

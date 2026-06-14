@@ -6,7 +6,14 @@ import { getStoredProfile, clearLocalData, register, login, uploadToCloud, downl
 import { getAllBooks, saveBook, saveProgress, getProgress } from '../utils/db'
 import { hasInviteCode, isInviteCodeValid, setInviteCode as saveInviteCodeToStorage } from '../utils/invite'
 
-const AVATARS = ['🐉', '🦅', '🐺', '🦁', '🐯', '🦈', '🐙', '🦂', '🦖', '👻', '🤖', '👽', '🦊', '🐲', '🦋']
+const AVATARS = [
+  '🐉','🦅','🐺','🦁','🐯','🦈','🐙','🦂','🦖','👻',
+  '🤖','👽','🦊','🐲','🦋','🦇','🕷️','🐍','🐊','🐢',
+  '🦎','🦑','🦐','🦀','🐬','🐳','🐋','🐆','🐅','🐃',
+  '🦌','🐪','🐫','🦙','🦒','🐘','🦏','🦛','🐓','🦃',
+  '🦅','🐧','🦚','🦜','🦢','🦩','🐝','🐛','🐌','🐜',
+  '🐞','🦗','🪲','🪳','🦟','🪰','🪱','🦠','💀','🎃'
+]
 
 interface Props {
   books: Book[]

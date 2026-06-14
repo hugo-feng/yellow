@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.17.0', date: '2026-06-15', changes: [
+    '修复注册失败bug：移除avatar_index列依赖，解决could not find column错误',
+    '头像扩展至60个，选择界面可滚动+右上角X关闭按钮',
+    '昵称修改验证：不能改回当前昵称',
+    '注册时间精确到时分秒',
+    '当前昵称显示缩进修复'
+  ]},
   { version: '5.16.0', date: '2026-06-15', changes: [
     '修复严重bug：昵称修改后无法登录（改为按昵称精确匹配查询）',
     '头像更新改为选择后确认才生效，防止误操作',
@@ -473,7 +480,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [errorMsg, setErrorMsg] = useState('')
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.16.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.17.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
