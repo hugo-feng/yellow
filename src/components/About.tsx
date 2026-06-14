@@ -1,8 +1,13 @@
 import { useState, useCallback } from 'react'
 import { checkForUpdates, APP_VERSION } from '../utils/updater'
-import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
+import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.18.0', date: '2026-06-15', changes: [
+    '下载更新后显示「安装更新」按钮，不再自动触发安装',
+    '可多次点击安装按钮重试安装，解决误触关闭安装对话框的问题',
+    '关于页面和主弹窗同步支持手动安装按钮'
+  ]},
   { version: '5.17.0', date: '2026-06-15', changes: [
     '修复注册失败bug：移除avatar_index列依赖，解决could not find column错误',
     '头像扩展至60个，选择界面可滚动+右上角X关闭按钮',
@@ -479,8 +484,9 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [downloadError, setDownloadError] = useState<string | null>(null)
+  const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.17.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.18.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
@@ -513,6 +519,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
     setDownloading(true)
     setDownloadProgress(0)
     setDownloadError(null)
+    setDownloadCompleted(false)
     try {
       await nativeDownload(downloadUrl, `yellow-v${remoteVersion}.apk`, remoteVersion)
       const poll = setInterval(() => {
@@ -520,6 +527,8 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
         if (p >= 0 && p <= 100) setDownloadProgress(p)
         if (p === 100) {
           clearInterval(poll)
+          setDownloading(false)
+          setDownloadCompleted(true)
         } else if (p === -1) {
           clearInterval(poll)
           setDownloading(false)
@@ -589,14 +598,22 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>v{currentVersion} → v{remoteVersion}</div>
               <button
                 className="btn btn-primary btn-sm" style={{ marginTop: 10, width: '100%' }}
-                onClick={startDownload} disabled={downloading}
+                onClick={startDownload} disabled={downloading || downloadCompleted}
               >
-                {downloading ? `下载中 ${downloadProgress}%` : '立即更新'}
+                {downloading ? `下载中 ${downloadProgress}%` : downloadCompleted ? '下载完成' : '立即更新'}
               </button>
               {downloading && (
                 <div style={{ marginTop: 8, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${downloadProgress}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 0.3s' }} />
                 </div>
+              )}
+              {downloadCompleted && (
+                <button
+                  className="btn btn-primary btn-sm" style={{ marginTop: 8, width: '100%' }}
+                  onClick={() => { if (!installDownloaded()) showToast('安装组件未加载，请重启app') }}
+                >
+                  安装更新
+                </button>
               )}
               {downloadError && (
                 <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: 'rgba(224,85,85,0.1)', border: '1px solid rgba(224,85,85,0.2)' }}>

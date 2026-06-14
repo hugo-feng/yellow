@@ -23,6 +23,7 @@ public class NativeDownloader {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private volatile boolean downloading = false;
     private volatile int progress = 0;
+    private File lastDownloadedFile = null;
 
     public NativeDownloader(Context context) {
         this.context = context;
@@ -101,10 +102,9 @@ public class NativeDownloader {
 
                 progress = 100;
                 downloading = false;
+                lastDownloadedFile = file;
                 notifyJs("completed");
                 Log.d(TAG, "download complete, size=" + file.length());
-
-                new Handler(Looper.getMainLooper()).postDelayed(() -> installApk(file), 500);
 
             } catch (Exception e) {
                 Log.e(TAG, "download failed", e);
@@ -144,6 +144,15 @@ public class NativeDownloader {
     @JavascriptInterface
     public boolean isDownloading() {
         return downloading;
+    }
+
+    @JavascriptInterface
+    public boolean install() {
+        if (lastDownloadedFile != null && lastDownloadedFile.exists()) {
+            new Handler(Looper.getMainLooper()).post(() -> installApk(lastDownloadedFile));
+            return true;
+        }
+        return false;
     }
 
     private void installApk(File file) {

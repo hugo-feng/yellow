@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
 import { checkForUpdates, waitSWReady, APP_VERSION, UpdateInfo } from './utils/updater'
-import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from './plugins/NativeDownloader'
+import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from './plugins/NativeDownloader'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { toast } from 'sonner'
@@ -57,6 +57,7 @@ function AppInner() {
   const [downloading, setDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState(0)
   const [downloadError, setDownloadError] = useState<string | null>(null)
+  const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [cacheTask, setCacheTask] = useState<CacheTask | null>(null)
   const [currentVersion, setCurrentVersion] = useState(APP_VERSION)
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => {
@@ -339,8 +340,18 @@ function AppInner() {
                   <div style={{ height: '100%', width: `${downloadProgress}%`, background: 'var(--accent)', borderRadius: 3, transition: 'width 0.3s' }} />
                 </div>
                 <p style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center', marginTop: 6 }}>
-                  {downloadProgress < 100 ? `下载中 ${downloadProgress}%` : '下载完成，正在安装...'}
+                  下载中 {downloadProgress}%
                 </p>
+              </div>
+            )}
+            {downloadCompleted && (
+              <div style={{ width: '100%', marginBottom: 16, padding: 12, borderRadius: 8, background: 'rgba(76,175,132,0.1)', border: '1px solid rgba(76,175,132,0.3)' }}>
+                <p style={{ fontSize: 13, color: 'var(--success)', marginBottom: 8, fontWeight: 600 }}>下载完成</p>
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => {
+                  if (!installDownloaded()) showToast('安装组件未加载，请重启app')
+                }}>
+                  安装更新
+                </button>
               </div>
             )}
             {downloadError && (
@@ -356,22 +367,24 @@ function AppInner() {
               </div>
             )}
             <div style={{ display: 'flex', gap: 10, width: '100%' }}>
-              {!downloading && (
-                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setShowUpdateModal(false); setDownloadError(null) }}>稍后提醒</button>
+              {(!downloading || downloadCompleted) && (
+                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setShowUpdateModal(false); setDownloadError(null); setDownloadCompleted(false) }}>稍后提醒</button>
               )}
-              <button
-                className="btn btn-primary"
-                style={{ flex: 1, opacity: downloading ? 0.6 : 1 }}
-                disabled={downloading}
-                onClick={async () => {
-                  if (downloading) return
-                  if (!isNativeDownloaderAvailable()) {
-                    showToast('下载组件未加载，请重启app')
-                    return
-                  }
-                  setDownloading(true)
-                  setDownloadProgress(0)
-                  setDownloadError(null)
+              {!downloadCompleted && (
+                <button
+                  className="btn btn-primary"
+                  style={{ flex: 1, opacity: downloading ? 0.6 : 1 }}
+                  disabled={downloading}
+                  onClick={async () => {
+                    if (downloading) return
+                    if (!isNativeDownloaderAvailable()) {
+                      showToast('下载组件未加载，请重启app')
+                      return
+                    }
+                    setDownloading(true)
+                    setDownloadProgress(0)
+                    setDownloadError(null)
+                    setDownloadCompleted(false)
                   try {
                     const url = updateInfo.downloadUrl
                     await nativeDownload(url, `yellow-v${updateInfo.version}.apk`, updateInfo.version)
@@ -380,6 +393,8 @@ function AppInner() {
                       if (p >= 0 && p <= 100) setDownloadProgress(p)
                       if (p === 100) {
                         clearInterval(poll)
+                        setDownloading(false)
+                        setDownloadCompleted(true)
                       } else if (p === -1) {
                         clearInterval(poll)
                         setDownloading(false)
@@ -402,6 +417,7 @@ function AppInner() {
               >
                 {downloading ? '下载中...' : downloadError ? '重新下载' : '立即更新'}
               </button>
+              )}
             </div>
           </div>
         </div>
