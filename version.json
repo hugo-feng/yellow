@@ -1,7 +1,7 @@
 {
-  "version": "5.9.0",
-  "versionCode": 590,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.0/yellow-v5.9.0.apk",
-  "updateContent": "默认光明模式+主题同步云端+Tab切换不刷新+修复底部安全区",
+  "version": "5.9.1",
+  "versionCode": 591,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.1/yellow-v5.9.1.apk",
+  "updateContent": "修复缓存状态丢失+Tab切换不刷新(组件保持挂载)",
   "releaseDate": "2026-06-14"
 }
