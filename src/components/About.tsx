@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.9.7', date: '2026-06-15', changes: [
+    '应用图标：Yellow字样缩小一倍+READER副标题+渐变装饰线',
+    '彻查底部遮挡：根因是内层div height:100%吃掉padding-bottom，已移除',
+    '去除重复.page-content CSS定义'
+  ]},
   { version: '5.9.6', date: '2026-06-15', changes: [
     '搜索结果已添加书籍不再变暗，点击进入详情页（而非直接阅读）',
     '主页底部内容不被底栏遮挡（padding增大到120px）',
@@ -395,7 +400,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.6')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.7')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

@@ -274,16 +274,16 @@ function AppInner() {
       </div>
 
       <div className="page-content">
-        <div style={{ display: activeTab === 'discover' ? 'block' : 'none', height: '100%' }}>
+        <div style={{ display: activeTab === 'discover' ? 'block' : 'none' }}>
           <Discover onViewDetail={setDetailBook} showToast={showToast} books={books} />
         </div>
-        <div style={{ display: activeTab === 'bookshelf' ? 'block' : 'none', height: '100%' }}>
+        <div style={{ display: activeTab === 'bookshelf' ? 'block' : 'none' }}>
           <Bookshelf books={books} onRead={handleReadBook} onDelete={handleDeleteBook} onRefresh={loadBooks} onViewDetail={setDetailBook} />
         </div>
-        <div style={{ display: activeTab === 'search' ? 'block' : 'none', height: '100%' }}>
+        <div style={{ display: activeTab === 'search' ? 'block' : 'none' }}>
           <SearchPage onAddBook={handleAddBook} onRead={handleReadBook} onViewDetail={setDetailBook} showToast={showToast} books={books} />
         </div>
-        <div style={{ display: activeTab === 'settings' ? 'block' : 'none', height: '100%' }}>
+        <div style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
           <Settings books={books} showToast={showToast} onOpenAbout={() => setShowAbout(true)}
             cacheTask={cacheTask} onOpenCacheManager={() => setShowCacheManager(true)}
             onSyncComplete={(syncedBooks) => setBooks(syncedBooks)} />
