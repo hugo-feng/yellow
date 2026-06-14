@@ -1,7 +1,7 @@
 {
-  "version": "5.3.0",
-  "versionCode": 530,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.3.0/yellow-v5.3.0.apk",
-  "updateContent": "注册添加密码+隐藏GitHub文案+二级页面动画+底部安全区修复",
+  "version": "5.4.0",
+  "versionCode": 540,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.4.0/yellow-v5.4.0.apk",
+  "updateContent": "修复云同步：移除嵌入token改为用户输入同步密钥+阅读滑动修复+底部安全区",
   "releaseDate": "2026-06-14"
 }
