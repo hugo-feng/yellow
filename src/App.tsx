@@ -210,46 +210,54 @@ function AppInner() {
 
   if (readingBook) {
     return (
-      <Reader book={readingBook} initialProgress={readingProgress}
-        settings={readerSettings} onSettingsChange={setReaderSettings}
-        onClose={handleCloseReader} showToast={showToast} />
+      <div className="page-enter">
+        <Reader book={readingBook} initialProgress={readingProgress}
+          settings={readerSettings} onSettingsChange={setReaderSettings}
+          onClose={handleCloseReader} showToast={showToast} />
+      </div>
     )
   }
 
   if (detailBook) {
     return (
-      <BookDetail
-        book={detailBook}
-        isInShelf={books.some(b => b.id === detailBook.id)}
-        onAddToShelf={() => { handleAddBook(detailBook) }}
-        onStartRead={() => {
-          if (!books.some(b => b.id === detailBook.id)) handleAddBook(detailBook)
-          handleReadBook(detailBook)
-          setDetailBook(null)
-        }}
-        onClose={() => setDetailBook(null)}
-        showToast={showToast}
-        cacheBook={cacheBook}
-        cacheTask={cacheTask}
-      />
+      <div className="page-enter">
+        <BookDetail
+          book={detailBook}
+          isInShelf={books.some(b => b.id === detailBook.id)}
+          onAddToShelf={() => { handleAddBook(detailBook) }}
+          onStartRead={() => {
+            if (!books.some(b => b.id === detailBook.id)) handleAddBook(detailBook)
+            handleReadBook(detailBook)
+            setDetailBook(null)
+          }}
+          onClose={() => setDetailBook(null)}
+          showToast={showToast}
+          cacheBook={cacheBook}
+          cacheTask={cacheTask}
+        />
+      </div>
     )
   }
 
   if (showAbout) {
     return (
-      <About currentVersion={currentVersion} showToast={showToast}
-        onClose={() => setShowAbout(false)}
-        onOtaSuccess={(v) => { setOtaNewVersion(v); setShowOtaSuccess(true); setShowAbout(false) }} />
+      <div className="page-enter">
+        <About currentVersion={currentVersion} showToast={showToast}
+          onClose={() => setShowAbout(false)}
+          onOtaSuccess={(v) => { setOtaNewVersion(v); setShowOtaSuccess(true); setShowAbout(false) }} />
+      </div>
     )
   }
 
   if (showCacheManager) {
     return (
-      <CacheManager
-        onClose={() => setShowCacheManager(false)}
-        showToast={showToast}
-        cacheTask={cacheTask}
-      />
+      <div className="page-enter">
+        <CacheManager
+          onClose={() => setShowCacheManager(false)}
+          showToast={showToast}
+          cacheTask={cacheTask}
+        />
+      </div>
     )
   }
 

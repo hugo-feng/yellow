@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.3.0', date: '2026-06-14', changes: [
+    '注册添加密码验证（SHA-256哈希存储）+ 登录/注册双模式',
+    '隐藏GitHub相关文案，改为"云端同步"',
+    '二级页面进入动画（书籍详情/关于/缓存管理）',
+    '修复底部安全区：tab-bar用::after伪元素填充安全区高度'
+  ]},
   { version: '5.2.1', date: '2026-06-14', changes: [
     '下载失败时显示提示弹窗：说明从GitHub下载可能不稳定+重试按钮',
     '按钮文字随状态变化：立即更新→下载中...→重新下载'
@@ -275,7 +281,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.2.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.3.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

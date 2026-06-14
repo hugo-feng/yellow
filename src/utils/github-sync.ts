@@ -8,6 +8,7 @@ const DATA_DIR = 'users'
 export interface UserProfile {
   userId: string
   nickname: string
+  passwordHash: string
   avatarColor: string
   createdAt: string
 }
@@ -26,6 +27,15 @@ const COLORS = ['#f0c040', '#6495ed', '#e05555', '#4caf84', '#9c27b0', '#ff9800'
 
 function randomId(): string {
   return Math.random().toString(36).substring(2, 8) + Date.now().toString(36)
+}
+
+async function hashPassword(password: string, salt: string): Promise<string> {
+  const msg = salt + ':' + password
+  const encoder = new TextEncoder()
+  const data = encoder.encode(msg)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 export function getStoredProfile(): UserProfile | null {
@@ -47,15 +57,43 @@ export function isRegistered(): boolean {
   return !!getStoredProfile()
 }
 
-export function createProfile(nickname: string): UserProfile {
+export async function createProfile(nickname: string, password: string): Promise<UserProfile> {
+  const userId = nickname.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + randomId()
+  const passwordHash = await hashPassword(password, userId)
   const profile: UserProfile = {
-    userId: nickname.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + randomId(),
+    userId,
     nickname,
+    passwordHash,
     avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)],
     createdAt: new Date().toISOString()
   }
   storeProfile(profile)
   return profile
+}
+
+export async function verifyLogin(nickname: string, password: string): Promise<UserProfile | null> {
+  const userIdPrefix = nickname.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const url = `https://api.github.com/repos/${REPO}/contents/${DATA_DIR}?ref=${BRANCH}`
+  try {
+    const files = await xhrFetch(url)
+    if (!Array.isArray(files)) return null
+
+    for (const file of files) {
+      if (!file.name.startsWith(userIdPrefix + '-') || !file.name.endsWith('.json')) continue
+      const fileUserId = file.name.replace('.json', '')
+      const data = await downloadData(fileUserId)
+      if (!data?.profile) continue
+
+      const passwordHash = await hashPassword(password, fileUserId)
+      if (data.profile.passwordHash === passwordHash) {
+        storeProfile(data.profile)
+        return data.profile
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
 }
 
 function xhrFetch(url: string, options: { method?: string; body?: string; token?: string; timeout?: number } = {}): Promise<any> {
@@ -108,17 +146,5 @@ export async function downloadData(userId: string): Promise<SyncData | null> {
     return data as SyncData
   } catch {
     return null
-  }
-}
-
-export async function checkNicknameExists(nickname: string): Promise<boolean> {
-  const userId = nickname.toLowerCase().replace(/[^a-z0-9]/g, '')
-  const url = `https://api.github.com/repos/${REPO}/contents/${DATA_DIR}?ref=${BRANCH}`
-  try {
-    const files = await xhrFetch(url)
-    if (!Array.isArray(files)) return false
-    return files.some((f: any) => f.name.startsWith(userId + '-'))
-  } catch {
-    return false
   }
 }
