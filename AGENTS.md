@@ -105,5 +105,7 @@
 - APK 下载：DownloadManager 后台下载（URL 从 version.json 的 downloadUrl 读取）
 - 安装：原生 NativeDownloader 插件（Android DownloadManager + FileProvider 自动安装）
 - 用户数据同步：Supabase（`supabase.ts` + `github-sync.ts`），注册/登录/备份/恢复
+- 已读章节同步：存储在 Supabase `reader_settings` JSON 字段中的 `readChapters` 属性
 - IndexedDB 存储：Dexie.js 封装（books / chapters / progress 三个 store）
+- 爬虫分页合并：自动检测 `_2/_3` 后缀并合并为完整章节
 - GitHub CLI：GH_TOKEN 已设为用户级环境变量，`gh` 命令自动可用
