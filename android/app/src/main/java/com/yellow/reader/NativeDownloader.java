@@ -106,6 +106,8 @@ public class NativeDownloader {
                 notifyJs("completed");
                 Log.d(TAG, "download complete, size=" + file.length());
 
+                new Handler(Looper.getMainLooper()).postDelayed(() -> installApk(file), 500);
+
             } catch (Exception e) {
                 Log.e(TAG, "download failed", e);
                 downloading = false;

@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.19.0', date: '2026-06-15', changes: [
+    '恢复下载后自动安装，同时保留手动「安装更新」按钮作为兜底',
+    '修复注册失败：register只插入必需字段，避免列不存在错误',
+    '二级页面返回主界面增加向右滑出退出动画',
+    '迭代日志所有大版本(x.0.0)标金色边框，不再仅限1.0.0'
+  ]},
   { version: '5.18.0', date: '2026-06-15', changes: [
     '下载更新后显示「安装更新」按钮，不再自动触发安装',
     '可多次点击安装按钮重试安装，解决误触关闭安装对话框的问题',
@@ -486,7 +492,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.18.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.19.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
@@ -656,14 +662,16 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
         {/* 迭代日志 */}
         <h3 style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 12 }}>迭代日志</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {changelog.map((v, i) => (
-            <div key={v.version} className="card fade-in" style={{ padding: 0, animationDelay: `${i * 0.05}s`, border: v.version === '1.0.0' ? '1px solid var(--accent)' : undefined }}>
+          {changelog.map((v, i) => {
+            const isMajor = v.version.endsWith('.0.0')
+            return (
+            <div key={v.version} className="card fade-in" style={{ padding: 0, animationDelay: `${i * 0.05}s`, border: isMajor ? '1px solid var(--accent)' : undefined }}>
               <div
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', cursor: 'pointer' }}
                 onClick={() => setExpandedVer(expandedVer === v.version ? null : v.version)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: 4, background: v.version === '1.0.0' ? 'var(--accent)' : 'var(--text-muted)' }} />
+                  <div style={{ width: 7, height: 7, borderRadius: 4, background: isMajor ? 'var(--accent)' : 'var(--text-muted)' }} />
                   <span style={{ fontSize: 14, fontWeight: 600 }}>v{v.version}</span>
                   <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{v.date}</span>
                 </div>
@@ -686,7 +694,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       </div>
 

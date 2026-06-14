@@ -62,15 +62,13 @@ export function clearLocalData() {
 export async function register(nickname: string, password: string, inviteCodeActivated?: boolean): Promise<{ profile?: UserProfile; error?: string }> {
   const userId = nickname.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, '') + '-' + randomId()
   const passwordHash = await hashPassword(password, userId)
+  const avatarColor = COLORS[Math.floor(Math.random() * COLORS.length)]
 
   const { error } = await supabase.from('yellow_users').insert({
     id: userId,
     nickname,
     password_hash: passwordHash,
-    avatar_color: COLORS[Math.floor(Math.random() * COLORS.length)],
-    books: [],
-    progress: [],
-    invite_code_activated: inviteCodeActivated || false,
+    avatar_color: avatarColor,
     created_at: new Date().toISOString()
   })
 
@@ -79,7 +77,15 @@ export async function register(nickname: string, password: string, inviteCodeAct
     return { error: error.message }
   }
 
-  const profile: UserProfile = { userId, nickname, passwordHash, avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)], createdAt: new Date().toISOString(), inviteCodeActivated: inviteCodeActivated || false }
+  try {
+    await supabase.from('yellow_users').update({
+      invite_code_activated: inviteCodeActivated || false,
+      books: [],
+      progress: []
+    }).eq('id', userId)
+  } catch {}
+
+  const profile: UserProfile = { userId, nickname, passwordHash, avatarColor, createdAt: new Date().toISOString(), inviteCodeActivated: inviteCodeActivated || false }
   storeProfile(profile)
   return { profile }
 }

@@ -49,6 +49,7 @@ function AppInner() {
   const [showAbout, setShowAbout] = useState(false)
   const [showCacheManager, setShowCacheManager] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
+  const [closingPage, setClosingPage] = useState<string | null>(null)
   const [cachedBookIds, setCachedBookIds] = useState<Set<string>>(new Set())
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
@@ -71,6 +72,14 @@ function AppInner() {
 
   const showToast = useCallback((msg: string) => {
     toast(msg)
+  }, [])
+
+  const closePage = useCallback((pageName: string, closeFn: () => void) => {
+    setClosingPage(pageName)
+    setTimeout(() => {
+      closeFn()
+      setClosingPage(null)
+    }, 250)
   }, [])
 
   const loadBooks = useCallback(async () => {
@@ -230,20 +239,20 @@ function AppInner() {
     )
   }
 
-  if (detailBook) {
+  if (detailBook || closingPage === 'detail') {
     return (
-      <div className="page-enter">
+      <div className={closingPage === 'detail' ? 'page-exit' : 'page-enter'}>
         <BookDetail
-          book={detailBook}
-          isInShelf={books.some(b => b.id === detailBook.id)}
-          isInitiallyCached={cachedBookIds.has(detailBook.id)}
-          onAddToShelf={() => { handleAddBook(detailBook) }}
+          book={detailBook!}
+          isInShelf={books.some(b => b.id === detailBook!.id)}
+          isInitiallyCached={cachedBookIds.has(detailBook!.id)}
+          onAddToShelf={() => { handleAddBook(detailBook!) }}
           onStartRead={(chapterIndex) => {
-            if (!books.some(b => b.id === detailBook.id)) handleAddBook(detailBook)
-            handleReadBook(detailBook, chapterIndex)
+            if (!books.some(b => b.id === detailBook!.id)) handleAddBook(detailBook!)
+            handleReadBook(detailBook!, chapterIndex)
             setDetailBook(null)
           }}
-          onClose={() => setDetailBook(null)}
+          onClose={() => closePage('detail', () => setDetailBook(null))}
           showToast={showToast}
           cacheBook={cacheBook}
           cacheTask={cacheTask}
@@ -252,21 +261,21 @@ function AppInner() {
     )
   }
 
-  if (showAbout) {
+  if (showAbout || closingPage === 'about') {
     return (
-      <div className="page-enter">
+      <div className={closingPage === 'about' ? 'page-exit' : 'page-enter'}>
         <About currentVersion={currentVersion} showToast={showToast}
-          onClose={() => setShowAbout(false)}
+          onClose={() => closePage('about', () => setShowAbout(false))}
           onOtaSuccess={(v) => { setOtaNewVersion(v); setShowOtaSuccess(true); setShowAbout(false) }} />
       </div>
     )
   }
 
-  if (showCacheManager) {
+  if (showCacheManager || closingPage === 'cache') {
     return (
-      <div className="page-enter">
+      <div className={closingPage === 'cache' ? 'page-exit' : 'page-enter'}>
         <CacheManager
-          onClose={() => setShowCacheManager(false)}
+          onClose={() => closePage('cache', () => setShowCacheManager(false))}
           showToast={showToast}
           cacheTask={cacheTask}
         />
@@ -274,12 +283,12 @@ function AppInner() {
     )
   }
 
-  if (showProfile) {
+  if (showProfile || closingPage === 'profile') {
     return (
-      <div className="page-enter">
+      <div className={closingPage === 'profile' ? 'page-exit' : 'page-enter'}>
         <ProfilePage
           showToast={showToast}
-          onClose={() => setShowProfile(false)}
+          onClose={() => closePage('profile', () => setShowProfile(false))}
         />
       </div>
     )
