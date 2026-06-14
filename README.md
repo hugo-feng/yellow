@@ -1,2 +1,2 @@
 # yellow
-a yellow(sex) books reader app
+a yellow books reader app
