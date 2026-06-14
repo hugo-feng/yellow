@@ -15,6 +15,7 @@ import Reader from './components/Reader'
 import BookDetail from './components/BookDetail'
 import About from './components/About'
 import CacheManager from './components/CacheManager'
+import ProfilePage from './components/ProfilePage'
 
 interface CacheTask {
   bookId: string; title: string; progress: number; current: number; total: number
@@ -47,6 +48,7 @@ function AppInner() {
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null)
   const [showAbout, setShowAbout] = useState(false)
   const [showCacheManager, setShowCacheManager] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const [cachedBookIds, setCachedBookIds] = useState<Set<string>>(new Set())
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
@@ -104,7 +106,7 @@ function AppInner() {
 
   // Android 系统返回手势：二级页面返回而非退出 App
   const pushedRef = useRef(false)
-  const hasSubPage = readingBook || detailBook || showAbout || showCacheManager
+  const hasSubPage = readingBook || detailBook || showAbout || showCacheManager || showProfile
   useEffect(() => {
     if (hasSubPage && !pushedRef.current) {
       history.pushState({ sub: true }, '')
@@ -119,6 +121,7 @@ function AppInner() {
       if (detailBook) { setDetailBook(null); return true }
       if (showAbout) { setShowAbout(false); return true }
       if (showCacheManager) { setShowCacheManager(false); return true }
+      if (showProfile) { setShowProfile(false); return true }
       return false
     }
 
@@ -133,7 +136,7 @@ function AppInner() {
       window.removeEventListener('popstate', onPopState)
       capListener.then(l => l.remove())
     }
-  }, [readingBook, detailBook, showAbout, showCacheManager])
+  }, [readingBook, detailBook, showAbout, showCacheManager, showProfile])
 
   const handleReadBook = useCallback(async (book: Book, chapterIndex?: number) => {
     const progress = await getProgress(book.id)
@@ -270,6 +273,17 @@ function AppInner() {
     )
   }
 
+  if (showProfile) {
+    return (
+      <div className="page-enter">
+        <ProfilePage
+          showToast={showToast}
+          onClose={() => setShowProfile(false)}
+        />
+      </div>
+    )
+  }
+
   return (
     <div className="app-container">
       <div className="header">
@@ -290,7 +304,8 @@ function AppInner() {
         <div style={{ display: activeTab === 'settings' ? 'block' : 'none' }}>
           <Settings books={books} showToast={showToast} onOpenAbout={() => setShowAbout(true)}
             cacheTask={cacheTask} onOpenCacheManager={() => setShowCacheManager(true)}
-            onSyncComplete={(syncedBooks) => setBooks(syncedBooks)} />
+            onSyncComplete={(syncedBooks) => setBooks(syncedBooks)}
+            onOpenProfile={() => setShowProfile(true)} />
         </div>
       </div>
 

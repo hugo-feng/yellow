@@ -5,7 +5,9 @@ export interface UserProfile {
   nickname: string
   passwordHash: string
   avatarColor: string
+  avatarIndex?: number
   createdAt: string
+  inviteCodeActivated?: boolean
 }
 
 export interface SyncData {
@@ -54,7 +56,7 @@ export function clearLocalData() {
   }
 }
 
-export async function register(nickname: string, password: string): Promise<{ profile?: UserProfile; error?: string }> {
+export async function register(nickname: string, password: string, inviteCodeActivated?: boolean): Promise<{ profile?: UserProfile; error?: string }> {
   const userId = nickname.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, '') + '-' + randomId()
   const passwordHash = await hashPassword(password, userId)
 
@@ -65,6 +67,7 @@ export async function register(nickname: string, password: string): Promise<{ pr
     avatar_color: COLORS[Math.floor(Math.random() * COLORS.length)],
     books: [],
     progress: [],
+    invite_code_activated: inviteCodeActivated || false,
     created_at: new Date().toISOString()
   })
 
@@ -73,7 +76,7 @@ export async function register(nickname: string, password: string): Promise<{ pr
     return { error: error.message }
   }
 
-  const profile: UserProfile = { userId, nickname, passwordHash, avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)], createdAt: new Date().toISOString() }
+  const profile: UserProfile = { userId, nickname, passwordHash, avatarColor: COLORS[Math.floor(Math.random() * COLORS.length)], createdAt: new Date().toISOString(), inviteCodeActivated: inviteCodeActivated || false }
   storeProfile(profile)
   return { profile }
 }
@@ -97,7 +100,9 @@ export async function login(nickname: string, password: string): Promise<{ profi
         nickname: row.nickname,
         passwordHash: row.password_hash,
         avatarColor: row.avatar_color || '#f0c040',
-        createdAt: row.created_at
+        avatarIndex: row.avatar_index ?? 0,
+        createdAt: row.created_at,
+        inviteCodeActivated: row.invite_code_activated || false
       }
       storeProfile(profile)
       return { profile }
@@ -111,20 +116,23 @@ export async function uploadToCloud(data: SyncData): Promise<{ error?: string }>
   const profile = getStoredProfile()
   if (!profile) return { error: '未登录' }
 
-  // Merge readChapters and invite code into reader_settings for storage
   const settingsWithRead = {
     ...(data.readerSettings || {}),
-    readChapters: data.readChapters || {},
-    inviteCodeActivated: data.inviteCodeActivated || false
+    readChapters: data.readChapters || {}
   }
 
-  const { error } = await supabase.from('yellow_users').update({
+  const updatePayload: Record<string, any> = {
     books: data.books,
     progress: data.progress,
     reader_settings: settingsWithRead,
     theme: data.theme || 'light',
     synced_at: new Date().toISOString()
-  }).eq('id', profile.userId)
+  }
+  if (data.inviteCodeActivated !== undefined) {
+    updatePayload.invite_code_activated = data.inviteCodeActivated
+  }
+
+  const { error } = await supabase.from('yellow_users').update(updatePayload).eq('id', profile.userId)
 
   if (error) return { error: error.message }
   return {}
@@ -135,16 +143,15 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
   if (!profile) return { error: '未登录' }
 
   const { data, error } = await supabase.from('yellow_users')
-    .select('books, progress, reader_settings, theme, synced_at')
+    .select('books, progress, reader_settings, theme, synced_at, invite_code_activated')
     .eq('id', profile.userId)
     .single()
 
   if (error) return { error: error.message }
   if (!data) return { error: '云端无数据' }
 
-  // Extract readChapters and inviteCodeActivated from reader_settings
   const settings = data.reader_settings || {}
-  const { readChapters, inviteCodeActivated, ...readerSettings } = settings
+  const { readChapters, ...readerSettings } = settings
 
   return {
     data: {
@@ -153,8 +160,63 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
       readerSettings,
       theme: data.theme || 'light',
       readChapters: readChapters || {},
-      inviteCodeActivated: inviteCodeActivated || false,
+      inviteCodeActivated: data.invite_code_activated || false,
       syncedAt: data.synced_at
     }
   }
+}
+
+export async function changeNickname(userId: string, newNickname: string): Promise<{ error?: string }> {
+  const { error } = await supabase.from('yellow_users')
+    .update({ nickname: newNickname })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+
+  const profile = getStoredProfile()
+  if (profile) {
+    profile.nickname = newNickname
+    storeProfile(profile)
+  }
+  return {}
+}
+
+export async function changePassword(userId: string, oldPassword: string, newPassword: string): Promise<{ error?: string }> {
+  const oldHash = await hashPassword(oldPassword, userId)
+  const { data, error: fetchError } = await supabase.from('yellow_users')
+    .select('password_hash')
+    .eq('id', userId)
+    .single()
+
+  if (fetchError) return { error: fetchError.message }
+  if (!data || data.password_hash !== oldHash) return { error: '原密码错误' }
+
+  const newHash = await hashPassword(newPassword, userId)
+  const { error } = await supabase.from('yellow_users')
+    .update({ password_hash: newHash })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+
+  const profile = getStoredProfile()
+  if (profile) {
+    profile.passwordHash = newHash
+    storeProfile(profile)
+  }
+  return {}
+}
+
+export async function updateAvatar(userId: string, avatarIndex: number): Promise<{ error?: string }> {
+  const { error } = await supabase.from('yellow_users')
+    .update({ avatar_index: avatarIndex })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
+
+  const profile = getStoredProfile()
+  if (profile) {
+    profile.avatarIndex = avatarIndex
+    storeProfile(profile)
+  }
+  return {}
 }

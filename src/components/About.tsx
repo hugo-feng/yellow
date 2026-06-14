@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.14.0', date: '2026-06-15', changes: [
+    '邀请码状态独立存储为Supabase数据库字段（invite_code_activated）',
+    '登录时从数据库读取邀请码状态，恢复数据时自动本地激活',
+    'hasInviteCode()同时检查localStorage和UserProfile',
+    '新增hasInviteCodeFromProfile()函数',
+    '上传云端时invite_code_activated作为独立字段更新'
+  ]},
   { version: '5.13.1', date: '2026-06-15', changes: [
     '邀请码确认后输入框消失，显示「已激活」状态',
     '邀请码激活状态同步到云端数据库，换设备自动恢复',
@@ -441,7 +448,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.13.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.14.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
