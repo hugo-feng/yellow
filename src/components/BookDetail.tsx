@@ -5,6 +5,7 @@ import { getBookChapters } from '../utils/db'
 interface Props {
   book: Book
   isInShelf: boolean
+  isInitiallyCached?: boolean
   onAddToShelf: () => void
   onStartRead: () => void
   onClose: () => void
@@ -13,9 +14,9 @@ interface Props {
   cacheTask?: { bookId: string; title: string; progress: number; current: number; total: number } | null
 }
 
-export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead, onClose, showToast, cacheBook, cacheTask }: Props) {
+export default function BookDetail({ book, isInShelf, isInitiallyCached, onAddToShelf, onStartRead, onClose, showToast, cacheBook, cacheTask }: Props) {
   const [expanded, setExpanded] = useState(false)
-  const [cached, setCached] = useState(false)
+  const [cached, setCached] = useState(isInitiallyCached || false)
 
   const chapters = book.chapters || []
   const showChapters = chapters.length > 1

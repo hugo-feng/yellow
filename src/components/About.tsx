@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.9.1', date: '2026-06-14', changes: [
+    '修复缓存状态丢失：App级别维护cachedBookIds集合，跨导航持久化',
+    'Tab切换不刷新：改为CSS display:none保持组件挂载（不再条件渲染卸载）',
+    '发现页/书架切换不再重新加载数据'
+  ]},
   { version: '5.9.0', date: '2026-06-14', changes: [
     '默认光明模式（首次安装不再强制暗黑）',
     '主题设置同步到云端（备份/恢复时包含暗黑模式开关）',
@@ -360,7 +365,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.1')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

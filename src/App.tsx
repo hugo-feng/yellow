@@ -42,11 +42,12 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 function AppInner() {
   const [activeTab, setActiveTab] = useState<TabKey>('discover')
   const [books, setBooks] = useState<Book[]>([])
-  const [readingBook, setReadingBook] = useState<Book | null>(null)
   const [detailBook, setDetailBook] = useState<Book | null>(null)
+  const [readingBook, setReadingBook] = useState<Book | null>(null)
   const [readingProgress, setReadingProgress] = useState<ReadingProgress | null>(null)
   const [showAbout, setShowAbout] = useState(false)
   const [showCacheManager, setShowCacheManager] = useState(false)
+  const [cachedBookIds, setCachedBookIds] = useState<Set<string>>(new Set())
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
   const [showOtaSuccess, setShowOtaSuccess] = useState(false)
@@ -70,7 +71,11 @@ function AppInner() {
   }, [])
 
   const loadBooks = useCallback(async () => {
-    try { setBooks(await getAllBooks()) } catch (e) { console.error(e) }
+    try {
+      const allBooks = await getAllBooks()
+      setBooks(allBooks)
+      setCachedBookIds(new Set(allBooks.filter(b => b.cached).map(b => b.id)))
+    } catch (e) { console.error(e) }
   }, [])
 
   useEffect(() => {
@@ -198,6 +203,7 @@ function AppInner() {
       }
 
       showToast(`"${book.title}" 已缓存完成`)
+      setCachedBookIds(prev => new Set(prev).add(book.id))
       loadBooks()
     } catch {
       showToast('缓存失败')
@@ -222,6 +228,7 @@ function AppInner() {
         <BookDetail
           book={detailBook}
           isInShelf={books.some(b => b.id === detailBook.id)}
+          isInitiallyCached={cachedBookIds.has(detailBook.id)}
           onAddToShelf={() => { handleAddBook(detailBook) }}
           onStartRead={() => {
             if (!books.some(b => b.id === detailBook.id)) handleAddBook(detailBook)
@@ -267,20 +274,20 @@ function AppInner() {
       </div>
 
       <div className="page-content">
-        {activeTab === 'discover' && (
+        <div style={{ display: activeTab === 'discover' ? 'block' : 'none', height: '100%' }}>
           <Discover onViewDetail={setDetailBook} showToast={showToast} books={books} />
-        )}
-        {activeTab === 'bookshelf' && (
+        </div>
+        <div style={{ display: activeTab === 'bookshelf' ? 'block' : 'none', height: '100%' }}>
           <Bookshelf books={books} onRead={handleReadBook} onDelete={handleDeleteBook} onRefresh={loadBooks} onViewDetail={setDetailBook} />
-        )}
-        {activeTab === 'search' && (
+        </div>
+        <div style={{ display: activeTab === 'search' ? 'block' : 'none', height: '100%' }}>
           <SearchPage onAddBook={handleAddBook} onRead={handleReadBook} showToast={showToast} books={books} />
-        )}
-        {activeTab === 'settings' && (
+        </div>
+        <div style={{ display: activeTab === 'settings' ? 'block' : 'none', height: '100%' }}>
           <Settings books={books} showToast={showToast} onOpenAbout={() => setShowAbout(true)}
             cacheTask={cacheTask} onOpenCacheManager={() => setShowCacheManager(true)}
             onSyncComplete={(syncedBooks) => setBooks(syncedBooks)} />
-        )}
+        </div>
       </div>
 
       <div className="tab-bar">
