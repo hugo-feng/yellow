@@ -10,10 +10,9 @@ interface Props {
   onOpenAbout: () => void
   cacheTask?: { bookId: string; title: string; progress: number; current: number; total: number } | null
   onOpenCacheManager?: () => void
-  onSyncComplete?: (books: Book[]) => void
 }
 
-export default function Settings({ books, showToast, onOpenAbout, cacheTask, onOpenCacheManager, onSyncComplete }: Props) {
+export default function Settings({ books, showToast, onOpenAbout, cacheTask, onOpenCacheManager }: Props) {
   const { theme, toggle: toggleTheme } = useTheme()
   const [autoCheck, setAutoCheck] = useState(() => localStorage.getItem('ota-auto-check') !== 'off')
   const [storageInfo, setStorageInfo] = useState({ books: 0, chapters: 0, size: '0 B' })
@@ -55,7 +54,7 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
   return (
     <div style={{ padding: 16 }}>
       {/* 用户账号 */}
-      <UserSettings books={books} showToast={showToast} onSyncComplete={onSyncComplete || (() => {})} />
+      <UserSettings showToast={showToast} />
 
       {/* 通用 */}
       <h3 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, paddingLeft: 4 }}>通用</h3>

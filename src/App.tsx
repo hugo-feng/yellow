@@ -280,8 +280,7 @@ function AppInner() {
         )}
         {activeTab === 'settings' && (
           <Settings books={books} showToast={showToast} onOpenAbout={() => setShowAbout(true)}
-            cacheTask={cacheTask} onOpenCacheManager={() => setShowCacheManager(true)}
-            onSyncComplete={(syncedBooks) => setBooks(syncedBooks)} />
+            cacheTask={cacheTask} onOpenCacheManager={() => setShowCacheManager(true)} />
         )}
       </div>
 

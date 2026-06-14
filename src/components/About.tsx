@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.5.0', date: '2026-06-14', changes: [
+    '简化用户系统：只需昵称即可使用，移除密码和同步密钥',
+    '数据保存在本设备IndexedDB（离线优先方案）',
+    '修复阅读界面底部安全区：只在阅读页处理，主页底栏不再多余padding'
+  ]},
   { version: '5.4.1', date: '2026-06-14', changes: [
     '修复底栏被安全区遮挡：改用padding-bottom替代absolute伪元素',
     '修复安全区fallback：无手势条设备不再强制加16px'
@@ -291,7 +296,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.4.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.5.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
