@@ -29,6 +29,8 @@
     "@tanstack/react-virtual": "^3.14.2",
     "dexie": "^4.4.3",
     "dompurify": "^3.4.10",
+    "iconv-lite": "^0.7.2",
+    "jsdom": "^29.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^6.1.2",

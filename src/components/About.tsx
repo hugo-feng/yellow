@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.10.0', date: '2026-06-15', changes: [
+    '书籍库扩充至224本（含经典热门正版书籍）',
+    '爬虫扩展到10个书源并行搜索+正版验证机制',
+    '发现页直接展示书籍库'
+  ]},
   { version: '5.9.9', date: '2026-06-15', changes: [
     '应用图标：纯黑背景+黄色书本居中（缩小50%）'
   ]},
@@ -406,7 +411,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.9')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.10.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
