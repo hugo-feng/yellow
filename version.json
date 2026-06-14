@@ -1,7 +1,7 @@
 {
-  "version": "5.4.1",
-  "versionCode": 541,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.4.1/yellow-v5.4.1.apk",
-  "updateContent": "修复底栏被安全区遮挡：改用padding-bottom替代absolute伪元素",
+  "version": "5.5.0",
+  "versionCode": 550,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.5.0/yellow-v5.5.0.apk",
+  "updateContent": "简化用户系统(只需昵称)+修复阅读界面底部安全区",
   "releaseDate": "2026-06-14"
 }
