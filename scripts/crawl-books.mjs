@@ -839,8 +839,163 @@ async function main() {
     }
   }
 
+  // Phase 4: Crawl jisge.com by keywords
+  console.log(`\n📚 阶段4: 从集书阁爬取更多书籍...\n`)
+  const JISGE_KEYWORDS = ['玄幻', '都市', '修仙', '重生', '穿越', '言情', '科幻', '历史', '武侠', '悬疑', '奇幻', '仙侠', '末世', '灵异', '军事', '网游', '竞技', '校园', '官场', '职场', '推理', '恐怖', '同人', '轻小说', '完结', '热门', '排行', '经典', '畅销', '最新']
+  const JISGE_BASE = 'https://26b.jisge.com'
+  const JISGE_TARGET = 200
+  let jisgeAdded = 0
+
+  const jisgeProgress = progress.jisge || { searched: [], crawled: [] }
+  progress.jisge = jisgeProgress
+
+  function parseJisgeSearch(html) {
+    const doc = parseDoc(html)
+    const results = []
+    const items = doc.querySelectorAll('ul.ucontent li a')
+    items.forEach(a => {
+      const titleEl = a.querySelector('.title')
+      const descEl = a.querySelector('.description')
+      const href = a.getAttribute('href') || ''
+      const id = href.replace(/^\//, '').replace(/\.html$/, '')
+      const title = titleEl?.textContent?.trim() || a.textContent?.trim() || ''
+      if (title && href && id) {
+        results.push({ id, title, description: descEl?.textContent?.trim() || '' })
+      }
+    })
+    return results
+  }
+
+  function parseJisgeBook(html) {
+    const doc = parseDoc(html)
+    const titleEl = doc.querySelector('.content-title div:last-child, .book-title, h1')
+    const title = titleEl?.textContent?.trim() || ''
+    const chapters = []
+
+    // Content page (short story with inline text)
+    if (doc.querySelector('#bookcontent p')) {
+      const paragraphs = doc.querySelectorAll('#bookcontent p')
+      const lines = []
+      paragraphs.forEach(p => {
+        let text = (p.textContent || '').replace(/来源[：:]\s*\S+/g, '').replace(/jishuge\S*/gi, '').replace(/集书阁\S*/g, '').replace(/请收藏.*?$/gm, '').replace(/https?:\/\/\S+/g, '').trim()
+        if (text.length > 2) lines.push(text)
+      })
+      if (lines.length > 0) {
+        chapters.push({ id: 'ch1', title: title || '正文', index: 0, url: '', content: lines.join('\n') })
+      }
+      return { title, chapters }
+    }
+
+    // Chapter list page
+    const chLinks = doc.querySelectorAll('ul.ucontent li a')
+    chLinks.forEach((a, i) => {
+      const chHref = a.getAttribute('href') || ''
+      const chTitle = a.querySelector('.title')?.textContent?.trim() || a.textContent?.trim() || ''
+      if (chHref && chTitle) {
+        chapters.push({ id: chHref.replace(/^\//, '').replace(/\.html$/, ''), title: chTitle, index: i, url: chHref })
+      }
+    })
+    return { title, chapters }
+  }
+
+  function parseJisgeChapter(html) {
+    const doc = parseDoc(html)
+    const paragraphs = doc.querySelectorAll('#bookcontent p')
+    const lines = []
+    paragraphs.forEach(p => {
+      let text = (p.textContent || '').replace(/来源[：:]\s*\S+/g, '').replace(/jishuge\S*/gi, '').replace(/集书阁\S*/g, '').replace(/请收藏.*?$/gm, '').replace(/https?:\/\/\S+/g, '').trim()
+      if (text.length > 2) lines.push(text)
+    })
+    return lines.join('\n')
+  }
+
+  const existingJisgeTitles = new Set(existingIndex.filter(b => b.sourceId === 'jisge').map(b => b.title))
+  const existingJisgeCount = existingJisgeTitles.size
+  console.log(`  已有集书阁书籍: ${existingJisgeCount} 本，目标: ${JISGE_TARGET} 本\n`)
+
+  for (const keyword of JISGE_KEYWORDS) {
+    if (existingJisgeCount + jisgeAdded >= JISGE_TARGET) break
+    if (jisgeProgress.searched.includes(keyword)) continue
+
+    console.log(`  🔍 搜索关键词: ${keyword}`)
+    try {
+      const searchUrl = `${JISGE_BASE}/list-${encodeURI(keyword)}.html`
+      const html = await fetchText(searchUrl, 10000)
+      const searchResults = parseJisgeSearch(html)
+      console.log(`    找到 ${searchResults.length} 个结果`)
+
+      jisgeProgress.searched.push(keyword)
+      saveJSON(PROGRESS_FILE, progress)
+
+      for (const result of searchResults) {
+        if (existingJisgeCount + jisgeAdded >= JISGE_TARGET) break
+        if (existingJisgeTitles.has(result.title)) continue
+        if (jisgeProgress.crawled.includes(result.id)) continue
+
+        try {
+          const bookUrl = result.id.includes('content_') ? `${JISGE_BASE}/${result.id}.html` : `${JISGE_BASE}/content_${result.id}.html`
+          const bookHtml = await fetchText(bookUrl, 10000)
+          const detail = parseJisgeBook(bookHtml)
+          if (!detail.title) continue
+
+          let chapters = []
+          if (detail.chapters.length > 0 && detail.chapters[0].content) {
+            // Short story with inline content
+            chapters = detail.chapters.slice(0, MAX_CHAPTERS)
+          } else if (detail.chapters.length > 0) {
+            // Multi-chapter book, fetch each chapter
+            for (const ch of detail.chapters.slice(0, MAX_CHAPTERS)) {
+              try {
+                const chUrl = ch.url.startsWith('http') ? ch.url : `${JISGE_BASE}${ch.url.startsWith('/') ? '' : '/'}${ch.url}`
+                const chHtml = await fetchText(chUrl, 8000)
+                const content = parseJisgeChapter(chHtml)
+                if (content && content.length > 20) {
+                  chapters.push({ id: ch.id, title: ch.title, index: chapters.length, url: ch.url, content })
+                }
+              } catch {}
+              await sleep(CH_DELAY)
+            }
+          }
+
+          if (chapters.length === 0) {
+            jisgeProgress.crawled.push(result.id)
+            continue
+          }
+
+          const id = `book_${bookId}`
+          const book = {
+            id, title: detail.title, author: '未知',
+            cover: '',
+            description: result.description?.substring(0, 200) || `${detail.title} - 集书阁`,
+            sourceId: 'jisge', sourceName: '集书阁',
+            chapters, tags: guessTags(detail.title + ' ' + (result.description || ''))
+          }
+
+          fs.writeFileSync(path.join(BOOKS_DIR, `${id}.json`), JSON.stringify(book, null, 2))
+          existingIndex.push({ id, title: book.title, author: book.author, cover: '', sourceId: 'jisge', sourceName: '集书阁', description: book.description.substring(0, 100), tags: book.tags })
+          existingJisgeTitles.add(book.title)
+          saveJSON(INDEX_FILE, existingIndex)
+          jisgeProgress.crawled.push(result.id)
+          saveJSON(PROGRESS_FILE, progress)
+
+          jisgeAdded++; bookId++
+          console.log(`    💾 ${id} - ${detail.title} (${chapters.length} 章)`)
+          await sleep(REQ_DELAY)
+        } catch (e) {
+          jisgeProgress.crawled.push(result.id)
+          saveJSON(PROGRESS_FILE, progress)
+        }
+      }
+    } catch (e) {
+      console.log(`    ❌ 搜索失败: ${e.message}`)
+    }
+    await sleep(REQ_DELAY)
+  }
+
+  console.log(`\n  集书阁新增: ${jisgeAdded} 本`)
+
   console.log(`\n========================================`)
-  console.log(`  ✅ 完成！新增: ${added} | 跳过: ${skipped} | 失败: ${failed} | 总计: ${existingIndex.length}`)
+  console.log(`  ✅ 完成！新增: ${added + jisgeAdded} | 跳过: ${skipped} | 失败: ${failed} | 总计: ${existingIndex.length}`)
   console.log(`========================================\n`)
 
   saveJSON(INDEX_FILE, existingIndex)

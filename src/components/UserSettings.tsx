@@ -2,23 +2,25 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Book } from '../types'
 import { getStoredProfile, clearLocalData, register, login, uploadToCloud, downloadFromCloud, type UserProfile } from '../utils/github-sync'
 import { getAllBooks, saveBook, saveProgress, getProgress } from '../utils/db'
-import { hasInviteCode, setInviteCode as saveInviteCodeToStorage } from '../utils/invite'
+import { hasInviteCode, isInviteCodeValid, setInviteCode as saveInviteCodeToStorage } from '../utils/invite'
 
 interface Props {
   books: Book[]
   showToast: (msg: string) => void
   onSyncComplete: (books: Book[]) => void
+  onProfileChange?: (profile: UserProfile | null) => void
 }
 
 const AUTO_BACKUP_INTERVAL = 5 * 60 * 1000
 
-export default function UserSettings({ books, showToast, onSyncComplete }: Props) {
+export default function UserSettings({ books, showToast, onSyncComplete, onProfileChange }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(getStoredProfile)
   const [nickname, setNickname] = useState('')
   const [password, setPassword] = useState('')
   const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'idle' | 'register' | 'login'>('idle')
+  const [showProfile, setShowProfile] = useState(false)
   const [lastBackup, setLastBackup] = useState<string | null>(null)
   const backupTimer = useRef<ReturnType<typeof setInterval>>()
 
@@ -117,15 +119,17 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     if (name.length < 2 || name.length > 12) { showToast('昵称2-12个字符'); return }
     if (password.length < 4) { showToast('密码至少4位'); return }
     setLoading(true)
-    const { profile: p, error } = await register(name, password)
+    const validInvite = inviteCode.trim() && isInviteCodeValid(inviteCode.trim())
+    const { profile: p, error } = await register(name, password, !!validInvite)
     setLoading(false)
     if (error) { showToast(error); return }
     if (p) {
       setProfile(p); setNickname(''); setPassword(''); setMode('idle')
-      if (inviteCode.trim()) localStorage.setItem('yellow-invite-code', inviteCode.trim())
+      if (validInvite) saveInviteCodeToStorage(inviteCode.trim())
+      onProfileChange?.(p)
       showToast(`欢迎, ${p.nickname}!`)
     }
-  }, [nickname, password, inviteCode, showToast])
+  }, [nickname, password, inviteCode, showToast, onProfileChange])
 
   const handleLogin = useCallback(async () => {
     const name = nickname.trim()
@@ -135,12 +139,14 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     if (error) { setLoading(false); showToast(error); return }
     if (p) {
       setProfile(p); setNickname(''); setPassword(''); setMode('idle')
+      if (p.inviteCodeActivated) saveInviteCodeToStorage('1887415157')
+      onProfileChange?.(p)
       showToast(`欢迎回来, ${p.nickname}!`)
       const restored = await doRestore()
       setLoading(false)
       if (restored) showToast('已从云端恢复数据')
     }
-  }, [nickname, password, showToast, doRestore])
+  }, [nickname, password, showToast, doRestore, onProfileChange])
 
   const handleLogout = useCallback(async () => {
     stopAutoBackup()
@@ -148,8 +154,9 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     clearLocalData()
     setProfile(null)
     setLastBackup(null)
+    onProfileChange?.(null)
     window.location.reload()
-  }, [stopAutoBackup, doBackup])
+  }, [stopAutoBackup, doBackup, onProfileChange])
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: 8,
@@ -200,9 +207,41 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     )
   }
 
+  if (showProfile) {
+    return (
+      <div className="card" style={{ padding: 16, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--text-secondary)' }} onClick={() => setShowProfile(false)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>个人资料</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <div style={{
+            width: 64, height: 64, borderRadius: 32, background: profile.avatarColor,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontWeight: 700, fontSize: 24
+          }}>
+            {profile.nickname.charAt(0).toUpperCase()}
+          </div>
+          <div style={{ fontWeight: 600, fontSize: 16 }}>{profile.nickname}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>ID: {profile.userId}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>注册时间: {new Date(profile.createdAt).toLocaleDateString()}</div>
+          {profile.inviteCodeActivated && (
+            <div style={{ fontSize: 12, color: 'var(--success)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              邀请码已激活
+            </div>
+          )}
+        </div>
+        <button className="btn btn-danger" style={{ width: '100%' }} onClick={handleLogout}>退出登录</button>
+      </div>
+    )
+  }
+
   return (
     <div className="card" style={{ padding: 16, marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setShowProfile(true)}>
         <div style={{
           width: 40, height: 40, borderRadius: 20, background: profile.avatarColor,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -216,15 +255,7 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
             {lastBackup ? `上次备份: ${lastBackup}` : '每5分钟自动备份'}
           </div>
         </div>
-        <button style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 12, padding: '4px 12px', borderRadius: 6, cursor: 'pointer' }} onClick={handleLogout}>退出</button>
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn btn-primary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={() => doBackup(false)} disabled={loading}>
-          {loading ? '备份中...' : '手动备份'}
-        </button>
-        <button className="btn btn-secondary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={async () => { setLoading(true); const ok = await doRestore(); setLoading(false); showToast(ok ? '已恢复' : '恢复失败') }} disabled={loading}>
-          {loading ? '恢复中...' : '从云端恢复'}
-        </button>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)' }}><polyline points="9 18 15 12 9 6" /></svg>
       </div>
     </div>
   )

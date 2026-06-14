@@ -174,7 +174,8 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
       const book = await getBookContent(result.id, result.sourceId)
       if (!book.title || book.title === '未知书名') book.title = result.title || book.title
       if (!book.author || book.author === '未知作者' || book.author === '未知') book.author = result.author || book.author
-      await saveBook(book); onAddBook(book); showToast(`已添加：${book.title}`)
+      await saveBook(book); onAddBook(book)
+      if (onViewDetail) { onViewDetail(book) } else { showToast(`已添加：${book.title}`) }
     } catch { showToast('获取书籍失败，请重试') }
     setLoadingBookId(null)
   }, [books, onAddBook, onRead, onViewDetail, showToast])
