@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Book, Chapter } from '../types'
+import { getBookChapters } from '../utils/db'
 
 interface Props {
   book: Book
@@ -20,6 +21,15 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
   const showChapters = chapters.length > 1
   const displayChapters = expanded ? chapters : chapters.slice(0, 20)
   const isCaching = cacheTask && cacheTask.bookId === book.id
+
+  // Check if book is already cached on mount
+  useEffect(() => {
+    if (chapters.length === 0) return
+    getBookChapters(book.id).then(cachedChapters => {
+      const cachedCount = cachedChapters.filter(c => c.cached).length
+      if (cachedCount >= chapters.length) setCached(true)
+    }).catch(() => {})
+  }, [book.id, chapters.length])
 
   const handleAdd = () => {
     onAddToShelf()

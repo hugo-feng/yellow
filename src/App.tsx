@@ -63,12 +63,10 @@ function AppInner() {
       return saved ? { ...defaults, ...JSON.parse(saved) } : defaults
     } catch { return defaults }
   })
-  const [toast, setToast] = useState<string | null>(null)
   const { theme } = useTheme()
 
   const showToast = useCallback((msg: string) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 2000)
+    toast(msg)
   }, [])
 
   const loadBooks = useCallback(async () => {
@@ -291,8 +289,6 @@ function AppInner() {
         <TabBtn icon={<SearchIcon />} label="搜索" active={activeTab === 'search'} onClick={() => setActiveTab('search')} />
         <TabBtn icon={<SettingsIcon />} label="设置" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
       </div>
-
-      {toast && <div className="toast scale-in">{toast}</div>}
 
       {showUpdateModal && updateInfo && (
         <div className="modal-overlay">

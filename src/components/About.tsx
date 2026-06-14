@@ -3,6 +3,10 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.8.4', date: '2026-06-14', changes: [
+    '修复二级页面弹窗不显示：改用sonner toast（渲染在root层，z-index最高）',
+    '已缓存状态自动检测：打开详情页时查询IndexedDB，已缓存书籍直接显示"已缓存"'
+  ]},
   { version: '5.8.3', date: '2026-06-14', changes: [
     '书籍详情页：缓存/加入书架操作后显示toast弹窗',
     '缓存完成后按钮变为"已缓存"状态',
@@ -334,7 +338,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.3')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.4')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
