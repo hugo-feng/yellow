@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.7.0', date: '2026-06-14', changes: [
+    '登录后自动从云端恢复数据',
+    '每5分钟自动后台备份（静默，显示上次备份时间）',
+    '退出登录自动备份+清除本地数据+刷新页面'
+  ]},
   { version: '5.6.0', date: '2026-06-14', changes: [
     '集成Supabase云端同步（74k⭐）：昵称+密码注册登录',
     '备份到云端/从云端恢复（书籍+阅读进度+阅读设置）',
@@ -301,7 +306,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.6.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.7.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

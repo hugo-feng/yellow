@@ -43,6 +43,14 @@ export function clearProfile() {
   localStorage.removeItem(USER_KEY)
 }
 
+export function clearLocalData() {
+  localStorage.removeItem(USER_KEY)
+  localStorage.removeItem('reader-settings')
+  if ('indexedDB' in window) {
+    indexedDB.deleteDatabase('yellow-reader-db')
+  }
+}
+
 export async function register(nickname: string, password: string): Promise<{ profile?: UserProfile; error?: string }> {
   const userId = nickname.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, '') + '-' + randomId()
   const passwordHash = await hashPassword(password, userId)

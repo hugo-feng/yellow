@@ -1,6 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Book } from '../types'
-import { getStoredProfile, clearProfile, register, login, uploadToCloud, downloadFromCloud, type UserProfile } from '../utils/github-sync'
+import { getStoredProfile, clearLocalData, register, login, uploadToCloud, downloadFromCloud, type UserProfile } from '../utils/github-sync'
 import { getAllBooks, saveBook, saveProgress, getProgress } from '../utils/db'
 
 interface Props {
@@ -9,12 +9,68 @@ interface Props {
   onSyncComplete: (books: Book[]) => void
 }
 
+const AUTO_BACKUP_INTERVAL = 5 * 60 * 1000
+
 export default function UserSettings({ books, showToast, onSyncComplete }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(getStoredProfile)
   const [nickname, setNickname] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'idle' | 'register' | 'login'>('idle')
+  const [lastBackup, setLastBackup] = useState<string | null>(null)
+  const backupTimer = useRef<ReturnType<typeof setInterval>>()
+
+  const doBackup = useCallback(async (silent = false) => {
+    const p = getStoredProfile()
+    if (!p) return
+    try {
+      const allBooks = await getAllBooks()
+      const progressList: any[] = []
+      for (const book of allBooks) {
+        const prog = await getProgress(book.id)
+        if (prog) progressList.push(prog)
+      }
+      const settings = localStorage.getItem('reader-settings')
+      const { error } = await uploadToCloud({
+        books: allBooks, progress: progressList,
+        readerSettings: settings ? JSON.parse(settings) : null,
+        syncedAt: new Date().toISOString()
+      })
+      if (!error) {
+        const now = new Date().toLocaleTimeString()
+        setLastBackup(now)
+        if (!silent) showToast('已备份到云端')
+      } else if (!silent) {
+        showToast('备份失败: ' + error)
+      }
+    } catch (e) {
+      if (!silent) showToast('备份失败')
+    }
+  }, [showToast])
+
+  const doRestore = useCallback(async () => {
+    const { data, error } = await downloadFromCloud()
+    if (error || !data) return false
+    for (const book of data.books) await saveBook(book)
+    for (const p of data.progress) await saveProgress(p)
+    if (data.readerSettings) localStorage.setItem('reader-settings', JSON.stringify(data.readerSettings))
+    onSyncComplete(await getAllBooks())
+    return true
+  }, [onSyncComplete])
+
+  const startAutoBackup = useCallback(() => {
+    if (backupTimer.current) clearInterval(backupTimer.current)
+    backupTimer.current = setInterval(() => doBackup(true), AUTO_BACKUP_INTERVAL)
+  }, [doBackup])
+
+  const stopAutoBackup = useCallback(() => {
+    if (backupTimer.current) { clearInterval(backupTimer.current); backupTimer.current = undefined }
+  }, [])
+
+  useEffect(() => {
+    if (profile) startAutoBackup()
+    return () => stopAutoBackup()
+  }, [profile])
 
   const handleRegister = useCallback(async () => {
     const name = nickname.trim()
@@ -25,7 +81,10 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     const { profile: p, error } = await register(name, password)
     setLoading(false)
     if (error) { showToast(error); return }
-    if (p) { setProfile(p); setNickname(''); setPassword(''); setMode('idle'); showToast(`欢迎, ${p.nickname}!`) }
+    if (p) {
+      setProfile(p); setNickname(''); setPassword(''); setMode('idle')
+      showToast(`欢迎, ${p.nickname}!`)
+    }
   }, [nickname, password, showToast])
 
   const handleLogin = useCallback(async () => {
@@ -33,47 +92,24 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     if (!name || !password) { showToast('请输入昵称和密码'); return }
     setLoading(true)
     const { profile: p, error } = await login(name, password)
-    setLoading(false)
-    if (error) { showToast(error); return }
-    if (p) { setProfile(p); setNickname(''); setPassword(''); setMode('idle'); showToast(`欢迎回来, ${p.nickname}!`) }
-  }, [nickname, password, showToast])
-
-  const handleLogout = useCallback(() => {
-    clearProfile(); setProfile(null); showToast('已退出')
-  }, [showToast])
-
-  const handleUpload = useCallback(async () => {
-    if (!profile) return
-    setLoading(true)
-    const allBooks = await getAllBooks()
-    const progressList: any[] = []
-    for (const book of allBooks) {
-      const p = await getProgress(book.id)
-      if (p) progressList.push(p)
+    if (error) { setLoading(false); showToast(error); return }
+    if (p) {
+      setProfile(p); setNickname(''); setPassword(''); setMode('idle')
+      showToast(`欢迎回来, ${p.nickname}!`)
+      const restored = await doRestore()
+      setLoading(false)
+      if (restored) showToast('已从云端恢复数据')
     }
-    const settings = localStorage.getItem('reader-settings')
-    const { error } = await uploadToCloud({
-      books: allBooks, progress: progressList,
-      readerSettings: settings ? JSON.parse(settings) : null,
-      syncedAt: new Date().toISOString()
-    })
-    setLoading(false)
-    showToast(error ? '备份失败: ' + error : '已备份到云端')
-  }, [profile, books, showToast])
+  }, [nickname, password, showToast, doRestore])
 
-  const handleDownload = useCallback(async () => {
-    if (!profile) return
-    setLoading(true)
-    const { data, error } = await downloadFromCloud()
-    setLoading(false)
-    if (error) { showToast(error); return }
-    if (!data) { showToast('云端无数据'); return }
-    for (const book of data.books) await saveBook(book)
-    for (const p of data.progress) await saveProgress(p)
-    if (data.readerSettings) localStorage.setItem('reader-settings', JSON.stringify(data.readerSettings))
-    onSyncComplete(await getAllBooks())
-    showToast(`已恢复 ${data.books.length} 本书`)
-  }, [profile, showToast, onSyncComplete])
+  const handleLogout = useCallback(async () => {
+    stopAutoBackup()
+    await doBackup(true)
+    clearLocalData()
+    setProfile(null)
+    setLastBackup(null)
+    window.location.reload()
+  }, [stopAutoBackup, doBackup])
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: 8,
@@ -91,7 +127,7 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
           </div>
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>未登录</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>登录后可同步书架到云端</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>登录后自动同步书架到云端</div>
           </div>
         </div>
         {mode === 'idle' && (
@@ -132,15 +168,17 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>{profile.nickname}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>云端同步已开启</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            {lastBackup ? `上次备份: ${lastBackup}` : '每5分钟自动备份'}
+          </div>
         </div>
         <button style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 12, padding: '4px 12px', borderRadius: 6, cursor: 'pointer' }} onClick={handleLogout}>退出</button>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn btn-primary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={handleUpload} disabled={loading}>
-          {loading ? '备份中...' : '备份到云端'}
+        <button className="btn btn-primary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={() => doBackup(false)} disabled={loading}>
+          {loading ? '备份中...' : '手动备份'}
         </button>
-        <button className="btn btn-secondary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={handleDownload} disabled={loading}>
+        <button className="btn btn-secondary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={async () => { setLoading(true); const ok = await doRestore(); setLoading(false); showToast(ok ? '已恢复' : '恢复失败') }} disabled={loading}>
           {loading ? '恢复中...' : '从云端恢复'}
         </button>
       </div>
