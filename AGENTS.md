@@ -102,7 +102,7 @@
 - React 18 + TypeScript + Vite + Capacitor Android
 - OTA 版本检查：GitHub API（`api.github.com/repos/.../contents/version.json?ref=gh-pages`），不经过 CDN 缓存
 - APK 下载：DownloadManager 后台下载（URL 从 version.json 的 downloadUrl 读取）
-- 安装：原生 AppUpdater 插件（Android DownloadManager + FileProvider 自动安装）
-- SW 拦截：/、/index.html、/assets/、/books/、/version.json
+- 安装：原生 NativeDownloader 插件（Android DownloadManager + FileProvider 自动安装）
+- 用户数据同步：GitHub Personal Access Token 登录 → 私有 Gist 存储（`github-sync.ts`）
 - IndexedDB 存储：Dexie.js 封装（books / chapters / progress 三个 store）
 - GitHub CLI：GH_TOKEN 已设为用户级环境变量，`gh` 命令自动可用
