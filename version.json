@@ -1,7 +1,7 @@
 {
-  "version": "5.7.0",
-  "versionCode": 570,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.7.0/yellow-v5.7.0.apk",
-  "updateContent": "登录自动恢复+5分钟自动备份+退出清除数据",
+  "version": "5.7.1",
+  "versionCode": 571,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.7.1/yellow-v5.7.1.apk",
+  "updateContent": "修复移动数据下载失败+下载失败弹窗保留+浏览器下载兜底",
   "releaseDate": "2026-06-14"
 }
