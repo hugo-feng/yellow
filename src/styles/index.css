@@ -88,6 +88,7 @@ body {
 
 .page-enter {
   animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  height: 100%;
 }
 
 .modal-sheet {

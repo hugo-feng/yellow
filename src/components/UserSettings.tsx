@@ -13,6 +13,7 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
   const [profile, setProfile] = useState<UserProfile | null>(getStoredProfile)
   const [nickname, setNickname] = useState('')
   const [password, setPassword] = useState('')
+  const [syncToken, setSyncToken] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'idle' | 'register' | 'login'>('idle')
 
@@ -21,41 +22,34 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     if (!name) { showToast('请输入昵称'); return }
     if (name.length < 2 || name.length > 12) { showToast('昵称2-12个字符'); return }
     if (password.length < 4) { showToast('密码至少4位'); return }
+    if (!syncToken.trim()) { showToast('请输入同步密钥'); return }
     setLoading(true)
     try {
-      const p = await createProfile(name, password)
+      const p = await createProfile(name, password, syncToken.trim())
       setProfile(p)
-      setNickname(''); setPassword(''); setMode('idle')
+      setNickname(''); setPassword(''); setSyncToken(''); setMode('idle')
       showToast(`欢迎, ${p.nickname}!`)
-    } catch (e) {
-      showToast('注册失败: ' + (e as Error).message)
-    }
+    } catch (e) { showToast('注册失败: ' + (e as Error).message) }
     setLoading(false)
-  }, [nickname, password, showToast])
+  }, [nickname, password, syncToken, showToast])
 
   const handleLogin = useCallback(async () => {
     const name = nickname.trim()
-    if (!name || !password) { showToast('请输入昵称和密码'); return }
+    if (!name || !password || !syncToken.trim()) { showToast('请输入完整信息'); return }
     setLoading(true)
     try {
-      const p = await verifyLogin(name, password)
+      const p = await verifyLogin(name, password, syncToken.trim())
       if (p) {
         setProfile(p)
-        setNickname(''); setPassword(''); setMode('idle')
+        setNickname(''); setPassword(''); setSyncToken(''); setMode('idle')
         showToast(`欢迎回来, ${p.nickname}!`)
-      } else {
-        showToast('昵称或密码错误')
-      }
-    } catch (e) {
-      showToast('登录失败: ' + (e as Error).message)
-    }
+      } else { showToast('昵称或密码错误') }
+    } catch (e) { showToast('登录失败: ' + (e as Error).message) }
     setLoading(false)
-  }, [nickname, password, showToast])
+  }, [nickname, password, syncToken, showToast])
 
   const handleLogout = useCallback(() => {
-    clearProfile()
-    setProfile(null)
-    showToast('已退出')
+    clearProfile(); setProfile(null); showToast('已退出')
   }, [showToast])
 
   const handleUpload = useCallback(async () => {
@@ -70,16 +64,12 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
       }
       const settings = localStorage.getItem('reader-settings')
       await uploadData({
-        profile,
-        books: allBooks,
-        progress: progressList,
+        profile, books: allBooks, progress: progressList,
         readerSettings: settings ? JSON.parse(settings) : null,
         syncedAt: new Date().toISOString()
       })
-      showToast('数据已同步到云端')
-    } catch (e) {
-      showToast('同步失败: ' + (e as Error).message)
-    }
+      showToast('数据已备份')
+    } catch (e) { showToast('备份失败: ' + (e as Error).message) }
     setLoading(false)
   }, [profile, books, showToast])
 
@@ -94,9 +84,7 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
       if (data.readerSettings) localStorage.setItem('reader-settings', JSON.stringify(data.readerSettings))
       onSyncComplete(await getAllBooks())
       showToast(`已恢复 ${data.books.length} 本书`)
-    } catch (e) {
-      showToast('恢复失败: ' + (e as Error).message)
-    }
+    } catch (e) { showToast('恢复失败: ' + (e as Error).message) }
     setLoading(false)
   }, [profile, showToast, onSyncComplete])
 
@@ -132,11 +120,16 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
             <input type="text" placeholder="昵称（2-12个字符）" value={nickname}
               onChange={e => setNickname(e.target.value)} maxLength={12} style={inputStyle} />
             <input type="password" placeholder="密码（至少4位）" value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)} style={inputStyle} />
+            <input type="password" placeholder="同步密钥" value={syncToken}
+              onChange={e => setSyncToken(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (mode === 'register' ? handleRegister() : handleLogin())}
               style={inputStyle} />
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>
+              向管理员获取同步密钥
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setMode('idle'); setNickname(''); setPassword('') }}>取消</button>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setMode('idle'); setNickname(''); setPassword(''); setSyncToken('') }}>取消</button>
               <button className="btn btn-primary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={mode === 'register' ? handleRegister : handleLogin} disabled={loading}>
                 {loading ? '处理中...' : mode === 'register' ? '注册' : '登录'}
               </button>
@@ -163,7 +156,6 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
         </div>
         <button style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 12, padding: '4px 12px', borderRadius: 6, cursor: 'pointer' }} onClick={handleLogout}>退出</button>
       </div>
-
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn btn-primary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={handleUpload} disabled={loading}>
           {loading ? '同步中...' : '备份到云端'}

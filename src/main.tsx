@@ -30,18 +30,31 @@ if ('caches' in window) {
 // Full screen safe area detection
 function detectSafeArea() {
   const root = document.documentElement
-  const testEl = document.createElement('div')
-  testEl.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top,24px);pointer-events:none;visibility:hidden'
-  document.body.appendChild(testEl)
-  const envTop = testEl.offsetHeight
-  document.body.removeChild(testEl)
 
-  if (envTop > 0) {
-    root.style.setProperty('--safe-top-real', `${envTop}px`)
+  // Detect top safe area (status bar)
+  const testTop = document.createElement('div')
+  testTop.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top,0px);pointer-events:none;visibility:hidden;z-index:-1'
+  document.body.appendChild(testTop)
+  const topH = testTop.offsetHeight
+  document.body.removeChild(testTop)
+  root.style.setProperty('--safe-top-real', (topH > 0 ? topH : 24) + 'px')
+
+  // Detect bottom safe area (gesture bar / navigation bar)
+  const testBottom = document.createElement('div')
+  testBottom.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;z-index:-1'
+  document.body.appendChild(testBottom)
+  const bottomH = testBottom.offsetHeight
+  document.body.removeChild(testBottom)
+
+  if (bottomH > 0) {
+    root.style.setProperty('--safe-bottom-real', bottomH + 'px')
   } else {
-    const estimatedTop = (window.screen?.height || 0) - (window.innerHeight || 0)
-    const safeTop = Math.max(24, Math.min(estimatedTop, 60))
-    root.style.setProperty('--safe-top-real', `${safeTop}px`)
+    // Estimate: if screen height > inner height by a small amount, likely gesture nav
+    const diff = (window.screen?.height || 0) - (window.innerHeight || 0)
+    // Android gesture bar is typically 16-24px, but innerHeight already accounts for it
+    // Use a minimum of 16px for gesture navigation devices
+    const safeBottom = Math.max(16, Math.min(diff, 48))
+    root.style.setProperty('--safe-bottom-real', safeBottom + 'px')
   }
 }
 
