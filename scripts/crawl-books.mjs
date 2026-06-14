@@ -16,7 +16,7 @@ const INDEX_FILE = path.join(BOOKS_DIR, 'index.json')
 const PROGRESS_FILE = path.join(__dirname, '..', '.crawl-progress.json')
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
-const MAX_CHAPTERS = 30
+const MAX_CHAPTERS = 200
 const MAX_CANDIDATES = 20
 const REQ_DELAY = 200
 const CH_DELAY = 150
@@ -86,12 +86,26 @@ function sortChapters(chapters) {
 }
 
 function extractCover(doc) {
-  const img = doc.querySelector('.book_img img, .bookimg img, .cover img, #fmimg img, .pic img, img[src*="cover"], img[src*="book"]')
-  let src = img?.getAttribute('src') || ''
-  if (src && !src.startsWith('http')) {
-    src = src.startsWith('//') ? 'https:' + src : src
+  const selectors = [
+    '#fmimg img', '.book_img img', '.bookimg img', '.cover img', '.pic img',
+    '.book-info img', '.book_cover img', '.info img[src*="cover"]',
+    '.info img[src*="book"]', '.info img[src*="jpg"]', '.info img[src*="png"]',
+    'img[src*="cover"]', 'img[src*="book"]', 'img[src*="jpg"]',
+    '#sidebar img', '.sidebar img'
+  ]
+  for (const sel of selectors) {
+    const img = doc.querySelector(sel)
+    if (img) {
+      let src = img.getAttribute('src') || ''
+      if (src && !src.startsWith('http')) {
+        src = src.startsWith('//') ? 'https:' + src : src
+      }
+      if (src && !src.includes('nocover') && !src.includes('default') && !src.includes('loading') && src.length > 10) {
+        return src
+      }
+    }
   }
-  return src
+  return ''
 }
 
 // ==================== 正版书单 ====================

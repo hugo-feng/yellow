@@ -15,6 +15,7 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
   const [profile, setProfile] = useState<UserProfile | null>(getStoredProfile)
   const [nickname, setNickname] = useState('')
   const [password, setPassword] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState<'idle' | 'register' | 'login'>('idle')
   const [lastBackup, setLastBackup] = useState<string | null>(null)
@@ -61,23 +62,34 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
   }, [showToast])
 
   const doRestore = useCallback(async () => {
-    const { data, error } = await downloadFromCloud()
-    if (error || !data) return false
-    for (const book of data.books) await saveBook(book)
-    for (const p of data.progress) await saveProgress(p)
-    if (data.readerSettings) localStorage.setItem('reader-settings', JSON.stringify(data.readerSettings))
-    if (data.theme) {
-      localStorage.setItem('theme', data.theme)
-      document.documentElement.className = `theme-${data.theme}`
-    }
-    // Restore readChapters
-    if (data.readChapters) {
-      for (const [bookId, chapters] of Object.entries(data.readChapters)) {
-        localStorage.setItem(`read-${bookId}`, JSON.stringify(chapters))
+    try {
+      const { data, error } = await downloadFromCloud()
+      if (error) { console.error('[Restore] download error:', error); return false }
+      if (!data) { console.error('[Restore] no data'); return false }
+      
+      let restoredCount = 0
+      for (const book of data.books) {
+        try {
+          if (book && book.id) { await saveBook(book); restoredCount++ }
+        } catch (e) { console.error('[Restore] saveBook error:', e) }
       }
-    }
-    onSyncComplete(await getAllBooks())
-    return true
+      for (const p of data.progress) {
+        try { if (p && p.bookId) await saveProgress(p) } catch (e) { console.error('[Restore] saveProgress error:', e) }
+      }
+      if (data.readerSettings) localStorage.setItem('reader-settings', JSON.stringify(data.readerSettings))
+      if (data.theme) {
+        localStorage.setItem('theme', data.theme)
+        document.documentElement.className = `theme-${data.theme}`
+      }
+      if (data.readChapters) {
+        for (const [bookId, chapters] of Object.entries(data.readChapters)) {
+          localStorage.setItem(`read-${bookId}`, JSON.stringify(chapters))
+        }
+      }
+      console.log(`[Restore] restored ${restoredCount}/${data.books.length} books`)
+      onSyncComplete(await getAllBooks())
+      return true
+    } catch (e) { console.error('[Restore] exception:', e); return false }
   }, [onSyncComplete])
 
   const startAutoBackup = useCallback(() => {
@@ -105,9 +117,10 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     if (error) { showToast(error); return }
     if (p) {
       setProfile(p); setNickname(''); setPassword(''); setMode('idle')
+      if (inviteCode.trim()) localStorage.setItem('yellow-invite-code', inviteCode.trim())
       showToast(`欢迎, ${p.nickname}!`)
     }
-  }, [nickname, password, showToast])
+  }, [nickname, password, inviteCode, showToast])
 
   const handleLogin = useCallback(async () => {
     const name = nickname.trim()
@@ -166,8 +179,12 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (mode === 'register' ? handleRegister() : handleLogin())}
               style={inputStyle} />
+            {mode === 'register' && (
+              <input type="text" placeholder="邀请码（选填）" value={inviteCode}
+                onChange={e => setInviteCode(e.target.value)} maxLength={20} style={inputStyle} />
+            )}
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setMode('idle'); setNickname(''); setPassword('') }}>取消</button>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setMode('idle'); setNickname(''); setPassword(''); setInviteCode('') }}>取消</button>
               <button className="btn btn-primary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={mode === 'register' ? handleRegister : handleLogin} disabled={loading}>
                 {loading ? '处理中...' : mode === 'register' ? '注册' : '登录'}
               </button>

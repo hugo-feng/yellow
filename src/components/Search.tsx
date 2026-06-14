@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import type { Book, SearchResult } from '../types'
 import { searchAcrossSources, getBookContent } from '../utils/sources'
 import { saveBook } from '../utils/db'
+import { hasInviteCode } from '../utils/invite'
 
 interface Props {
   onAddBook: (book: Book) => void
@@ -66,7 +67,9 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
     const kw = q.trim().toLowerCase()
 
     // Local search (instant)
+    const allowJisge = hasInviteCode()
     for (const book of localIndex) {
+      if (!allowJisge && book.sourceId === 'jisge') continue
       if (book.title.toLowerCase().includes(kw) || book.description.toLowerCase().includes(kw) || book.author.toLowerCase().includes(kw)) {
         const key = `${book.sourceId}-${book.id}`
         if (!seen.has(key)) {
@@ -81,8 +84,9 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
       }
     }
     setResults([...allResults])
+    setLoading(false)
 
-    // Online search (append results)
+    // Online search (append results, loading already false)
     try {
       const onlineResults = await searchAcrossSources(q.trim())
       for (const r of onlineResults) {
@@ -94,7 +98,6 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
       }
       setResults([...allResults])
     } catch { /* online failed */ }
-    setLoading(false)
   }, [localIndex, addToHistory])
 
   const handleSearch = useCallback((q: string) => {

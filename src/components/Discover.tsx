@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Book } from '../types'
+import { hasInviteCode } from '../utils/invite'
 
 interface DiscoverItem {
   id: string; title: string; author: string; cover: string; description: string
@@ -14,7 +15,7 @@ interface Props {
 }
 
 interface LocalBookIndex {
-  id: string; title: string; author: string; sourceId: string; sourceName: string; description: string; tags?: string[]
+  id: string; title: string; author: string; cover?: string; sourceId: string; sourceName: string; description: string; tags?: string[]
 }
 
 const LOCAL_BOOKS_URL = 'books/index.json'
@@ -55,22 +56,23 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
 
   const allTags = Array.from(new Set(bookIndex.flatMap(b => b.tags || [])))
 
-  const filteredBooks = selectedCat
-    ? bookIndex.filter(b => b.tags?.includes(selectedCat))
-    : bookIndex
+  const filteredIndex = hasInviteCode() ? bookIndex : bookIndex.filter(b => b.sourceId !== 'jisge')
 
-  const shuffled = [...filteredBooks].sort(() => Math.random() - 0.5 + shuffleKey * 0)
+  const shuffled = [...filteredIndex].sort(() => Math.random() - 0.5 + shuffleKey * 0)
+  const recommended = selectedCat
+    ? shuffled.filter(b => b.tags?.includes(selectedCat)).slice(0, 36)
+    : shuffled.slice(0, 36)
 
-  const items: DiscoverItem[] = shuffled.map(b => ({
-    id: b.id,
-    title: b.title,
-    author: b.author || '未知',
-    cover: '',
-    description: b.description || '',
-    sourceId: b.sourceId || 'jisge',
-    sourceName: b.sourceName || '集书阁',
-    url: '',
-    tags: b.tags
+  const tagSections = allTags.slice(0, 6).map(tag => ({
+    tag,
+    books: shuffled.filter(b => b.tags?.includes(tag)).slice(0, 12)
+  })).filter(s => s.books.length > 0)
+
+  const toItems = (list: typeof bookIndex): DiscoverItem[] => list.map(b => ({
+    id: b.id, title: b.title, author: b.author || '未知',
+    cover: b.cover || '', description: b.description || '',
+    sourceId: b.sourceId || 'jisge', sourceName: b.sourceName || '集书阁',
+    url: '', tags: b.tags
   }))
 
   const handleClick = useCallback(async (item: DiscoverItem) => {
@@ -142,7 +144,7 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
 
       {/* 推荐列表 */}
       <div className="section-title">
-        为你推荐
+        {selectedCat ? `分类：${selectedCat}` : '为你推荐'}
         <button className="btn btn-secondary btn-sm" style={{ marginLeft: 'auto', fontSize: 11, padding: '3px 10px' }} onClick={() => { setSelectedCat(''); setShuffleKey(k => k + 1) }}>
           换一换
         </button>
@@ -164,15 +166,15 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
 
       {error && <div className="empty-state" style={{ paddingTop: 20 }}><h3>加载失败，请检查网络</h3></div>}
 
-      {!isLoading && items.length === 0 && (
+      {!isLoading && recommended.length === 0 && (
         <div className="empty-state" style={{ paddingTop: 20 }}>
           <h3>{selectedCat ? `分类 "${selectedCat}" 暂无书籍` : '暂无预缓存书籍'}</h3>
         </div>
       )}
 
-      {!isLoading && items.length > 0 && (
+      {!isLoading && recommended.length > 0 && (
         <div className="discover-grid">
-          {items.map((item, i) => (
+          {toItems(recommended).map((item, i) => (
             <div
               key={`${item.sourceId}-${item.id}`}
               className="discover-card fade-in"
@@ -181,7 +183,7 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
             >
               <div className="discover-cover" style={{ padding: 6, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: 1.3, wordBreak: 'break-all' }}>
                 {item.cover ? (
-                  <img src={item.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={item.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
                 ) : (
                   <span style={{ fontSize: 12 }}>{item.title}</span>
                 )}
@@ -194,6 +196,35 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
           ))}
         </div>
       )}
+
+      {/* 热门tag分类区块 */}
+      {!selectedCat && !isLoading && tagSections.map(section => (
+        <div key={section.tag} style={{ marginTop: 24 }}>
+          <div className="section-title">{section.tag}</div>
+          <div className="discover-grid">
+            {toItems(section.books).map((item, i) => (
+              <div
+                key={`tag-${item.sourceId}-${item.id}`}
+                className="discover-card fade-in"
+                style={{ animationDelay: `${i * 0.03}s` }}
+                onClick={() => handleClick(item)}
+              >
+                <div className="discover-cover" style={{ padding: 6, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: 1.3, wordBreak: 'break-all' }}>
+                  {item.cover ? (
+                    <img src={item.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} loading="lazy" />
+                  ) : (
+                    <span style={{ fontSize: 12 }}>{item.title}</span>
+                  )}
+                </div>
+                <div className="discover-info">
+                  <div className="discover-title">{item.title}</div>
+                  <div className="discover-author">{item.sourceName}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

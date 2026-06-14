@@ -133,19 +133,19 @@ export default function BookDetail({ book, isInShelf, isInitiallyCached, onAddTo
           )}
         </div>
 
-        {/* 目录 - 默认全展开，可点击章节 */}
+        {/* 目录 - 固定高度可滚动区域，默认全展开 */}
         {showChapters && (
           <div style={{ padding: '0 16px', marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
               目录（共{chapters.length}章）
             </div>
-            <div className="card">
+            <div className="card" style={{ maxHeight: 400, overflow: 'auto', WebkitOverflowScrolling: 'touch' }}>
               {chapters.map((ch, i) => (
                 <div
                   key={ch.id}
                   onClick={() => onStartRead(i)}
                   style={{
-                    padding: '12px 14px',
+                    padding: '10px 14px',
                     borderBottom: i < chapters.length - 1 ? '1px solid var(--border)' : 'none',
                     fontSize: 13,
                     color: 'var(--text-primary)',

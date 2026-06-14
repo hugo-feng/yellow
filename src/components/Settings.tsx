@@ -18,6 +18,7 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
   const [autoCheck, setAutoCheck] = useState(() => localStorage.getItem('ota-auto-check') !== 'off')
   const [storageInfo, setStorageInfo] = useState({ books: 0, chapters: 0, size: '0 B' })
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [inviteCode, setInviteCode] = useState(() => localStorage.getItem('yellow-invite-code') || '')
 
   useEffect(() => { getStorageInfo().then(setStorageInfo) }, [books])
 
@@ -34,6 +35,17 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
     showToast('已清除所有数据')
     setShowClearConfirm(false)
     setTimeout(() => window.location.reload(), 500)
+  }
+
+  const handleSaveInviteCode = () => {
+    const code = inviteCode.trim()
+    if (code) {
+      localStorage.setItem('yellow-invite-code', code)
+      showToast('邀请码已保存')
+    } else {
+      localStorage.removeItem('yellow-invite-code')
+      showToast('邀请码已清除')
+    }
   }
 
   const entryStyle: React.CSSProperties = {
@@ -84,6 +96,27 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
             </div>
           </div>
           <button className={`toggle ${autoCheck ? 'active' : ''}`} onClick={toggleAutoCheck} />
+        </div>
+      </div>
+
+      {/* 邀请码 */}
+      <h3 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, paddingLeft: 4 }}>邀请码</h3>
+      <div className="card" style={{ marginBottom: 20, padding: 14 }}>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>填写邀请码可解锁更多书源（选填）</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="text"
+            placeholder="输入邀请码"
+            value={inviteCode}
+            onChange={e => setInviteCode(e.target.value)}
+            maxLength={20}
+            style={{
+              flex: 1, padding: '8px 12px', borderRadius: 8,
+              border: '1px solid var(--border)', background: 'var(--bg-primary)',
+              color: 'var(--text-primary)', fontSize: 14, outline: 'none'
+            }}
+          />
+          <button className="btn btn-primary btn-sm" onClick={handleSaveInviteCode}>保存</button>
         </div>
       </div>
 

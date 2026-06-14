@@ -3,6 +3,15 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.13.0', date: '2026-06-15', changes: [
+    '发现页优化：只展示36本推荐+热门tag分类区块',
+    '邀请码机制：注册时选填邀请码，设置页可补填，控制集书阁书源可见性',
+    '搜索转圈修复：本地结果出来后立即停止',
+    '云端恢复修复：添加错误处理和日志',
+    '爬虫章节数从30提升到200，解决章节缺失问题',
+    '爬虫封面提取增强：更多选择器覆盖',
+    '章节目录改为固定高度可滚动区域'
+  ]},
   { version: '5.12.0', date: '2026-06-15', changes: [
     '搜索结果添加到书架不再显示未知书名/未知作者',
     '搜索结果全部加载完毕后才停止转圈（本地+在线搜索都结束后）',
@@ -427,7 +436,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.12.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.13.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
