@@ -3,6 +3,10 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.4.1', date: '2026-06-14', changes: [
+    '修复底栏被安全区遮挡：改用padding-bottom替代absolute伪元素',
+    '修复安全区fallback：无手势条设备不再强制加16px'
+  ]},
   { version: '5.4.0', date: '2026-06-14', changes: [
     '修复云同步：移除嵌入token（GitHub Secret Scanning拦截），改为用户输入同步密钥',
     '同步密钥由管理员提供，不暴露在代码中',
@@ -287,7 +291,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.4.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.4.1')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

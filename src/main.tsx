@@ -49,12 +49,7 @@ function detectSafeArea() {
   if (bottomH > 0) {
     root.style.setProperty('--safe-bottom-real', bottomH + 'px')
   } else {
-    // Estimate: if screen height > inner height by a small amount, likely gesture nav
-    const diff = (window.screen?.height || 0) - (window.innerHeight || 0)
-    // Android gesture bar is typically 16-24px, but innerHeight already accounts for it
-    // Use a minimum of 16px for gesture navigation devices
-    const safeBottom = Math.max(16, Math.min(diff, 48))
-    root.style.setProperty('--safe-bottom-real', safeBottom + 'px')
+    root.style.setProperty('--safe-bottom-real', '0px')
   }
 }
 
