@@ -7,7 +7,7 @@ interface Props {
   isInShelf: boolean
   isInitiallyCached?: boolean
   onAddToShelf: () => void
-  onStartRead: () => void
+  onStartRead: (chapterIndex?: number) => void
   onClose: () => void
   showToast: (msg: string) => void
   cacheBook?: (book: Book) => void
@@ -15,15 +15,12 @@ interface Props {
 }
 
 export default function BookDetail({ book, isInShelf, isInitiallyCached, onAddToShelf, onStartRead, onClose, showToast, cacheBook, cacheTask }: Props) {
-  const [expanded, setExpanded] = useState(false)
   const [cached, setCached] = useState(isInitiallyCached || false)
 
   const chapters = book.chapters || []
   const showChapters = chapters.length > 1
-  const displayChapters = expanded ? chapters : chapters.slice(0, 20)
   const isCaching = cacheTask && cacheTask.bookId === book.id
 
-  // Check if book is already cached on mount
   useEffect(() => {
     if (chapters.length === 0) return
     getBookChapters(book.id).then(cachedChapters => {
@@ -42,7 +39,6 @@ export default function BookDetail({ book, isInShelf, isInitiallyCached, onAddTo
     cacheBook(book)
   }
 
-  // Check if cache completed (in useEffect to avoid duplicate toasts)
   useEffect(() => {
     if (isCaching && cacheTask!.progress >= 100 && !cached) {
       setCached(true)
@@ -73,13 +69,13 @@ export default function BookDetail({ book, isInShelf, isInitiallyCached, onAddTo
               width: 110, height: 150, borderRadius: 8, margin: '0 auto 16px',
               background: book.cover ? `url(${book.cover}) center/cover` : 'var(--bg-hover)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--text-muted)', fontSize: 14
+              color: 'var(--text-muted)', fontSize: 14, overflow: 'hidden'
             }}
           >
             {!book.cover && <span style={{ padding: 4, textAlign: 'center', lineHeight: 1.3 }}>{book.title}</span>}
           </div>
           <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{book.title}</h2>
-          {book.author && (
+          {book.author && book.author !== '未知' && (
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 8 }}>{book.author}</p>
           )}
           <div style={{ display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -112,7 +108,7 @@ export default function BookDetail({ book, isInShelf, isInitiallyCached, onAddTo
           <button
             className="btn btn-primary"
             style={{ flex: 1 }}
-            onClick={onStartRead}
+            onClick={() => onStartRead()}
           >
             开始阅读
           </button>
@@ -137,41 +133,35 @@ export default function BookDetail({ book, isInShelf, isInitiallyCached, onAddTo
           )}
         </div>
 
-        {/* 目录 */}
+        {/* 目录 - 默认全展开，可点击章节 */}
         {showChapters && (
           <div style={{ padding: '0 16px', marginBottom: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8 }}>
               目录（共{chapters.length}章）
             </div>
-            <div className="card" style={{ maxHeight: 400, overflow: 'auto' }}>
-              {displayChapters.map((ch, i) => (
+            <div className="card">
+              {chapters.map((ch, i) => (
                 <div
                   key={ch.id}
+                  onClick={() => onStartRead(i)}
                   style={{
                     padding: '12px 14px',
-                    borderBottom: i < displayChapters.length - 1 ? '1px solid var(--border)' : 'none',
+                    borderBottom: i < chapters.length - 1 ? '1px solid var(--border)' : 'none',
                     fontSize: 13,
                     color: 'var(--text-primary)',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8
+                    gap: 8,
+                    cursor: 'pointer',
+                    transition: 'background 0.15s'
                   }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-hover)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   <span style={{ color: 'var(--text-muted)', fontSize: 11, minWidth: 24 }}>{i + 1}</span>
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.title}</span>
                 </div>
               ))}
-              {chapters.length > 20 && (
-                <button
-                  style={{
-                    width: '100%', padding: '12px', border: 'none', borderTop: '1px solid var(--border)',
-                    background: 'var(--bg-hover)', color: 'var(--accent)', fontSize: 13, cursor: 'pointer'
-                  }}
-                  onClick={() => setExpanded(!expanded)}
-                >
-                  {expanded ? `收起（共${chapters.length}章）` : `展开全部（共${chapters.length}章）`}
-                </button>
-              )}
             </div>
           </div>
         )}

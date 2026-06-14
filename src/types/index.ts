@@ -19,6 +19,7 @@ export interface Chapter {
   url: string
   content?: string
   cached: boolean
+  bookId?: string
 }
 
 export interface BookSource {

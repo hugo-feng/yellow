@@ -135,9 +135,13 @@ function AppInner() {
     }
   }, [readingBook, detailBook, showAbout, showCacheManager])
 
-  const handleReadBook = useCallback(async (book: Book) => {
+  const handleReadBook = useCallback(async (book: Book, chapterIndex?: number) => {
     const progress = await getProgress(book.id)
-    setReadingProgress(progress || null)
+    if (chapterIndex !== undefined && chapterIndex > 0) {
+      setReadingProgress({ bookId: book.id, chapterIndex, scrollPosition: 0, updatedAt: Date.now() })
+    } else {
+      setReadingProgress(progress || null)
+    }
     setReadingBook(book)
   }, [])
 
@@ -174,7 +178,7 @@ function AppInner() {
         setCacheTask(prev => prev ? { ...prev, current: i + 1, progress: Math.round(((i + 1) / chapters.length) * 100) } : null)
 
         if (ch.content) {
-          await saveChapter({ ...ch, id: `${book.id}-ch-${ch.index}`, cached: true })
+          await saveChapter({ ...ch, id: `${book.id}-ch-${ch.index}`, bookId: book.id, cached: true })
           continue
         }
 
@@ -195,7 +199,7 @@ function AppInner() {
                 content = pMatches ? pMatches.map(p => p.replace(/<[^>]+>/g, '').trim()).filter(Boolean).join('\n\n') : text.replace(/<[^>]+>/g, '').trim()
               }
               if (content) {
-                await saveChapter({ ...ch, id: `${book.id}-ch-${ch.index}`, content, cached: true })
+                await saveChapter({ ...ch, id: `${book.id}-ch-${ch.index}`, bookId: book.id, content, cached: true })
               }
             }
           }
@@ -230,9 +234,9 @@ function AppInner() {
           isInShelf={books.some(b => b.id === detailBook.id)}
           isInitiallyCached={cachedBookIds.has(detailBook.id)}
           onAddToShelf={() => { handleAddBook(detailBook) }}
-          onStartRead={() => {
+          onStartRead={(chapterIndex) => {
             if (!books.some(b => b.id === detailBook.id)) handleAddBook(detailBook)
-            handleReadBook(detailBook)
+            handleReadBook(detailBook, chapterIndex)
             setDetailBook(null)
           }}
           onClose={() => setDetailBook(null)}

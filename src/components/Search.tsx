@@ -12,7 +12,7 @@ interface Props {
 }
 
 interface LocalBookIndex {
-  id: string; title: string; author: string; sourceId: string; sourceName: string; description: string
+  id: string; title: string; author: string; cover?: string; sourceId: string; sourceName: string; description: string
 }
 
 const HISTORY_KEY = 'yellow-search-history'
@@ -73,7 +73,7 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
           seen.add(key)
           allResults.push({
             id: book.id, title: book.title, author: book.author || '未知',
-            cover: '', description: book.description || '',
+            cover: book.cover || '', description: book.description || '',
             sourceId: book.sourceId, sourceName: book.sourceName,
             format: 'html', downloadUrl: ''
           })
@@ -94,7 +94,6 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
       }
       setResults([...allResults])
     } catch { /* online failed */ }
-
     setLoading(false)
   }, [localIndex, addToHistory])
 
@@ -170,6 +169,8 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
         } catch {}
       }
       const book = await getBookContent(result.id, result.sourceId)
+      if (!book.title || book.title === '未知书名') book.title = result.title || book.title
+      if (!book.author || book.author === '未知作者' || book.author === '未知') book.author = result.author || book.author
       await saveBook(book); onAddBook(book); showToast(`已添加：${book.title}`)
     } catch { showToast('获取书籍失败，请重试') }
     setLoadingBookId(null)

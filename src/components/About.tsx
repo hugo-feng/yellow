@@ -3,6 +3,15 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.12.0', date: '2026-06-15', changes: [
+    '搜索结果添加到书架不再显示未知书名/未知作者',
+    '搜索结果全部加载完毕后才停止转圈（本地+在线搜索都结束后）',
+    '缓存管理修复：显示实际已缓存章节数和进度条',
+    '缓存章节添加bookId字段，支持按书ID查询已缓存内容',
+    '爬虫封面提取：所有10个书源自动提取书籍封面图片',
+    '爬虫章节排序：从章节标题提取数字用于正确排序',
+    '书籍详情章节目录默认全展开，点击直接跳转阅读'
+  ]},
   { version: '5.11.0', date: '2026-06-15', changes: [
     '阅读器重写：去掉分页标识，自动合并多页内容为完整章节',
     '新增章节列表弹窗（点击目录按钮/底栏目录按钮）',
@@ -418,7 +427,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.11.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.12.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

@@ -46,6 +46,10 @@ export async function getBookChapters(bookId: string): Promise<Chapter[]> {
   return db.chapters.where('bookId').equals(bookId).toArray()
 }
 
+export async function getChaptersByIdPrefix(bookId: string): Promise<Chapter[]> {
+  return db.chapters.where('id').startsWith(`${bookId}-ch-`).toArray()
+}
+
 export async function saveProgress(progress: ReadingProgress): Promise<void> {
   progress.updatedAt = Date.now()
   await db.progress.put(progress)

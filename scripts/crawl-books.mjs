@@ -75,6 +75,25 @@ function guessTags(text) {
   return tags.length > 0 ? tags.slice(0, 4) : ['其他']
 }
 
+// 从章节标题提取数字用于排序
+function extractChapterNum(title) {
+  const m = title.match(/第\s*(\d+)\s*章/) || title.match(/(\d+)/)
+  return m ? parseInt(m[1], 10) : 999999
+}
+
+function sortChapters(chapters) {
+  return chapters.sort((a, b) => extractChapterNum(a.title) - extractChapterNum(b.title))
+}
+
+function extractCover(doc) {
+  const img = doc.querySelector('.book_img img, .bookimg img, .cover img, #fmimg img, .pic img, img[src*="cover"], img[src*="book"]')
+  let src = img?.getAttribute('src') || ''
+  if (src && !src.startsWith('http')) {
+    src = src.startsWith('//') ? 'https:' + src : src
+  }
+  return src
+}
+
 // ==================== 正版书单 ====================
 const BOOK_LIST = [
   { title: '斗罗大陆', author: '唐家三少' }, { title: '斗罗大陆II绝世唐门', author: '唐家三少' },
@@ -163,6 +182,7 @@ const SEARCH_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -171,7 +191,7 @@ const SEARCH_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.biquqi.com/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('article') || doc.querySelector('#content'))?.textContent || '') }
@@ -200,6 +220,7 @@ const SEARCH_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       const seen = new Set()
       doc.querySelectorAll('a').forEach((a, i) => {
@@ -210,7 +231,7 @@ const SEARCH_SOURCES = [
           if (!seen.has(chId)) { seen.add(chId); chapters.push({ id: chId, title: chTitle, index: chapters.length, url: href }) }
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.bqukan.com/${bid}/${cid}`,
     parseChapter(doc) { return cleanText((doc.querySelector('article') || doc.querySelector('#chaptercontent') || doc.querySelector('#content'))?.textContent || '') }
@@ -239,6 +260,7 @@ const SEARCH_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -247,7 +269,7 @@ const SEARCH_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.biqule.net/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('article') || doc.querySelector('#content'))?.textContent || '') }
@@ -281,6 +303,7 @@ const SCRAPE_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -289,7 +312,7 @@ const SCRAPE_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.xbiqugu.com/wapbook/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('#nr1') || doc.querySelector('#content') || doc.querySelector('article'))?.textContent || '') }
@@ -317,6 +340,7 @@ const SCRAPE_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -325,7 +349,7 @@ const SCRAPE_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.biquxia.com/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('#content') || doc.querySelector('article'))?.textContent || '') }
@@ -353,6 +377,7 @@ const SCRAPE_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -361,7 +386,7 @@ const SCRAPE_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.xinmiaobige.net/shu/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('#nr1') || doc.querySelector('#content') || doc.querySelector('article'))?.textContent || '') }
@@ -389,6 +414,7 @@ const SCRAPE_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -397,7 +423,7 @@ const SCRAPE_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.biquwo.com/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('#content') || doc.querySelector('article'))?.textContent || '') }
@@ -425,6 +451,7 @@ const SCRAPE_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -433,7 +460,7 @@ const SCRAPE_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.qu-la.com/booktxt/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('#content') || doc.querySelector('article'))?.textContent || '') }
@@ -461,6 +488,7 @@ const SCRAPE_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -469,7 +497,7 @@ const SCRAPE_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.biquhi.com/txt/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('#content') || doc.querySelector('article'))?.textContent || '') }
@@ -497,6 +525,7 @@ const SCRAPE_SOURCES = [
         if (m && !author) author = m[1].trim()
       })
       const intro = doc.querySelector('.intro, .desc, #intro')?.textContent?.trim() || ''
+      const cover = extractCover(doc)
       const chapters = []
       doc.querySelectorAll('a').forEach((a, i) => {
         const href = a.getAttribute('href') || ''
@@ -505,7 +534,7 @@ const SCRAPE_SOURCES = [
           chapters.push({ id: href.split('/').pop()?.replace('.html', '') || `ch${i}`, title: chTitle, index: chapters.length, url: href })
         }
       })
-      return { title, author, description: intro, chapters }
+      return { title, author, description: intro, cover, chapters: sortChapters(chapters) }
     },
     chapterUrl: (bid, cid) => `https://www.biqule.net/${bid}/${cid}.html`,
     parseChapter(doc) { return cleanText((doc.querySelector('article') || doc.querySelector('#content'))?.textContent || '') }
@@ -688,13 +717,14 @@ async function main() {
         const id = `book_${bookId}`
         const book = {
           id, title: detail.title, author: detail.author || target.author,
+          cover: detail.cover || '',
           description: detail.description?.substring(0, 200) || `${target.title} - ${target.author}`,
           sourceId: cand.source.id, sourceName: cand.source.name,
           chapters, tags: guessTags(target.title + ' ' + (detail.description || ''))
         }
 
         fs.writeFileSync(path.join(BOOKS_DIR, `${id}.json`), JSON.stringify(book, null, 2))
-        existingIndex.push({ id, title: book.title, author: book.author, sourceId: book.sourceId, sourceName: book.sourceName, description: book.description.substring(0, 100), tags: book.tags })
+        existingIndex.push({ id, title: book.title, author: book.author, cover: book.cover || '', sourceId: book.sourceId, sourceName: book.sourceName, description: book.description.substring(0, 100), tags: book.tags })
         existingTitles.add(book.title)
         saveJSON(INDEX_FILE, existingIndex)
         progress.completed.push(key)
@@ -775,13 +805,14 @@ async function main() {
         const id = `book_${bookId}`
         const book = {
           id, title: detail.title, author: detail.author || '未知',
+          cover: detail.cover || '',
           description: detail.description?.substring(0, 200) || `${detail.title} - ${sb.source.name}`,
           sourceId: sb.source.id, sourceName: sb.source.name,
           chapters, tags: guessTags(detail.title + ' ' + (detail.description || ''))
         }
 
         fs.writeFileSync(path.join(BOOKS_DIR, `${id}.json`), JSON.stringify(book, null, 2))
-        existingIndex.push({ id, title: book.title, author: book.author, sourceId: book.sourceId, sourceName: book.sourceName, description: book.description.substring(0, 100), tags: book.tags })
+        existingIndex.push({ id, title: book.title, author: book.author, cover: book.cover || '', sourceId: book.sourceId, sourceName: book.sourceName, description: book.description.substring(0, 100), tags: book.tags })
         existingTitles.add(book.title)
         saveJSON(INDEX_FILE, existingIndex)
         progress.completed.push(key)

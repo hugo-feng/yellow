@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getAllBooks, getBookChapters, removeBook, getStorageInfo } from '../utils/db'
+import { getAllBooks, getBookChapters, getChaptersByIdPrefix, removeBook, getStorageInfo } from '../utils/db'
 
 interface CacheBookInfo {
   id: string
@@ -30,15 +30,34 @@ async function fetchCacheBooks(): Promise<CacheBookInfo[]> {
   const allBooks = await getAllBooks()
   const infos: CacheBookInfo[] = []
   for (const book of allBooks) {
-    const chapters = await getBookChapters(book.id)
-    const cached = chapters.filter(c => c.cached)
-    const size = new Blob([JSON.stringify(book)]).size + cached.reduce((s, c) => s + new Blob([c.content || '']).size, 0)
+    // Try to find cached chapters by bookId (new method)
+    let dbChapters: any[] = []
+    try { dbChapters = await getBookChapters(book.id) } catch {}
+    const dbCached = dbChapters.filter(c => c.cached)
+    
+    // Also find chapters by ID prefix (for chapters saved before bookId field was added)
+    let prefixChapters: any[] = []
+    try { prefixChapters = await getChaptersByIdPrefix(book.id) } catch {}
+    const prefixCached = prefixChapters.filter(c => c.cached)
+    
+    // Chapters with content in the book object itself are also cached
+    const bookChapters = book.chapters || []
+    const bookCached = bookChapters.filter(c => c.content && c.content.length > 0)
+    
+    // Use the highest count from all methods
+    const cachedCount = Math.max(dbCached.length, prefixCached.length, bookCached.length)
+    const totalChapters = bookChapters.length || 0
+    const dbSize = Math.max(
+      dbCached.reduce((s, c) => s + new Blob([c.content || '']).size, 0),
+      prefixCached.reduce((s, c) => s + new Blob([c.content || '']).size, 0)
+    )
+    const size = new Blob([JSON.stringify(book)]).size + dbSize
     infos.push({
       id: book.id,
       title: book.title,
       author: book.author || '未知',
-      chapterCount: book.chapters?.length || 0,
-      cachedChapters: cached.length,
+      chapterCount: totalChapters,
+      cachedChapters: cachedCount,
       size,
       sizeStr: size > 1024 * 1024 ? `${(size / 1024 / 1024).toFixed(1)} MB` : size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`
     })
