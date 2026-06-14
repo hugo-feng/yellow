@@ -22,6 +22,7 @@
 | 虚拟滚动 | **@tanstack/react-virtual** | ~6k | 长列表性能优化 |
 | HTML安全 | **DOMPurify** | ~14k | 防 XSS，内容清理 |
 | OTA更新 | **azhon/AppUpdate** 模式 | 2.5k | DownloadManager + FileProvider |
+| 云端同步 | **Supabase** | ~74k | PostgreSQL 后端，用户注册/登录/数据同步 |
 
 ## 每次迭代检查清单（强制，每次代码改动必做）
 
@@ -103,6 +104,6 @@
 - OTA 版本检查：GitHub API（`api.github.com/repos/.../contents/version.json?ref=gh-pages`），不经过 CDN 缓存
 - APK 下载：DownloadManager 后台下载（URL 从 version.json 的 downloadUrl 读取）
 - 安装：原生 NativeDownloader 插件（Android DownloadManager + FileProvider 自动安装）
-- 用户数据同步：GitHub Personal Access Token 登录 → 私有 Gist 存储（`github-sync.ts`）
+- 用户数据同步：Supabase（`supabase.ts` + `github-sync.ts`），注册/登录/备份/恢复
 - IndexedDB 存储：Dexie.js 封装（books / chapters / progress 三个 store）
 - GitHub CLI：GH_TOKEN 已设为用户级环境变量，`gh` 命令自动可用
