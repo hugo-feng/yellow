@@ -15,8 +15,11 @@ export interface SyncData {
   progress: any[]
   readerSettings: any
   theme?: string
-  readChapters?: Record<string, number[]> // bookId -> read chapter indices
+  readChapters?: Record<string, number[]>
   inviteCodeActivated?: boolean
+  autoCheckUpdates?: boolean
+  backupFrequency?: number
+  searchHistory?: string[]
   syncedAt: string
 }
 
@@ -65,6 +68,7 @@ export async function register(nickname: string, password: string, inviteCodeAct
     nickname,
     password_hash: passwordHash,
     avatar_color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    avatar_index: 0,
     books: [],
     progress: [],
     invite_code_activated: inviteCodeActivated || false,
@@ -118,7 +122,10 @@ export async function uploadToCloud(data: SyncData): Promise<{ error?: string }>
 
   const settingsWithRead = {
     ...(data.readerSettings || {}),
-    readChapters: data.readChapters || {}
+    readChapters: data.readChapters || {},
+    autoCheckUpdates: data.autoCheckUpdates ?? true,
+    backupFrequency: data.backupFrequency ?? 5,
+    searchHistory: data.searchHistory || []
   }
 
   const updatePayload: Record<string, any> = {
@@ -151,7 +158,7 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
   if (!data) return { error: '云端无数据' }
 
   const settings = data.reader_settings || {}
-  const { readChapters, ...readerSettings } = settings
+  const { readChapters, autoCheckUpdates, backupFrequency, searchHistory, ...readerSettings } = settings
 
   return {
     data: {
@@ -161,6 +168,9 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
       theme: data.theme || 'light',
       readChapters: readChapters || {},
       inviteCodeActivated: data.invite_code_activated || false,
+      autoCheckUpdates: autoCheckUpdates ?? true,
+      backupFrequency: backupFrequency ?? 5,
+      searchHistory: searchHistory || [],
       syncedAt: data.synced_at
     }
   }
@@ -207,16 +217,16 @@ export async function changePassword(userId: string, oldPassword: string, newPas
 }
 
 export async function updateAvatar(userId: string, avatarIndex: number): Promise<{ error?: string }> {
-  const { error } = await supabase.from('yellow_users')
-    .update({ avatar_index: avatarIndex })
-    .eq('id', userId)
-
-  if (error) return { error: error.message }
-
   const profile = getStoredProfile()
   if (profile) {
     profile.avatarIndex = avatarIndex
     storeProfile(profile)
   }
+
+  const { error } = await supabase.from('yellow_users')
+    .update({ avatar_index: avatarIndex })
+    .eq('id', userId)
+
+  if (error) return { error: error.message }
   return {}
 }

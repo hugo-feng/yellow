@@ -3,6 +3,18 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.15.0', date: '2026-06-15', changes: [
+    '头像升级：15个酷炫新头像（龙、鹰、狼、鲨鱼等）',
+    '邀请码激活后可在个人资料中清除，状态同步到Supabase',
+    '昵称修改冷却从24小时改为1分钟',
+    '备份频率可选：1/5/10/30分钟，在通用设置中调整',
+    '用户数据全量同步Supabase：书架、设置、搜索历史、备份频率',
+    '关于页面下载超时30秒自动弹出失败弹窗+重试/浏览器下载',
+    '用户ID显示昵称而非随机后缀',
+    '修复头像更新：本地先更新再同步数据库',
+    '竖屏锁定：去掉屏幕旋转按钮',
+    '修复昵称冷却提醒位置和修改密码文字缩进'
+  ]},
   { version: '5.14.0', date: '2026-06-15', changes: [
     '邀请码状态独立存储为Supabase数据库字段（invite_code_activated）',
     '登录时从数据库读取邀请码状态，恢复数据时自动本地激活',
@@ -447,8 +459,9 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [remoteDesc, setRemoteDesc] = useState('')
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
+  const [downloadError, setDownloadError] = useState<string | null>(null)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.14.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.15.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
@@ -480,22 +493,30 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
     }
     setDownloading(true)
     setDownloadProgress(0)
+    setDownloadError(null)
     try {
       await nativeDownload(downloadUrl, `yellow-v${remoteVersion}.apk`, remoteVersion)
       const poll = setInterval(() => {
         const p = getNativeProgress()
         if (p >= 0 && p <= 100) setDownloadProgress(p)
-        if (p === 100 || p === -1) {
+        if (p === 100) {
           clearInterval(poll)
-          if (p === -1) {
-            setDownloading(false)
-            showToast('下载失败')
-          }
+        } else if (p === -1) {
+          clearInterval(poll)
+          setDownloading(false)
+          setDownloadError('下载失败，可能是网络问题或存储空间不足')
         }
       }, 500)
+      setTimeout(() => {
+        if (getNativeProgress() <= 0) {
+          clearInterval(poll)
+          setDownloading(false)
+          setDownloadError('下载超时，请检查网络后重试')
+        }
+      }, 30000)
     } catch (e) {
       setDownloading(false)
-      showToast('下载失败: ' + (e as Error).message)
+      setDownloadError((e as Error).message || '下载失败')
     }
   }, [remoteVersion, downloading, showToast, downloadUrl])
 
@@ -556,6 +577,21 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
               {downloading && (
                 <div style={{ marginTop: 8, height: 4, borderRadius: 2, background: 'var(--border)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${downloadProgress}%`, background: 'var(--accent)', borderRadius: 2, transition: 'width 0.3s' }} />
+                </div>
+              )}
+              {downloadError && (
+                <div style={{ marginTop: 8, padding: 10, borderRadius: 8, background: 'rgba(224,85,85,0.1)', border: '1px solid rgba(224,85,85,0.2)' }}>
+                  <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 6, fontWeight: 600 }}>{downloadError}</p>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn btn-secondary btn-sm" style={{ flex: 1 }}
+                      onClick={() => { setDownloadError(null); startDownload() }}>
+                      重新下载
+                    </button>
+                    <button className="btn btn-secondary btn-sm" style={{ flex: 1 }}
+                      onClick={() => window.open(downloadUrl, '_system')}>
+                      浏览器下载
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

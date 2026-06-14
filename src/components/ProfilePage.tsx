@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react'
-import { getStoredProfile, changeNickname, changePassword, updateAvatar, type UserProfile } from '../utils/github-sync'
+import { getStoredProfile, storeProfile, changeNickname, changePassword, updateAvatar, uploadToCloud, type UserProfile } from '../utils/github-sync'
+import { hasInviteCode, setInviteCode } from '../utils/invite'
+import { getAllBooks, getProgress } from '../utils/db'
 
-const AVATARS = ['🐱', '🐶', '🐼', '🦊', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🦅', '🦆']
+const AVATARS = ['🐉', '🦅', '🐺', '🦁', '🐯', '🦈', '🐙', '🦂', '🦖', '👻', '🤖', '👽', '🦊', '🐲', '🦋']
 
 interface Props {
   showToast: (msg: string) => void
@@ -9,7 +11,7 @@ interface Props {
 }
 
 const NICKNAME_COOLDOWN_KEY = 'yellow-nickname-last-change'
-const NICKNAME_COOLDOWN_MS = 24 * 60 * 60 * 1000
+const NICKNAME_COOLDOWN_MS = 60 * 1000
 
 function canChangeNickname(): boolean {
   const last = localStorage.getItem(NICKNAME_COOLDOWN_KEY)
@@ -20,9 +22,9 @@ function canChangeNickname(): boolean {
 function getNextChangeTime(): string {
   const last = localStorage.getItem(NICKNAME_COOLDOWN_KEY)
   if (!last) return ''
-  const next = parseInt(last, 10) + NICKNAME_COOLDOWN_MS
-  const d = new Date(next)
-  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
+  const remaining = parseInt(last, 10) + NICKNAME_COOLDOWN_MS - Date.now()
+  if (remaining <= 0) return ''
+  return `${Math.ceil(remaining / 1000)}秒后`
 }
 
 export default function ProfilePage({ showToast, onClose }: Props) {
@@ -56,7 +58,7 @@ export default function ProfilePage({ showToast, onClose }: Props) {
     const name = newNickname.trim()
     if (!name) { showToast('请输入新昵称'); return }
     if (name.length < 2 || name.length > 12) { showToast('昵称2-12个字符'); return }
-    if (!canChangeNickname()) { showToast(`今天已改过，下次可改时间: ${getNextChangeTime()}`); return }
+    if (!canChangeNickname()) { showToast(`冷却中，${getNextChangeTime()}可改`); return }
 
     setLoading(true)
     const { error } = await changeNickname(profile.userId, name)
@@ -69,6 +71,28 @@ export default function ProfilePage({ showToast, onClose }: Props) {
     setShowNicknameForm(false)
     showToast('昵称已更新')
   }, [profile, newNickname, showToast])
+
+  const handleDeactivateInvite = useCallback(async () => {
+    if (!profile) return
+    setInviteCode('')
+    const updated = { ...profile, inviteCodeActivated: false }
+    setProfile(updated)
+    storeProfile(updated)
+    try {
+      const allBooks = await getAllBooks()
+      const progressList: any[] = []
+      for (const book of allBooks) {
+        const prog = await getProgress(book.id)
+        if (prog) progressList.push(prog)
+      }
+      await uploadToCloud({
+        books: allBooks, progress: progressList,
+        readerSettings: null, theme: localStorage.getItem('theme') || 'light',
+        readChapters: {}, inviteCodeActivated: false, syncedAt: new Date().toISOString()
+      })
+    } catch {}
+    showToast('邀请码已清除')
+  }, [profile, showToast])
 
   const handleChangePassword = useCallback(async () => {
     if (!profile) return
@@ -178,12 +202,12 @@ export default function ProfilePage({ showToast, onClose }: Props) {
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{profile.nickname}</div>
             </div>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', transform: showNicknameForm ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}><polyline points="6 9 12 15 18 9" /></svg>
-         </button>
+          </button>
           {showNicknameForm && (
             <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
               {!canChangeNickname() && (
                 <div style={{ fontSize: 12, color: 'var(--warning)', marginBottom: 8 }}>
-                  每天只能修改一次，下次可改: {getNextChangeTime()}
+                  冷却中，{getNextChangeTime()}可再次修改
                 </div>
               )}
               <input
@@ -205,10 +229,8 @@ export default function ProfilePage({ showToast, onClose }: Props) {
           >
             <div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>修改密码</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                {canChangeNickname() ? '每天限改一次昵称' : `昵称下次可改: ${getNextChangeTime()}`}
-              </div>
-           </div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>密码至少4位</div>
+            </div>
             <button
               className="btn btn-secondary btn-sm"
               onClick={() => setShowPasswordForm(!showPasswordForm)}
@@ -237,15 +259,37 @@ export default function ProfilePage({ showToast, onClose }: Props) {
 
         {/* 账号信息 */}
         <h3 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, paddingLeft: 4 }}>账号信息</h3>
-        <div className="card" style={{ padding: 16 }}>
+        <div className="card" style={{ padding: 16, marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>用户ID</span>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: 'monospace' }}>{profile.userId}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{profile.nickname}</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>注册时间</span>
             <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{new Date(profile.createdAt).toLocaleDateString()}</span>
           </div>
+        </div>
+
+        {/* 邀请码 */}
+        <h3 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, paddingLeft: 4 }}>邀请码</h3>
+        <div className="card" style={{ padding: 16 }}>
+          {hasInviteCode() ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <span style={{ fontSize: 14, color: 'var(--success)', fontWeight: 600 }}>已激活</span>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={handleDeactivateInvite}
+                disabled={loading}
+              >
+                清除激活
+              </button>
+            </div>
+          ) : (
+            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>未激活</div>
+          )}
         </div>
       </div>
     </div>

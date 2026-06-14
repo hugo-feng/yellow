@@ -25,6 +25,10 @@ export function setInviteCode(code: string) {
   }
 }
 
+export function clearInviteCode() {
+  localStorage.removeItem(STORAGE_KEY)
+}
+
 export function isInviteCodeValid(code: string): boolean {
   return code.trim() === INVITE_CODE
 }

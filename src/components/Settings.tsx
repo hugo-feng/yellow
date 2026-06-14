@@ -31,6 +31,11 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
   const [authMode, setAuthMode] = useState<'idle' | 'register' | 'login'>('idle')
   const [lastBackup, setLastBackup] = useState<string | null>(null)
   const [showCloudSheet, setShowCloudSheet] = useState(false)
+  const [backupFrequency, setBackupFrequency] = useState(() => {
+    const saved = localStorage.getItem('yellow-backup-frequency')
+    return saved ? parseInt(saved, 10) : 5
+  })
+  const [showBackupFreqSheet, setShowBackupFreqSheet] = useState(false)
 
   useEffect(() => { getStorageInfo().then(setStorageInfo) }, [books])
 
@@ -39,6 +44,13 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
     setAutoCheck(next)
     localStorage.setItem('ota-auto-check', next ? 'on' : 'off')
     showToast(next ? '启动时自动检查更新' : '已关闭自动检查更新')
+  }
+
+  const changeBackupFreq = (mins: number) => {
+    setBackupFrequency(mins)
+    localStorage.setItem('yellow-backup-frequency', String(mins))
+    setShowBackupFreqSheet(false)
+    showToast(`备份频率已改为 ${mins} 分钟`)
   }
 
   const handleClearAll = async () => {
@@ -68,11 +80,16 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
           if (stored) readChapters[book.id] = JSON.parse(stored)
         } catch {}
       }
+      let searchHistory: string[] = []
+      try { searchHistory = JSON.parse(localStorage.getItem('yellow-search-history') || '[]') } catch {}
       const { error } = await uploadToCloud({
         books: allBooks, progress: progressList,
         readerSettings: settings ? JSON.parse(settings) : null,
         theme: thm, readChapters,
         inviteCodeActivated: hasInviteCode(),
+        autoCheckUpdates: localStorage.getItem('ota-auto-check') !== 'off',
+        backupFrequency: parseInt(localStorage.getItem('yellow-backup-frequency') || '5', 10),
+        searchHistory,
         syncedAt: new Date().toISOString()
       })
       if (!error) {
@@ -86,6 +103,13 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
       if (!silent) showToast('备份失败')
     }
   }, [showToast])
+
+  useEffect(() => {
+    if (!profile) return
+    const mins = parseInt(localStorage.getItem('yellow-backup-frequency') || '5', 10)
+    const timer = setInterval(() => doBackup(true), mins * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [profile, doBackup])
 
   const doRestore = useCallback(async () => {
     try {
@@ -110,6 +134,17 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
       }
       if (data.inviteCodeActivated) {
         saveInviteCodeToStorage('1887415157')
+      }
+      if (data.autoCheckUpdates !== undefined) {
+        localStorage.setItem('ota-auto-check', data.autoCheckUpdates ? 'on' : 'off')
+        setAutoCheck(data.autoCheckUpdates)
+      }
+      if (data.backupFrequency) {
+        localStorage.setItem('yellow-backup-frequency', String(data.backupFrequency))
+        setBackupFrequency(data.backupFrequency)
+      }
+      if (data.searchHistory && data.searchHistory.length > 0) {
+        localStorage.setItem('yellow-search-history', JSON.stringify(data.searchHistory))
       }
       onSyncComplete?.(await getAllBooks())
       return true
@@ -282,7 +317,7 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
           <button className={`toggle ${theme === 'dark' ? 'active' : ''}`} onClick={toggleTheme} />
         </div>
 
-        <div style={{ ...lastEntryStyle, cursor: 'default' }}>
+        <div style={{ ...(profile ? midEntryStyle : lastEntryStyle), cursor: 'default' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <EntryIcon bg="rgba(100,149,237,0.15)" color="#6495ed">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>
@@ -294,6 +329,20 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
           </div>
           <button className={`toggle ${autoCheck ? 'active' : ''}`} onClick={toggleAutoCheck} />
         </div>
+        {profile && (
+          <button style={lastEntryStyle} onClick={() => setShowBackupFreqSheet(true)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <EntryIcon bg="rgba(240,192,64,0.15)" color="var(--accent)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              </EntryIcon>
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>备份频率</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>每 {backupFrequency} 分钟自动备份</div>
+              </div>
+            </div>
+            <Chevron />
+          </button>
+        )}
       </div>
 
       {/* 存储 */}
@@ -382,6 +431,31 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
               }}>
                 从云端恢复
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 备份频率选择弹窗 */}
+      {showBackupFreqSheet && (
+        <div className="modal-overlay" onClick={() => setShowBackupFreqSheet(false)}>
+          <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()}>
+            <div className="modal-handle" />
+            <h3 style={{ fontSize: 16, marginBottom: 8 }}>备份频率</h3>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>
+              自动备份将消耗流量，建议保持 WiFi 连接。
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[1, 5, 10, 30].map(mins => (
+                <button
+                  key={mins}
+                  className={backupFrequency === mins ? 'btn btn-primary' : 'btn btn-secondary'}
+                  style={{ width: '100%' }}
+                  onClick={() => changeBackupFreq(mins)}
+                >
+                  每 {mins} 分钟
+                </button>
+              ))}
             </div>
           </div>
         </div>
