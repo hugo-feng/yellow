@@ -1,7 +1,7 @@
 {
-  "version": "5.8.4",
-  "versionCode": 584,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.8.4/yellow-v5.8.4.apk",
-  "updateContent": "修复二级页面弹窗+已缓存状态自动检测",
+  "version": "5.8.5",
+  "versionCode": 585,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.8.5/yellow-v5.8.5.apk",
+  "updateContent": "修复弹窗层级+键盘顶起底栏+toast去重+底部安全区扩大",
   "releaseDate": "2026-06-14"
 }

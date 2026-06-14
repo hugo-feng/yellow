@@ -51,7 +51,7 @@ function detectSafeArea() {
   } else {
     // Android gesture nav: env() returns 0 but gesture bar is ~16px
     const isAndroid = /android/i.test(navigator.userAgent)
-    root.style.setProperty('--safe-bottom-real', isAndroid ? '16px' : '0px')
+    root.style.setProperty('--safe-bottom-real', isAndroid ? '24px' : '0px')
   }
 }
 
@@ -66,6 +66,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
-    <Toaster position="top-center" richColors closeButton duration={2000} />
+    <Toaster position="top-center" richColors closeButton duration={2000} offset={48} />
   </React.StrictMode>
 )

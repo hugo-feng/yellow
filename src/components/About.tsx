@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.8.5', date: '2026-06-14', changes: [
+    '修复清除数据弹窗被底栏盖住：modal z-index从50提升到200',
+    '修复搜索时底栏被键盘顶起：安装@capacitor/keyboard+配置resize:none',
+    '修复缓存时弹多个toast：缓存完成检测移入useEffect避免重复触发',
+    'toast位置下移：offset=48避免被状态栏遮挡',
+    '阅读底部安全区扩大到24px'
+  ]},
   { version: '5.8.4', date: '2026-06-14', changes: [
     '修复二级页面弹窗不显示：改用sonner toast（渲染在root层，z-index最高）',
     '已缓存状态自动检测：打开详情页时查询IndexedDB，已缓存书籍直接显示"已缓存"'
@@ -338,7 +345,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.4')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.5')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

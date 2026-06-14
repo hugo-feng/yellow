@@ -39,14 +39,14 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
   const handleCache = () => {
     if (cached || isCaching || !cacheBook) return
     cacheBook(book)
-    showToast(`开始缓存：${book.title}`)
   }
 
-  // Check if cache completed
-  if (isCaching && cacheTask!.progress >= 100 && !cached) {
-    setCached(true)
-    showToast(`缓存完成：${book.title}`)
-  }
+  // Check if cache completed (in useEffect to avoid duplicate toasts)
+  useEffect(() => {
+    if (isCaching && cacheTask!.progress >= 100 && !cached) {
+      setCached(true)
+    }
+  }, [isCaching, cacheTask, cached])
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
