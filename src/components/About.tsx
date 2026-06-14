@@ -3,6 +3,9 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.8.2', date: '2026-06-14', changes: [
+    '顶部安全区扩大到48px，标题和返回按钮下移避免被状态栏遮挡'
+  ]},
   { version: '5.8.1', date: '2026-06-14', changes: [
     '顶部安全区扩大到36px',
     '去除设置页设备信息',
@@ -325,7 +328,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.2')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

@@ -1,7 +1,7 @@
 {
-  "version": "5.8.1",
-  "versionCode": 581,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.8.1/yellow-v5.8.1.apk",
-  "updateContent": "顶部安全区扩大到36px+去除设备信息+去除OTA调试面板",
+  "version": "5.8.2",
+  "versionCode": 582,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.8.2/yellow-v5.8.2.apk",
+  "updateContent": "顶部安全区扩大到48px，主页面和二级界面标题下移",
   "releaseDate": "2026-06-14"
 }
