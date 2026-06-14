@@ -3,6 +3,10 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.8.6', date: '2026-06-14', changes: [
+    '所有顶部弹窗大幅下移(offset 48→120)',
+    '阅读界面底部安全区翻倍(24px→48px)'
+  ]},
   { version: '5.8.5', date: '2026-06-14', changes: [
     '修复清除数据弹窗被底栏盖住：modal z-index从50提升到200',
     '修复搜索时底栏被键盘顶起：安装@capacitor/keyboard+配置resize:none',
@@ -345,7 +349,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.5')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.6')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
