@@ -121,7 +121,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     : 0
 
   const safeTop = 'var(--safe-top, 24px)'
-  const safeBottom = '0px'
+  const safeBottom = '36px'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg, position: 'relative' }}>

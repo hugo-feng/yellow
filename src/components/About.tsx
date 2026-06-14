@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.9.5', date: '2026-06-15', changes: [
+    '阅读界面底部安全区增至36px',
+    '主页/书架底部内容不被遮挡（padding增大到90px+safe-bottom）',
+    '搜索页：初始化显示搜索历史（localStorage持久化，最多15条）',
+    '搜索框右侧添加X清除按钮',
+    '搜索加速：debounce从400ms降到250ms+本地结果先显示+在线结果追加'
+  ]},
   { version: '5.9.4', date: '2026-06-15', changes: [
     '底部安全区从48px降到12px（之前太高挡住内容）',
     '主页/书架底部内容不被遮挡（page-content padding适配）',
@@ -382,7 +389,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.4')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.5')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
