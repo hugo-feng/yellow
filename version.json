@@ -1,7 +1,7 @@
 {
-  "version": "5.0.1",
-  "versionCode": 501,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.0.1/yellow-v5.0.1.apk",
-  "updateContent": "修复加入书架后重启丢失：handleAddBook添加saveBook持久化",
+  "version": "5.1.0",
+  "versionCode": 510,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.1.0/yellow-v5.1.0.apk",
+  "updateContent": "新增用户管理：GitHub登录+数据同步到私有Gist\n设置页顶部登录/注册+上传/恢复数据",
   "releaseDate": "2026-06-14"
 }
