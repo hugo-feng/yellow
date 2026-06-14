@@ -281,7 +281,7 @@ function AppInner() {
           <Bookshelf books={books} onRead={handleReadBook} onDelete={handleDeleteBook} onRefresh={loadBooks} onViewDetail={setDetailBook} />
         </div>
         <div style={{ display: activeTab === 'search' ? 'block' : 'none', height: '100%' }}>
-          <SearchPage onAddBook={handleAddBook} onRead={handleReadBook} showToast={showToast} books={books} />
+          <SearchPage onAddBook={handleAddBook} onRead={handleReadBook} onViewDetail={setDetailBook} showToast={showToast} books={books} />
         </div>
         <div style={{ display: activeTab === 'settings' ? 'block' : 'none', height: '100%' }}>
           <Settings books={books} showToast={showToast} onOpenAbout={() => setShowAbout(true)}

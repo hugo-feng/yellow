@@ -6,6 +6,7 @@ import { saveBook } from '../utils/db'
 interface Props {
   onAddBook: (book: Book) => void
   onRead: (book: Book) => void
+  onViewDetail?: (book: Book) => void
   showToast: (msg: string) => void
   books: Book[]
 }
@@ -24,7 +25,7 @@ function saveHistory(terms: string[]) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(terms))
 }
 
-export default function SearchPage({ onAddBook, onRead, showToast, books }: Props) {
+export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast, books }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -117,7 +118,10 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
 
   const handleAddOrRead = useCallback(async (result: SearchResult) => {
     const existing = books.find(b => b.id === result.id && b.sourceId === result.sourceId)
-    if (existing) { onRead(existing); return }
+    if (existing) {
+      if (onViewDetail) { onViewDetail(existing) } else { onRead(existing) }
+      return
+    }
 
     setLoadingBookId(result.id)
     try {
@@ -169,7 +173,7 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
       await saveBook(book); onAddBook(book); showToast(`已添加：${book.title}`)
     } catch { showToast('获取书籍失败，请重试') }
     setLoadingBookId(null)
-  }, [books, onAddBook, onRead, showToast])
+  }, [books, onAddBook, onRead, onViewDetail, showToast])
 
   const showHistory = !query.trim() && !loading && results.length === 0 && history.length > 0
 
@@ -269,7 +273,7 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
             const isAdded = books.some(b => b.id === result.id && b.sourceId === result.sourceId)
             const isLocal = result.sourceId === 'jisge'
             return (
-              <div key={`${result.sourceId}-${result.id}`} className="card fade-in" style={{ display: 'flex', padding: 12, gap: 12, animationDelay: `${idx * 0.04}s`, opacity: isAdded ? 0.65 : 1 }}>
+              <div key={`${result.sourceId}-${result.id}`} className="card fade-in" style={{ display: 'flex', padding: 12, gap: 12, animationDelay: `${idx * 0.04}s` }}>
                 <div style={{ width: 60, height: 80, borderRadius: 6, background: result.cover ? `url(${result.cover}) center/cover` : 'var(--bg-hover)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--text-muted)', overflow: 'hidden' }}>
                   {!result.cover && result.title.slice(0, 2)}
                 </div>
@@ -283,7 +287,7 @@ export default function SearchPage({ onAddBook, onRead, showToast, books }: Prop
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{result.description}</div>
                   <button className="btn btn-primary btn-sm" style={{ marginTop: 8, width: '100%' }} onClick={() => handleAddOrRead(result)} disabled={loadingBookId === result.id}>
-                    {loadingBookId === result.id ? '加载中...' : isAdded ? '直接阅读' : '添加到书架'}
+                    {loadingBookId === result.id ? '加载中...' : isAdded ? '查看详情' : '添加到书架'}
                   </button>
                 </div>
               </div>
