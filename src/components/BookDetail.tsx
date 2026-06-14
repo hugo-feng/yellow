@@ -14,14 +14,28 @@ interface Props {
 
 export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead, onClose, showToast, cacheBook, cacheTask }: Props) {
   const [expanded, setExpanded] = useState(false)
+  const [cached, setCached] = useState(false)
 
   const chapters = book.chapters || []
   const showChapters = chapters.length > 1
   const displayChapters = expanded ? chapters : chapters.slice(0, 20)
+  const isCaching = cacheTask && cacheTask.bookId === book.id
 
   const handleAdd = () => {
     onAddToShelf()
     showToast(`已加入书架：${book.title}`)
+  }
+
+  const handleCache = () => {
+    if (cached || isCaching || !cacheBook) return
+    cacheBook(book)
+    showToast(`开始缓存：${book.title}`)
+  }
+
+  // Check if cache completed
+  if (isCaching && cacheTask!.progress >= 100 && !cached) {
+    setCached(true)
+    showToast(`缓存完成：${book.title}`)
   }
 
   return (
@@ -102,12 +116,12 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
           )}
           {cacheBook && (
             <button
-              className="btn btn-secondary"
-              style={{ flex: 1, position: 'relative' }}
-              onClick={() => cacheBook(book)}
-              disabled={!!(cacheTask && cacheTask.bookId === book.id)}
+              className={cached ? 'btn btn-primary' : 'btn btn-secondary'}
+              style={{ flex: 1, position: 'relative', opacity: cached ? 0.7 : 1 }}
+              onClick={handleCache}
+              disabled={!!isCaching || cached}
             >
-              {cacheTask && cacheTask.bookId === book.id ? `缓存中 ${cacheTask.progress}%` : '缓存'}
+              {cached ? '已缓存' : isCaching ? `缓存中 ${cacheTask!.progress}%` : '缓存'}
             </button>
           )}
         </div>
@@ -158,7 +172,6 @@ export default function BookDetail({ book, isInShelf, onAddToShelf, onStartRead,
             <InfoRow label="书名" value={book.title} />
             <InfoRow label="作者" value={book.author || '未知'} />
             <InfoRow label="来源" value={book.sourceName} />
-            <InfoRow label="格式" value={book.format || 'html'} />
             <InfoRow label="章节数" value={String(chapters.length)} isLast />
           </div>
         </div>

@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.8.3', date: '2026-06-14', changes: [
+    '书籍详情页：缓存/加入书架操作后显示toast弹窗',
+    '缓存完成后按钮变为"已缓存"状态',
+    '去掉书籍信息中的"格式"字段',
+    '阅读界面底部安全区：Android手势条至少16px'
+  ]},
   { version: '5.8.2', date: '2026-06-14', changes: [
     '顶部安全区扩大到48px，标题和返回按钮下移避免被状态栏遮挡'
   ]},
@@ -328,7 +334,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.3')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

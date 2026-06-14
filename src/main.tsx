@@ -49,7 +49,9 @@ function detectSafeArea() {
   if (bottomH > 0) {
     root.style.setProperty('--safe-bottom-real', bottomH + 'px')
   } else {
-    root.style.setProperty('--safe-bottom-real', '0px')
+    // Android gesture nav: env() returns 0 but gesture bar is ~16px
+    const isAndroid = /android/i.test(navigator.userAgent)
+    root.style.setProperty('--safe-bottom-real', isAndroid ? '16px' : '0px')
   }
 }
 
