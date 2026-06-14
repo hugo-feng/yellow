@@ -123,6 +123,17 @@ body {
   border-top: 1px solid var(--border);
   position: fixed; bottom: 0; left: 0; right: 0;
   z-index: 100;
+  transform: translateY(0) !important;
+}
+
+/* Toast: force position much lower */
+[data-sonner-toaster] {
+  top: calc(var(--safe-top, 48px) + 60px) !important;
+}
+
+/* Keyboard: prevent layout shift */
+@supports (height: 100dvh) {
+  .app-container { height: 100dvh; }
 }
 
 .page-content {

@@ -271,7 +271,7 @@ function AppInner() {
           <Discover onViewDetail={setDetailBook} showToast={showToast} books={books} />
         )}
         {activeTab === 'bookshelf' && (
-          <Bookshelf books={books} onRead={handleReadBook} onDelete={handleDeleteBook} onRefresh={loadBooks} />
+          <Bookshelf books={books} onRead={handleReadBook} onDelete={handleDeleteBook} onRefresh={loadBooks} onViewDetail={setDetailBook} />
         )}
         {activeTab === 'search' && (
           <SearchPage onAddBook={handleAddBook} onRead={handleReadBook} showToast={showToast} books={books} />

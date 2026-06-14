@@ -5,9 +5,10 @@ interface Props {
   onRead: (book: Book) => void
   onDelete: (bookId: string) => void
   onRefresh: () => void
+  onViewDetail?: (book: Book) => void
 }
 
-export default function Bookshelf({ books, onRead, onDelete, onRefresh }: Props) {
+export default function Bookshelf({ books, onRead, onDelete, onRefresh, onViewDetail }: Props) {
   if (books.length === 0) {
     return (
       <div className="empty-state" style={{ paddingTop: 80 }}>
@@ -61,8 +62,10 @@ export default function Bookshelf({ books, onRead, onDelete, onRefresh }: Props)
               display: 'flex',
               padding: 12,
               gap: 12,
-              animationDelay: `${index * 0.05}s`
+              animationDelay: `${index * 0.05}s`,
+              cursor: onViewDetail ? 'pointer' : 'default'
             }}
+            onClick={() => onViewDetail?.(book)}
           >
             <div
               style={{

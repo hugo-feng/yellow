@@ -66,6 +66,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
-    <Toaster position="top-center" richColors closeButton duration={2000} offset={120} />
+    <Toaster position="top-center" richColors closeButton duration={2000} />
   </React.StrictMode>
 )
