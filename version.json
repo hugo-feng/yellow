@@ -1,7 +1,7 @@
 {
-  "version": "5.2.1",
-  "versionCode": 521,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.2.1/yellow-v5.2.1.apk",
-  "updateContent": "下载失败时显示提示弹窗+重试按钮",
+  "version": "5.3.0",
+  "versionCode": 530,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.3.0/yellow-v5.3.0.apk",
+  "updateContent": "注册添加密码+隐藏GitHub文案+二级页面动画+底部安全区修复",
   "releaseDate": "2026-06-14"
 }
