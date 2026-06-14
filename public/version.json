@@ -1,7 +1,7 @@
 {
-  "version": "5.13.0",
-  "versionCode": 5130,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.13.0/yellow-v5.13.0.apk",
-  "updateContent": "发现页优化+邀请码+搜索修复+云端恢复修复",
+  "version": "5.13.1",
+  "versionCode": 5131,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.13.1/yellow-v5.13.1.apk",
+  "updateContent": "邀请码确认后隐藏+状态同步到云端",
   "releaseDate": "2026-06-15"
 }

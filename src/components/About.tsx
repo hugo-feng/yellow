@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.13.1', date: '2026-06-15', changes: [
+    '邀请码确认后输入框消失，显示「已激活」状态',
+    '邀请码激活状态同步到云端数据库，换设备自动恢复',
+    '邀请码按钮改为「确认」，无效码提示错误'
+  ]},
   { version: '5.13.0', date: '2026-06-15', changes: [
     '发现页优化：只展示36本推荐+热门tag分类区块',
     '邀请码机制：注册时选填邀请码，设置页可补填，控制集书阁书源可见性',
@@ -436,7 +441,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.13.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.13.1')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

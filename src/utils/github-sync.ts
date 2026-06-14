@@ -14,6 +14,7 @@ export interface SyncData {
   readerSettings: any
   theme?: string
   readChapters?: Record<string, number[]> // bookId -> read chapter indices
+  inviteCodeActivated?: boolean
   syncedAt: string
 }
 
@@ -110,10 +111,11 @@ export async function uploadToCloud(data: SyncData): Promise<{ error?: string }>
   const profile = getStoredProfile()
   if (!profile) return { error: '未登录' }
 
-  // Merge readChapters into reader_settings for storage
+  // Merge readChapters and invite code into reader_settings for storage
   const settingsWithRead = {
     ...(data.readerSettings || {}),
-    readChapters: data.readChapters || {}
+    readChapters: data.readChapters || {},
+    inviteCodeActivated: data.inviteCodeActivated || false
   }
 
   const { error } = await supabase.from('yellow_users').update({
@@ -140,9 +142,9 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
   if (error) return { error: error.message }
   if (!data) return { error: '云端无数据' }
 
-  // Extract readChapters from reader_settings
+  // Extract readChapters and inviteCodeActivated from reader_settings
   const settings = data.reader_settings || {}
-  const { readChapters, ...readerSettings } = settings
+  const { readChapters, inviteCodeActivated, ...readerSettings } = settings
 
   return {
     data: {
@@ -151,6 +153,7 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
       readerSettings,
       theme: data.theme || 'light',
       readChapters: readChapters || {},
+      inviteCodeActivated: inviteCodeActivated || false,
       syncedAt: data.synced_at
     }
   }

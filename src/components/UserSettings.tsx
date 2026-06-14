@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Book } from '../types'
 import { getStoredProfile, clearLocalData, register, login, uploadToCloud, downloadFromCloud, type UserProfile } from '../utils/github-sync'
 import { getAllBooks, saveBook, saveProgress, getProgress } from '../utils/db'
+import { hasInviteCode, setInviteCode as saveInviteCodeToStorage } from '../utils/invite'
 
 interface Props {
   books: Book[]
@@ -47,6 +48,7 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
         books: allBooks, progress: progressList,
         readerSettings: settings ? JSON.parse(settings) : null,
         theme, readChapters,
+        inviteCodeActivated: hasInviteCode(),
         syncedAt: new Date().toISOString()
       })
       if (!error) {
@@ -85,6 +87,9 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
         for (const [bookId, chapters] of Object.entries(data.readChapters)) {
           localStorage.setItem(`read-${bookId}`, JSON.stringify(chapters))
         }
+      }
+      if (data.inviteCodeActivated) {
+        saveInviteCodeToStorage('1887415157')
       }
       console.log(`[Restore] restored ${restoredCount}/${data.books.length} books`)
       onSyncComplete(await getAllBooks())

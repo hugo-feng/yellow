@@ -3,6 +3,7 @@ import type { Book } from '../types'
 import { getStorageInfo, clearCache } from '../utils/db'
 import { useTheme } from '../hooks/useTheme'
 import UserSettings from './UserSettings'
+import { hasInviteCode, isInviteCodeValid, setInviteCode as saveInviteCode } from '../utils/invite'
 
 interface Props {
   books: Book[]
@@ -18,7 +19,8 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
   const [autoCheck, setAutoCheck] = useState(() => localStorage.getItem('ota-auto-check') !== 'off')
   const [storageInfo, setStorageInfo] = useState({ books: 0, chapters: 0, size: '0 B' })
   const [showClearConfirm, setShowClearConfirm] = useState(false)
-  const [inviteCode, setInviteCode] = useState(() => localStorage.getItem('yellow-invite-code') || '')
+  const [inviteCode, setInviteCode] = useState('')
+  const [inviteActivated, setInviteActivated] = useState(() => hasInviteCode())
 
   useEffect(() => { getStorageInfo().then(setStorageInfo) }, [books])
 
@@ -37,14 +39,14 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
     setTimeout(() => window.location.reload(), 500)
   }
 
-  const handleSaveInviteCode = () => {
-    const code = inviteCode.trim()
-    if (code) {
-      localStorage.setItem('yellow-invite-code', code)
-      showToast('邀请码已保存')
+  const handleConfirmInviteCode = () => {
+    if (isInviteCodeValid(inviteCode)) {
+      saveInviteCode(inviteCode)
+      setInviteActivated(true)
+      setInviteCode('')
+      showToast('邀请码已激活')
     } else {
-      localStorage.removeItem('yellow-invite-code')
-      showToast('邀请码已清除')
+      showToast('邀请码无效')
     }
   }
 
@@ -102,22 +104,33 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
       {/* 邀请码 */}
       <h3 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, paddingLeft: 4 }}>邀请码</h3>
       <div className="card" style={{ marginBottom: 20, padding: 14 }}>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>填写邀请码可解锁更多书源（选填）</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <input
-            type="text"
-            placeholder="输入邀请码"
-            value={inviteCode}
-            onChange={e => setInviteCode(e.target.value)}
-            maxLength={20}
-            style={{
-              flex: 1, padding: '8px 12px', borderRadius: 8,
-              border: '1px solid var(--border)', background: 'var(--bg-primary)',
-              color: 'var(--text-primary)', fontSize: 14, outline: 'none'
-            }}
-          />
-          <button className="btn btn-primary btn-sm" onClick={handleSaveInviteCode}>保存</button>
-        </div>
+        {inviteActivated ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+            <span style={{ fontSize: 14, color: 'var(--success)', fontWeight: 600 }}>已激活</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>已解锁全部书源</span>
+          </div>
+        ) : (
+          <>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>填写邀请码可解锁更多书源（选填）</div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                placeholder="输入邀请码"
+                value={inviteCode}
+                onChange={e => setInviteCode(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleConfirmInviteCode()}
+                maxLength={20}
+                style={{
+                  flex: 1, padding: '8px 12px', borderRadius: 8,
+                  border: '1px solid var(--border)', background: 'var(--bg-primary)',
+                  color: 'var(--text-primary)', fontSize: 14, outline: 'none'
+                }}
+              />
+              <button className="btn btn-primary btn-sm" onClick={handleConfirmInviteCode}>确认</button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* 存储 */}
