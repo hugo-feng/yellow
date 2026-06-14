@@ -1,7 +1,7 @@
 {
-  "version": "5.14.0",
-  "versionCode": 5140,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.14.0/yellow-v5.14.0.apk",
-  "updateContent": "邀请码状态独立存储到Supabase数据库字段\n登录/恢复时自动激活邀请码\nhasInviteCode支持Profile检测",
+  "version": "5.15.0",
+  "versionCode": 5150,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.15.0/yellow-v5.15.0.apk",
+  "updateContent": "个人资料页全面优化：酷炫头像+邀请码可清除+1分钟改名冷却\n备份频率可选(1/5/10/30分钟)\n用户数据全量同步Supabase\n下载超时30秒自动弹出失败弹窗\n竖屏锁定+UI修复",
   "releaseDate": "2026-06-15"
 }
