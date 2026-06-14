@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.1.0', date: '2026-06-14', changes: [
+    '新增用户管理：GitHub Personal Access Token登录（行业标准OAuth方案）',
+    '数据同步到GitHub私有Gist（仅用户本人可见）',
+    '设置页顶部显示登录状态+头像+上传/恢复按钮',
+    '未登录时数据缓存在本地IndexedDB，登录后可同步到云端'
+  ]},
   { version: '5.0.1', date: '2026-06-14', changes: [
     '修复加入书架后重启丢失：handleAddBook添加saveBook持久化到IndexedDB'
   ]},
@@ -260,7 +266,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.0.1')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.1.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
