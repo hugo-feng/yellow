@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.2.0', date: '2026-06-14', changes: [
+    '用户系统重写：昵称注册（无需登录GitHub）',
+    '数据存储在开发者GitHub仓库的gh-pages/users/目录',
+    '上传/恢复按钮+头像颜色+用户ID显示'
+  ]},
   { version: '5.1.0', date: '2026-06-14', changes: [
     '新增用户管理：GitHub Personal Access Token登录（行业标准OAuth方案）',
     '数据同步到GitHub私有Gist（仅用户本人可见）',
@@ -266,7 +271,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.1.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.2.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
