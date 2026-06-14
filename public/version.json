@@ -1,7 +1,7 @@
 {
-  "version": "5.9.8",
-  "versionCode": 598,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.8/yellow-v5.9.8.apk",
-  "updateContent": "图标：黑底白字Yellow居中+Impact方正字体",
+  "version": "5.9.9",
+  "versionCode": 599,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.9/yellow-v5.9.9.apk",
+  "updateContent": "图标改为黑底黄色书本居中",
   "releaseDate": "2026-06-15"
 }
