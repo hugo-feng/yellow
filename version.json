@@ -1,7 +1,7 @@
 {
-  "version": "5.8.7",
-  "versionCode": 587,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.8.7/yellow-v5.8.7.apk",
-  "updateContent": "toast大幅下移CSS覆盖+键盘防抖+书架点击进详情页",
+  "version": "5.9.0",
+  "versionCode": 590,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.0/yellow-v5.9.0.apk",
+  "updateContent": "默认光明模式+主题同步云端+Tab切换不刷新+修复底部安全区",
   "releaseDate": "2026-06-14"
 }
