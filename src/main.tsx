@@ -37,7 +37,7 @@ function detectSafeArea() {
   document.body.appendChild(testTop)
   const topH = testTop.offsetHeight
   document.body.removeChild(testTop)
-  root.style.setProperty('--safe-top-real', (topH > 0 ? topH : 28) + 'px')
+  root.style.setProperty('--safe-top-real', (topH > 0 ? topH : 32) + 'px')
 
   // Detect bottom safe area (gesture bar / navigation bar)
   const testBottom = document.createElement('div')

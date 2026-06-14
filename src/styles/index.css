@@ -18,7 +18,7 @@
   --radius: 12px;
   --radius-sm: 8px;
   --safe-bottom: var(--safe-bottom-real, env(safe-area-inset-bottom, 0px));
-  --safe-top: var(--safe-top-real, env(safe-area-inset-top, 28px));
+  --safe-top: var(--safe-top-real, env(safe-area-inset-top, 32px));
   --tab-height: 64px;
   --header-height: 44px;
 }

@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.8.0', date: '2026-06-14', changes: [
+    '下载改用HttpURLConnection直连（绕过国产ROM流量保护限制）',
+    '新增30秒超时检测+失败弹窗保留+浏览器下载兜底',
+    '顶部安全区fallback增大到32px'
+  ]},
   { version: '5.7.2', date: '2026-06-14', changes: [
     '修复键盘弹出时底栏上移：tab-bar改为position:fixed固定底部',
     '扩大二级页面顶部安全区：fallback从24px增大到28px'
@@ -315,7 +320,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.7.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.0')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {

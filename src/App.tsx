@@ -361,12 +361,20 @@ function AppInner() {
                       } else if (p === -1) {
                         clearInterval(poll)
                         setDownloading(false)
-                        setDownloadError('下载失败')
+                        setDownloadError('下载失败，可能是网络问题或存储空间不足')
                       }
                     }, 500)
+                    // Timeout: if no progress after 30s, show error
+                    setTimeout(() => {
+                      if (getNativeProgress() <= 0) {
+                        clearInterval(poll)
+                        setDownloading(false)
+                        setDownloadError('下载超时，请检查网络后重试')
+                      }
+                    }, 30000)
                   } catch (e) {
                     setDownloading(false)
-                    setDownloadError((e as Error).message)
+                    setDownloadError((e as Error).message || '下载失败')
                   }
                 }}
               >

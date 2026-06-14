@@ -1,11 +1,7 @@
 package com.yellow.reader;
 
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -14,6 +10,8 @@ import android.webkit.JavascriptInterface;
 import android.util.Log;
 import androidx.core.content.FileProvider;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.ExecutorService;
@@ -22,9 +20,9 @@ import java.util.concurrent.Executors;
 public class NativeDownloader {
     private static final String TAG = "NativeDownloader";
     private final Context context;
-    private long downloadId = -1;
-    private BroadcastReceiver downloadReceiver;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private volatile boolean downloading = false;
+    private volatile int progress = 0;
 
     public NativeDownloader(Context context) {
         this.context = context;
@@ -32,23 +30,88 @@ public class NativeDownloader {
 
     @JavascriptInterface
     public void download(String url, String filename, String version) {
-        Log.d(TAG, "download: url=" + url + " version=" + version);
+        Log.d(TAG, "download: " + url);
+        downloading = true;
+        progress = 0;
 
         File dir = new File(context.getExternalFilesDir(null), "updates");
         if (!dir.exists()) dir.mkdirs();
         File file = new File(dir, filename);
         if (file.exists()) file.delete();
 
-        String title = "Yellow v" + version + " 更新";
-
-        // Resolve redirect URL in background, then start DownloadManager
         executor.execute(() -> {
-            String resolvedUrl = resolveRedirect(url);
-            Log.d(TAG, "resolved url: " + resolvedUrl);
+            try {
+                // Resolve redirect first
+                String finalUrl = resolveRedirect(url);
+                Log.d(TAG, "final url: " + finalUrl);
 
-            new Handler(Looper.getMainLooper()).post(() -> {
-                startDownload(resolvedUrl != null ? resolvedUrl : url, filename, title, file);
-            });
+                HttpURLConnection conn = (HttpURLConnection) new URL(finalUrl).openConnection();
+                conn.setConnectTimeout(15000);
+                conn.setReadTimeout(30000);
+                conn.setRequestProperty("User-Agent", "YellowReader/1.0 Android");
+                conn.setInstanceFollowRedirects(true);
+                conn.connect();
+
+                int code = conn.getResponseCode();
+                Log.d(TAG, "response: " + code);
+                if (code != 200 && code != 302) {
+                    notifyJs("failed");
+                    downloading = false;
+                    conn.disconnect();
+                    return;
+                }
+
+                // Follow redirect if needed
+                if (code == 302 || code == 301) {
+                    String location = conn.getHeaderField("Location");
+                    conn.disconnect();
+                    conn = (HttpURLConnection) new URL(location).openConnection();
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(30000);
+                    conn.setRequestProperty("User-Agent", "YellowReader/1.0 Android");
+                    conn.connect();
+                }
+
+                int totalSize = conn.getContentLength();
+                Log.d(TAG, "totalSize: " + totalSize);
+
+                InputStream is = conn.getInputStream();
+                FileOutputStream fos = new FileOutputStream(file);
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                int downloaded = 0;
+                int lastReported = -1;
+
+                while ((bytesRead = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, bytesRead);
+                    downloaded += bytesRead;
+                    if (totalSize > 0) {
+                        progress = (int) (downloaded * 100 / totalSize);
+                        if (progress != lastReported) {
+                            lastReported = progress;
+                            notifyJs("progress:" + progress);
+                        }
+                    }
+                }
+
+                fos.flush();
+                fos.close();
+                is.close();
+                conn.disconnect();
+
+                progress = 100;
+                downloading = false;
+                notifyJs("completed");
+                Log.d(TAG, "download complete, size=" + file.length());
+
+                new Handler(Looper.getMainLooper()).postDelayed(() -> installApk(file), 500);
+
+            } catch (Exception e) {
+                Log.e(TAG, "download failed", e);
+                downloading = false;
+                progress = -1;
+                notifyJs("failed:" + e.getMessage());
+            }
         });
     }
 
@@ -61,10 +124,8 @@ public class NativeDownloader {
             conn.setReadTimeout(8000);
             conn.setRequestProperty("User-Agent", "YellowReader/1.0 Android");
             int code = conn.getResponseCode();
-            Log.d(TAG, "HEAD " + urlStr + " -> " + code);
             if (code == 301 || code == 302) {
                 String location = conn.getHeaderField("Location");
-                Log.d(TAG, "redirect to: " + location);
                 conn.disconnect();
                 return location;
             }
@@ -72,93 +133,17 @@ public class NativeDownloader {
         } catch (Exception e) {
             Log.e(TAG, "resolveRedirect failed", e);
         }
-        return null;
-    }
-
-    private void startDownload(String url, String filename, String title, File file) {
-        Log.d(TAG, "startDownload: " + url);
-
-        DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-        request.setTitle(title);
-        request.setDescription("正在下载，请稍候...");
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-        request.setDestinationInExternalFilesDir(context, "updates", filename);
-        request.setAllowedOverMetered(true);
-        request.setAllowedOverRoaming(true);
-        request.addRequestHeader("User-Agent", "YellowReader/1.0 Android");
-
-        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        downloadId = dm.enqueue(request);
-        Log.d(TAG, "download enqueued, id=" + downloadId);
-
-        if (downloadReceiver != null) {
-            try { context.unregisterReceiver(downloadReceiver); } catch (Exception ignored) {}
-        }
-
-        downloadReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context ctx, Intent intent) {
-                long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-                Log.d(TAG, "onReceive: id=" + id + " ourId=" + downloadId);
-                if (id != downloadId) return;
-
-                DownloadManager.Query query = new DownloadManager.Query();
-                query.setFilterById(downloadId);
-                Cursor cursor = dm.query(query);
-
-                if (cursor != null && cursor.moveToFirst()) {
-                    int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
-                    int reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
-                    cursor.close();
-                    Log.d(TAG, "status=" + status + " reason=" + reason);
-
-                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        notifyJs("completed");
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> installApk(file), 500);
-                    } else {
-                        Log.e(TAG, "download failed: status=" + status + " reason=" + reason);
-                        notifyJs("failed");
-                    }
-                } else {
-                    Log.e(TAG, "cursor null/empty");
-                    notifyJs("failed");
-                }
-
-                try { context.unregisterReceiver(downloadReceiver); } catch (Exception ignored) {}
-                downloadReceiver = null;
-            }
-        };
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED);
-        } else {
-            context.registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-        }
-
-        notifyJs("started");
+        return urlStr;
     }
 
     @JavascriptInterface
     public int getProgress() {
-        if (downloadId == -1) return -1;
+        return progress;
+    }
 
-        DownloadManager dm = (DownloadManager) context.getSystemService(Context.DOWNLOAD_SERVICE);
-        DownloadManager.Query query = new DownloadManager.Query();
-        query.setFilterById(downloadId);
-        Cursor cursor = dm.query(query);
-
-        if (cursor != null && cursor.moveToFirst()) {
-            int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
-            long total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-            long downloaded = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
-            cursor.close();
-
-            if (status == DownloadManager.STATUS_SUCCESSFUL) return 100;
-            if (status == DownloadManager.STATUS_FAILED) return -1;
-            if (total > 0) return (int) (downloaded * 100 / total);
-            return 0;
-        }
-        return -1;
+    @JavascriptInterface
+    public boolean isDownloading() {
+        return downloading;
     }
 
     private void installApk(File file) {
@@ -180,7 +165,8 @@ public class NativeDownloader {
 
     private void notifyJs(String status) {
         try {
-            String js = "window.__nativeDownloadCallback && window.__nativeDownloadCallback('" + status + "')";
+            String escaped = status.replace("'", "\\'");
+            String js = "window.__nativeDownloadCallback && window.__nativeDownloadCallback('" + escaped + "')";
             if (context instanceof MainActivity) {
                 ((MainActivity) context).runOnUiThread(() -> {
                     try {
