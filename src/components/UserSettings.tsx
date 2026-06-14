@@ -1,31 +1,79 @@
 import { useState, useCallback } from 'react'
-import { getStoredProfile, clearProfile, createProfile, type UserProfile } from '../utils/github-sync'
+import type { Book } from '../types'
+import { getStoredProfile, clearProfile, register, login, uploadToCloud, downloadFromCloud, type UserProfile } from '../utils/github-sync'
+import { getAllBooks, saveBook, saveProgress, getProgress } from '../utils/db'
 
 interface Props {
+  books: Book[]
   showToast: (msg: string) => void
+  onSyncComplete: (books: Book[]) => void
 }
 
-export default function UserSettings({ showToast }: Props) {
+export default function UserSettings({ books, showToast, onSyncComplete }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(getStoredProfile)
   const [nickname, setNickname] = useState('')
-  const [showInput, setShowInput] = useState(false)
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<'idle' | 'register' | 'login'>('idle')
 
-  const handleRegister = useCallback(() => {
+  const handleRegister = useCallback(async () => {
     const name = nickname.trim()
     if (!name) { showToast('请输入昵称'); return }
     if (name.length < 2 || name.length > 12) { showToast('昵称2-12个字符'); return }
-    const p = createProfile(name)
-    setProfile(p)
-    setNickname('')
-    setShowInput(false)
-    showToast(`欢迎, ${p.nickname}!`)
-  }, [nickname, showToast])
+    if (password.length < 4) { showToast('密码至少4位'); return }
+    setLoading(true)
+    const { profile: p, error } = await register(name, password)
+    setLoading(false)
+    if (error) { showToast(error); return }
+    if (p) { setProfile(p); setNickname(''); setPassword(''); setMode('idle'); showToast(`欢迎, ${p.nickname}!`) }
+  }, [nickname, password, showToast])
+
+  const handleLogin = useCallback(async () => {
+    const name = nickname.trim()
+    if (!name || !password) { showToast('请输入昵称和密码'); return }
+    setLoading(true)
+    const { profile: p, error } = await login(name, password)
+    setLoading(false)
+    if (error) { showToast(error); return }
+    if (p) { setProfile(p); setNickname(''); setPassword(''); setMode('idle'); showToast(`欢迎回来, ${p.nickname}!`) }
+  }, [nickname, password, showToast])
 
   const handleLogout = useCallback(() => {
-    clearProfile()
-    setProfile(null)
-    showToast('已退出')
+    clearProfile(); setProfile(null); showToast('已退出')
   }, [showToast])
+
+  const handleUpload = useCallback(async () => {
+    if (!profile) return
+    setLoading(true)
+    const allBooks = await getAllBooks()
+    const progressList: any[] = []
+    for (const book of allBooks) {
+      const p = await getProgress(book.id)
+      if (p) progressList.push(p)
+    }
+    const settings = localStorage.getItem('reader-settings')
+    const { error } = await uploadToCloud({
+      books: allBooks, progress: progressList,
+      readerSettings: settings ? JSON.parse(settings) : null,
+      syncedAt: new Date().toISOString()
+    })
+    setLoading(false)
+    showToast(error ? '备份失败: ' + error : '已备份到云端')
+  }, [profile, books, showToast])
+
+  const handleDownload = useCallback(async () => {
+    if (!profile) return
+    setLoading(true)
+    const { data, error } = await downloadFromCloud()
+    setLoading(false)
+    if (error) { showToast(error); return }
+    if (!data) { showToast('云端无数据'); return }
+    for (const book of data.books) await saveBook(book)
+    for (const p of data.progress) await saveProgress(p)
+    if (data.readerSettings) localStorage.setItem('reader-settings', JSON.stringify(data.readerSettings))
+    onSyncComplete(await getAllBooks())
+    showToast(`已恢复 ${data.books.length} 本书`)
+  }, [profile, showToast, onSyncComplete])
 
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: 8,
@@ -43,20 +91,28 @@ export default function UserSettings({ showToast }: Props) {
           </div>
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>未登录</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>设置昵称即可使用</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>登录后可同步书架到云端</div>
           </div>
         </div>
-        {!showInput ? (
-          <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setShowInput(true)}>设置昵称</button>
-        ) : (
+        {mode === 'idle' && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setMode('register')}>注册</button>
+            <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setMode('login')}>登录</button>
+          </div>
+        )}
+        {(mode === 'register' || mode === 'login') && (
           <div>
-            <input type="text" placeholder="输入昵称（2-12个字符）" value={nickname}
-              onChange={e => setNickname(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleRegister()}
-              maxLength={12} style={inputStyle} autoFocus />
+            <input type="text" placeholder="昵称（2-12个字符）" value={nickname}
+              onChange={e => setNickname(e.target.value)} maxLength={12} style={inputStyle} autoFocus />
+            <input type="password" placeholder="密码（至少4位）" value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (mode === 'register' ? handleRegister() : handleLogin())}
+              style={inputStyle} />
             <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setShowInput(false); setNickname('') }}>取消</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleRegister}>确认</button>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setMode('idle'); setNickname(''); setPassword('') }}>取消</button>
+              <button className="btn btn-primary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={mode === 'register' ? handleRegister : handleLogin} disabled={loading}>
+                {loading ? '处理中...' : mode === 'register' ? '注册' : '登录'}
+              </button>
             </div>
           </div>
         )}
@@ -66,7 +122,7 @@ export default function UserSettings({ showToast }: Props) {
 
   return (
     <div className="card" style={{ padding: 16, marginBottom: 20 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <div style={{
           width: 40, height: 40, borderRadius: 20, background: profile.avatarColor,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -76,9 +132,17 @@ export default function UserSettings({ showToast }: Props) {
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 14 }}>{profile.nickname}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>数据保存在本设备</div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>云端同步已开启</div>
         </div>
         <button style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: 12, padding: '4px 12px', borderRadius: 6, cursor: 'pointer' }} onClick={handleLogout}>退出</button>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button className="btn btn-primary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={handleUpload} disabled={loading}>
+          {loading ? '备份中...' : '备份到云端'}
+        </button>
+        <button className="btn btn-secondary" style={{ flex: 1, opacity: loading ? 0.6 : 1 }} onClick={handleDownload} disabled={loading}>
+          {loading ? '恢复中...' : '从云端恢复'}
+        </button>
       </div>
     </div>
   )

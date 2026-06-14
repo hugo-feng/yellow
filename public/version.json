@@ -1,7 +1,7 @@
 {
-  "version": "5.5.0",
-  "versionCode": 550,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.5.0/yellow-v5.5.0.apk",
-  "updateContent": "简化用户系统(只需昵称)+修复阅读界面底部安全区",
+  "version": "5.6.0",
+  "versionCode": 560,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.6.0/yellow-v5.6.0.apk",
+  "updateContent": "集成Supabase云端同步：注册+登录+备份+恢复",
   "releaseDate": "2026-06-14"
 }

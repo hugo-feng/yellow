@@ -23,6 +23,7 @@
     "@capacitor/cli": "^8.4.0",
     "@capacitor/core": "^8.4.0",
     "@capacitor/status-bar": "^8.0.2",
+    "@supabase/supabase-js": "^2.108.1",
     "@tanstack/react-query": "^5.101.0",
     "@tanstack/react-virtual": "^3.14.2",
     "dexie": "^4.4.3",
