@@ -1,7 +1,7 @@
 {
-  "version": "5.9.4",
-  "versionCode": 594,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.4/yellow-v5.9.4.apk",
-  "updateContent": "安全区降低+底部不遮挡+换一换生效+阅读控制栏全透明",
+  "version": "5.9.5",
+  "versionCode": 595,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.5/yellow-v5.9.5.apk",
+  "updateContent": "阅读底部安全区36px+底部内容不遮挡+搜索历史+清除按钮+搜索加速",
   "releaseDate": "2026-06-15"
 }
