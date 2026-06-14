@@ -126,9 +126,9 @@ body {
   transform: translateY(0) !important;
 }
 
-/* Toast: force position much lower */
+/* Toast: force position below status bar */
 [data-sonner-toaster] {
-  top: calc(var(--safe-top, 48px) + 60px) !important;
+  top: calc(var(--safe-top, 48px) + 8px) !important;
 }
 
 /* Keyboard: prevent layout shift */

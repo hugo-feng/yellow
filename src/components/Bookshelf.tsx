@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Book } from '../types'
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function Bookshelf({ books, onRead, onDelete, onRefresh, onViewDetail }: Props) {
+  const [deleteTarget, setDeleteTarget] = useState<Book | null>(null)
   if (books.length === 0) {
     return (
       <div className="empty-state" style={{ paddingTop: 80 }}>
@@ -122,7 +124,7 @@ export default function Bookshelf({ books, onRead, onDelete, onRefresh, onViewDe
                   style={{ padding: '6px 10px', fontSize: 12 }}
                   onClick={(e) => {
                     e.stopPropagation()
-                    onDelete(book.id)
+                    setDeleteTarget(book)
                   }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -135,6 +137,22 @@ export default function Bookshelf({ books, onRead, onDelete, onRefresh, onViewDe
           </div>
         ))}
       </div>
+
+      {deleteTarget && (
+        <div className="modal-overlay" onClick={() => setDeleteTarget(null)}>
+          <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()}>
+            <div className="modal-handle" />
+            <h3 style={{ fontSize: 16, marginBottom: 8, color: 'var(--danger)' }}>删除书籍</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
+              确定从书架移除「{deleteTarget.title}」？本地缓存也会被清除。
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setDeleteTarget(null)}>取消</button>
+              <button className="btn btn-danger" style={{ flex: 1 }} onClick={() => { onDelete(deleteTarget.id); setDeleteTarget(null) }}>删除</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
