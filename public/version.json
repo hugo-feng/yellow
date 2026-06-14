@@ -1,7 +1,7 @@
 {
-  "version": "5.9.2",
-  "versionCode": 592,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.2/yellow-v5.9.2.apk",
-  "updateContent": "toast位置上移+书架删除确认弹窗",
-  "releaseDate": "2026-06-14"
+  "version": "5.9.3",
+  "versionCode": 593,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.9.3/yellow-v5.9.3.apk",
+  "updateContent": "发现页随机排列+标签换行+底栏安全区+底部内容不被遮挡",
+  "releaseDate": "2026-06-15"
 }

@@ -58,7 +58,9 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
     ? bookIndex.filter(b => b.tags?.includes(selectedCat))
     : bookIndex
 
-  const items: DiscoverItem[] = filteredBooks.map(b => ({
+  const shuffled = [...filteredBooks].sort(() => Math.random() - 0.5)
+
+  const items: DiscoverItem[] = shuffled.map(b => ({
     id: b.id,
     title: b.title,
     author: b.author || '未知',
@@ -124,13 +126,13 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
       {allTags.length > 0 && (
         <div style={{ marginBottom: 16 }}>
           <div className="section-title">分类标签</div>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4, scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', paddingBottom: 4 }}>
             {allTags.map(q => (
               <button
                 key={q}
                 onClick={() => setSelectedCat(prev => prev === q ? '' : q)}
                 className={`btn btn-sm ${selectedCat === q ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ fontSize: 12, padding: '5px 12px' }}
+                style={{ fontSize: 12, padding: '5px 14px', minWidth: 44, textAlign: 'center' }}
               >{q}</button>
             ))}
           </div>

@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.9.3', date: '2026-06-15', changes: [
+    '发现页书籍随机排列（每次进入/换一换都不同顺序）',
+    '筛选标签改为flex-wrap换行排列（不再横滑）',
+    '底栏安全区增大（padding包含safe-bottom）',
+    '发现页底部内容不被底栏遮挡（page-content padding适配）'
+  ]},
   { version: '5.9.2', date: '2026-06-14', changes: [
     'toast弹窗位置上移（紧贴状态栏下方）',
     '书架删除书籍需要确认弹窗'
@@ -369,7 +375,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.2')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.3')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
