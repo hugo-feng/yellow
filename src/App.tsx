@@ -53,6 +53,7 @@ function AppInner() {
   const [otaNewVersion, setOtaNewVersion] = useState('')
   const [downloading, setDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState(0)
+  const [downloadError, setDownloadError] = useState<string | null>(null)
   const [cacheTask, setCacheTask] = useState<CacheTask | null>(null)
   const [currentVersion, setCurrentVersion] = useState(APP_VERSION)
   const [readerSettings, setReaderSettings] = useState<ReaderSettings>(() => {
@@ -312,9 +313,17 @@ function AppInner() {
                 </p>
               </div>
             )}
+            {downloadError && (
+              <div style={{ width: '100%', marginBottom: 16, padding: 12, borderRadius: 8, background: 'rgba(224,85,85,0.1)', border: '1px solid rgba(224,85,85,0.2)' }}>
+                <p style={{ fontSize: 13, color: 'var(--danger)', marginBottom: 4, fontWeight: 600 }}>下载失败</p>
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  安装包从 GitHub 下载，国内网络可能不稳定。请检查网络后重试。
+                </p>
+              </div>
+            )}
             <div style={{ display: 'flex', gap: 10, width: '100%' }}>
               {!downloading && (
-                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowUpdateModal(false)}>稍后提醒</button>
+                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setShowUpdateModal(false); setDownloadError(null) }}>稍后提醒</button>
               )}
               <button
                 className="btn btn-primary"
@@ -328,27 +337,28 @@ function AppInner() {
                   }
                   setDownloading(true)
                   setDownloadProgress(0)
+                  setDownloadError(null)
                   try {
                     const url = updateInfo.downloadUrl
                     await nativeDownload(url, `yellow-v${updateInfo.version}.apk`, updateInfo.version)
                     const poll = setInterval(() => {
                       const p = getNativeProgress()
                       if (p >= 0 && p <= 100) setDownloadProgress(p)
-                      if (p === 100 || p === -1) {
+                      if (p === 100) {
                         clearInterval(poll)
-                        if (p === -1) {
-                          setDownloading(false)
-                          showToast('下载失败')
-                        }
+                      } else if (p === -1) {
+                        clearInterval(poll)
+                        setDownloading(false)
+                        setDownloadError('下载失败')
                       }
                     }, 500)
                   } catch (e) {
                     setDownloading(false)
-                    showToast('下载失败: ' + (e as Error).message)
+                    setDownloadError((e as Error).message)
                   }
                 }}
               >
-                {downloading ? '下载中...' : '立即更新'}
+                {downloading ? '下载中...' : downloadError ? '重新下载' : '立即更新'}
               </button>
             </div>
           </div>
