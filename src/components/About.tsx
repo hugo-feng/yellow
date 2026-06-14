@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.8.1', date: '2026-06-14', changes: [
+    '顶部安全区扩大到36px',
+    '去除设置页设备信息',
+    '去除关于页OTA调试面板'
+  ]},
   { version: '5.8.0', date: '2026-06-14', changes: [
     '下载改用HttpURLConnection直连（绕过国产ROM流量保护限制）',
     '新增30秒超时检测+失败弹窗保留+浏览器下载兜底',
@@ -320,18 +325,15 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.0')
-  const [debugLog, setDebugLog] = useState('')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.8.1')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
     setErrorMsg('')
     setRemoteVersion(null)
-    setDebugLog(`内嵌版本: ${APP_VERSION}\n开始检查...`)
 
     const result = await checkForUpdates()
     setChecking(false)
-    setDebugLog(prev => prev + `\n结果: ${JSON.stringify(result)}`)
 
     if (result.error) {
       setErrorMsg(result.error)
@@ -444,14 +446,6 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
             }}>{errorMsg}</div>
           )}
         </div>
-
-        {/* OTA调试信息 */}
-        {debugLog && (
-          <div className="card" style={{ padding: 12, marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>OTA调试</div>
-            <pre style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6 }}>{debugLog}</pre>
-          </div>
-        )}
 
         {/* 书源统计 */}
         <div className="card" style={{ padding: 16, marginBottom: 16 }}>

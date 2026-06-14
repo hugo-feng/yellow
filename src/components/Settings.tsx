@@ -139,17 +139,6 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
           </div>
           <Chevron />
         </button>
-        <div style={lastEntryStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <EntryIcon bg="rgba(154,154,176,0.15)" color="var(--text-muted)">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-            </EntryIcon>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>设备信息</div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{navigator.userAgent.includes('Android') ? 'Android' : 'Web'} · {window.screen.width}×{window.screen.height}</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {cacheTask && (
