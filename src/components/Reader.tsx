@@ -121,21 +121,21 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     : 0
 
   const safeTop = 'var(--safe-top, 24px)'
-  const safeBottom = 'var(--safe-bottom, 0px)'
+  const safeBottom = '0px'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg, position: 'relative' }}>
       {/* Top safe area background */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 21,
-        height: safeTop, background: showControls ? 'rgba(0,0,0,0.85)' : theme.bg,
+        height: safeTop, background: showControls ? 'rgba(0,0,0,1)' : theme.bg,
         transition: 'background 0.25s'
       }} />
 
       {/* Bottom safe area background */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 21,
-        height: safeBottom, background: showControls ? 'rgba(0,0,0,0.85)' : theme.bg,
+        height: safeBottom, background: showControls ? 'rgba(0,0,0,1)' : theme.bg,
         transition: 'background 0.25s'
       }} />
 
@@ -143,8 +143,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       <div style={{
         position: 'fixed', top: safeTop, left: 0, right: 0, zIndex: 20,
         height: 48,
-        background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        background: 'rgba(0,0,0,1)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
         transition: 'opacity 0.25s'
@@ -212,8 +211,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
       <div style={{
         position: 'fixed', bottom: safeBottom, left: 0, right: 0, zIndex: 20,
         height: 'auto',
-        background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        background: 'rgba(0,0,0,1)',
         opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
         transition: 'opacity 0.25s'
       }}>

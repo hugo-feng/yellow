@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.9.4', date: '2026-06-15', changes: [
+    '底部安全区从48px降到12px（之前太高挡住内容）',
+    '主页/书架底部内容不被遮挡（page-content padding适配）',
+    '主页换一换按钮生效（添加shuffleKey强制重排）',
+    '阅读界面控制栏完全不透明（rgba(0,0,0,1)）',
+    '阅读底部安全区归零（不再有多余间距）'
+  ]},
   { version: '5.9.3', date: '2026-06-15', changes: [
     '发现页书籍随机排列（每次进入/换一换都不同顺序）',
     '筛选标签改为flex-wrap换行排列（不再横滑）',
@@ -375,7 +382,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.3')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.9.4')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

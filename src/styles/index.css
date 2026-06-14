@@ -140,7 +140,7 @@ body {
   flex: 1;
   overflow-y: auto; overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(60px + var(--safe-bottom, 0px));
+  padding-bottom: calc(70px + var(--safe-bottom, 0px));
 }
 
 .tab-item {

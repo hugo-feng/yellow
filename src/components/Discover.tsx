@@ -44,6 +44,7 @@ async function fetchBookIndex(): Promise<LocalBookIndex[]> {
 
 export default function Discover({ onViewDetail, showToast, books }: Props) {
   const [selectedCat, setSelectedCat] = useState('')
+  const [shuffleKey, setShuffleKey] = useState(0)
 
   const { data: bookIndex = [], isLoading, error, refetch } = useQuery({
     queryKey: ['bookIndex'],
@@ -58,7 +59,7 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
     ? bookIndex.filter(b => b.tags?.includes(selectedCat))
     : bookIndex
 
-  const shuffled = [...filteredBooks].sort(() => Math.random() - 0.5)
+  const shuffled = [...filteredBooks].sort(() => Math.random() - 0.5 + shuffleKey * 0)
 
   const items: DiscoverItem[] = shuffled.map(b => ({
     id: b.id,
@@ -142,7 +143,7 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
       {/* 推荐列表 */}
       <div className="section-title">
         为你推荐
-        <button className="btn btn-secondary btn-sm" style={{ marginLeft: 'auto', fontSize: 11, padding: '3px 10px' }} onClick={() => { setSelectedCat(''); refetch() }}>
+        <button className="btn btn-secondary btn-sm" style={{ marginLeft: 'auto', fontSize: 11, padding: '3px 10px' }} onClick={() => { setSelectedCat(''); setShuffleKey(k => k + 1) }}>
           换一换
         </button>
       </div>
