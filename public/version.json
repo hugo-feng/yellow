@@ -1,7 +1,7 @@
 {
-  "version": "5.10.0",
-  "versionCode": 5100,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.10.0/yellow-v5.10.0.apk",
-  "updateContent": "书籍库扩充至224本+10书源爬虫+发现页直接展示",
+  "version": "5.11.0",
+  "versionCode": 5110,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.11.0/yellow-v5.11.0.apk",
+  "updateContent": "阅读器重写：分页合并+章节列表+已读标记+同步云端",
   "releaseDate": "2026-06-15"
 }

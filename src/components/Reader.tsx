@@ -13,14 +13,43 @@ interface Props {
   showToast: (msg: string) => void
 }
 
+function cleanPaginationMarkers(text: string): string {
+  return text
+    .replace(/第\s*\(\s*\d+\s*\/\s*\d+\s*\)\s*页/g, '')
+    .replace(/第\s*\d+\s*\/\s*\d+\s*页/g, '')
+    .replace(/\(\s*\d+\s*\/\s*\d+\s*\)/g, '')
+    .replace(/更多内容加载中[。.]*\s*/g, '')
+    .replace(/请稍候[。.]*\s*/g, '')
+    .replace(/正在手打中[，,]*\s*请稍等片刻[，,]*/g, '')
+    .replace(/内容更新后[，,]*\s*/g, '')
+    .replace(/请重新刷新页面[，,]*\s*/g, '')
+    .replace(/即可获取最新更新[！!]\s*/g, '')
+    .replace(/正在手打中[，,]*\s*/g, '')
+    .replace(/请收藏本站.*?$/gm, '')
+    .replace(/最快更新.*?$/gm, '')
+    .replace(/一秒记住.*?$/gm, '')
+    .replace(/天才一秒.*?$/gm, '')
+    .replace(/手机阅读.*?$/gm, '')
+    .replace(/本章未完.*?$/gm, '')
+    .replace(/章节错误.*?$/gm, '')
+    .replace(/点此报错.*?$/gm, '')
+    .replace(/来源[：:]\s*\S+/g, '')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/[\u200b\u200c\u200d\ufeff]/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 export default function Reader({ book, initialProgress, settings, onSettingsChange, onClose, showToast }: Props) {
   const [chapterIdx, setChapterIdx] = useState(initialProgress?.chapterIndex ?? 0)
   const [showControls, setShowControls] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showChapterList, setShowChapterList] = useState(false)
   const [loading, setLoading] = useState(false)
   const [content, setContent] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
+  const [readChapters, setReadChapters] = useState<Set<number>>(new Set())
 
   const chapter = book.chapters[chapterIdx]
   const hasPrev = chapterIdx > 0
@@ -39,7 +68,26 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     mono: '"SF Mono", "Fira Code", "Courier New", monospace'
   }
 
-  const paragraphs = content ? content.replace(/\r\n/g, '\n').split('\n').filter(p => p.trim()) : []
+  // Load read chapters from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`read-${book.id}`)
+      if (stored) setReadChapters(new Set(JSON.parse(stored)))
+    } catch {}
+  }, [book.id])
+
+  // Mark current chapter as read
+  useEffect(() => {
+    setReadChapters(prev => {
+      if (prev.has(chapterIdx)) return prev
+      const next = new Set(prev)
+      next.add(chapterIdx)
+      localStorage.setItem(`read-${book.id}`, JSON.stringify([...next]))
+      return next
+    })
+  }, [chapterIdx, book.id])
+
+  const paragraphs = content ? cleanPaginationMarkers(content).split('\n').filter(p => p.trim()) : []
 
   const loadContent = useCallback(async () => {
     if (!chapter) return
@@ -69,9 +117,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
   useEffect(() => {
     if (!loading && content && scrollRef.current) {
       const savedPos = initialProgress?.chapterIndex === chapterIdx ? (initialProgress?.scrollPosition ?? 0) : 0
-      requestAnimationFrame(() => {
-        if (scrollRef.current) scrollRef.current.scrollTop = savedPos
-      })
+      requestAnimationFrame(() => { if (scrollRef.current) scrollRef.current.scrollTop = savedPos })
     }
   }, [loading, content, chapterIdx])
 
@@ -93,13 +139,13 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     if (!showControls) timerRef.current = setTimeout(() => setShowControls(false), 4000)
   }, [showControls])
 
-  const goChapter = useCallback((dir: number) => {
-    const next = chapterIdx + dir
-    if (next >= 0 && next < book.chapters.length) {
-      setChapterIdx(next)
+  const goChapter = useCallback((idx: number) => {
+    if (idx >= 0 && idx < book.chapters.length) {
+      setChapterIdx(idx)
       setScrollProgress(0)
+      if (scrollRef.current) scrollRef.current.scrollTop = 0
     }
-  }, [chapterIdx, book.chapters.length])
+  }, [book.chapters.length])
 
   const handleClose = useCallback(() => {
     onClose({
@@ -120,30 +166,17 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
     ? Math.round((completedWeight + currentWeight * scrollProgress) / totalWeight * 100)
     : 0
 
-  const safeTop = 'var(--safe-top, 24px)'
-  const safeBottom = '36px'
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg, position: 'relative' }}>
-      {/* Top safe area background */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 21,
-        height: safeTop, background: showControls ? 'rgba(0,0,0,1)' : theme.bg,
-        transition: 'background 0.25s'
-      }} />
-
-      {/* Bottom safe area background */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 21,
-        height: safeBottom, background: showControls ? 'rgba(0,0,0,1)' : theme.bg,
-        transition: 'background 0.25s'
-      }} />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: theme.bg }}>
+      {/* Safe area background top */}
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 21, height: 'var(--safe-top, 24px)', background: showControls ? 'rgba(0,0,0,0.92)' : theme.bg, transition: 'background 0.25s' }} />
+      {/* Safe area background bottom */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 21, height: 36, background: showControls ? 'rgba(0,0,0,0.92)' : theme.bg, transition: 'background 0.25s' }} />
 
       {/* Top bar */}
       <div style={{
-        position: 'fixed', top: safeTop, left: 0, right: 0, zIndex: 20,
-        height: 48,
-        background: 'rgba(0,0,0,1)',
+        position: 'fixed', top: 'var(--safe-top, 24px)', left: 0, right: 0, zIndex: 20, height: 48,
+        background: 'rgba(0,0,0,0.92)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
         transition: 'opacity 0.25s'
@@ -154,9 +187,14 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             返回
           </button>
           <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{overallPercent}%</span>
-          <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 20, padding: '8px 16px', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer' }} onClick={() => { setShowSettings(true); setShowControls(false) }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 20, padding: '8px 12px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowChapterList(true)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+            </button>
+            <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 20, padding: '8px 12px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => { setShowSettings(true); setShowControls(false) }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" /><line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" /><line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" /><line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" /></svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -166,10 +204,9 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
         style={{
           flex: 1, overflow: 'auto', overflowX: 'hidden',
           WebkitOverflowScrolling: 'touch',
-          paddingTop: `calc(${safeTop} + 48px)`,
-          paddingBottom: `calc(${safeBottom} + 60px)`,
-          paddingLeft: 16,
-          paddingRight: 16,
+          paddingTop: `calc(var(--safe-top, 24px) + 48px)`,
+          paddingBottom: `calc(36px + 60px)`,
+          paddingLeft: 16, paddingRight: 16,
           filter: settings.brightness < 100 ? `brightness(${settings.brightness / 100})` : undefined
         }}
         onClick={toggleControls}
@@ -201,7 +238,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
           ))}
           {paragraphs.length > 0 && !loading && (
             <div style={{ textAlign: 'center', padding: '40px 0 20px', color: 'var(--text-muted)', fontSize: 13 }}>
-              —— {overallPercent}% · 第{chapterIdx + 1}/{book.chapters.length}章 ——
+              —— {overallPercent}% · 第{chapterIdx + 1}/{book.chapters.length}章 · 已读{readChapters.size}章 ——
             </div>
           )}
         </div>
@@ -209,13 +246,10 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
 
       {/* Bottom bar */}
       <div style={{
-        position: 'fixed', bottom: safeBottom, left: 0, right: 0, zIndex: 20,
-        height: 'auto',
-        background: 'rgba(0,0,0,1)',
-        opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none',
-        transition: 'opacity 0.25s'
+        position: 'fixed', bottom: 36, left: 0, right: 0, zIndex: 20,
+        background: 'rgba(0,0,0,0.92)',
+        opacity: showControls ? 1 : 0, pointerEvents: showControls ? 'auto' : 'none', transition: 'opacity 0.25s'
       }}>
-        {/* Progress slider */}
         <div style={{ padding: '8px 16px 4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', minWidth: 32, textAlign: 'right' }}>{chapterIdx + 1}</span>
@@ -233,21 +267,73 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', minWidth: 32 }}>{book.chapters.length}</span>
           </div>
         </div>
-
-        {/* Chapter nav buttons */}
-        <div style={{ display: 'flex', padding: '4px 16px 12px', gap: 10 }}>
-          <button style={{
-            flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
-            padding: '10px', color: '#fff', fontSize: 13, fontWeight: 600,
-            cursor: hasPrev ? 'pointer' : 'default', opacity: hasPrev ? 1 : 0.3
-          }} onClick={() => goChapter(-1)} disabled={!hasPrev}>上一章</button>
-          <button style={{
-            flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8,
-            padding: '10px', color: '#fff', fontSize: 13, fontWeight: 600,
-            cursor: hasNext ? 'pointer' : 'default', opacity: hasNext ? 1 : 0.3
-          }} onClick={() => goChapter(1)} disabled={!hasNext}>下一章</button>
+        <div style={{ display: 'flex', padding: '4px 16px 8px', gap: 10 }}>
+          <button style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: hasPrev ? 'pointer' : 'default', opacity: hasPrev ? 1 : 0.3 }} onClick={() => goChapter(chapterIdx - 1)} disabled={!hasPrev}>上一章</button>
+          <button style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowChapterList(true)}>目录</button>
+          <button style={{ flex: 1, background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 8, padding: '10px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: hasNext ? 'pointer' : 'default', opacity: hasNext ? 1 : 0.3 }} onClick={() => goChapter(chapterIdx + 1)} disabled={!hasNext}>下一章</button>
         </div>
       </div>
+
+      {/* Chapter List Modal */}
+      {showChapterList && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 30,
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex', justifyContent: 'flex-end'
+        }} onClick={() => setShowChapterList(false)}>
+          <div style={{
+            width: '80%', maxWidth: 360, height: '100%', background: theme.bg,
+            display: 'flex', flexDirection: 'column',
+            animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>{book.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>共{book.chapters.length}章 · 已读{readChapters.size}章</div>
+              </div>
+              <button onClick={() => setShowChapterList(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: 20, cursor: 'pointer', padding: '4px 8px' }}>✕</button>
+            </div>
+            <div style={{ flex: 1, overflow: 'auto', paddingBottom: 20 }}>
+              {book.chapters.map((ch, i) => {
+                const isRead = readChapters.has(i)
+                const isCurrent = i === chapterIdx
+                return (
+                  <div
+                    key={i}
+                    onClick={() => { goChapter(i); setShowChapterList(false) }}
+                    style={{
+                      padding: '12px 16px',
+                      borderBottom: '1px solid var(--border)',
+                      cursor: 'pointer',
+                      background: isCurrent ? 'var(--accent)' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      transition: 'background 0.2s'
+                    }}
+                  >
+                    <div style={{
+                      width: 20, height: 20, borderRadius: 10,
+                      border: `2px solid ${isRead ? 'var(--success)' : 'var(--border)'}`,
+                      background: isRead ? 'var(--success)' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      {isRead && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
+                    </div>
+                    <span style={{
+                      fontSize: 14,
+                      fontWeight: isCurrent ? 700 : 400,
+                      color: isCurrent ? '#fff' : 'var(--text-primary)',
+                      flex: 1
+                    }}>{ch.title}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings */}
       {showSettings && (

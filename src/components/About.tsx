@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.11.0', date: '2026-06-15', changes: [
+    '阅读器重写：去掉分页标识，自动合并多页内容为完整章节',
+    '新增章节列表弹窗（点击目录按钮/底栏目录按钮）',
+    '已读章节标记（绿色✓）+ 已读数据同步到 Supabase',
+    '爬虫修复：自动检测并合并分页章节（_2/_3后缀）',
+    '底栏新增「目录」按钮，点击弹出章节列表'
+  ]},
   { version: '5.10.0', date: '2026-06-15', changes: [
     '书籍库扩充至224本（含经典热门正版书籍）',
     '爬虫扩展到10个书源并行搜索+正版验证机制',
@@ -411,7 +418,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.10.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.11.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

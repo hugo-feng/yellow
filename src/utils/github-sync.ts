@@ -13,6 +13,7 @@ export interface SyncData {
   progress: any[]
   readerSettings: any
   theme?: string
+  readChapters?: Record<string, number[]> // bookId -> read chapter indices
   syncedAt: string
 }
 
@@ -109,10 +110,16 @@ export async function uploadToCloud(data: SyncData): Promise<{ error?: string }>
   const profile = getStoredProfile()
   if (!profile) return { error: '未登录' }
 
+  // Merge readChapters into reader_settings for storage
+  const settingsWithRead = {
+    ...(data.readerSettings || {}),
+    readChapters: data.readChapters || {}
+  }
+
   const { error } = await supabase.from('yellow_users').update({
     books: data.books,
     progress: data.progress,
-    reader_settings: data.readerSettings,
+    reader_settings: settingsWithRead,
     theme: data.theme || 'light',
     synced_at: new Date().toISOString()
   }).eq('id', profile.userId)
@@ -133,12 +140,17 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
   if (error) return { error: error.message }
   if (!data) return { error: '云端无数据' }
 
+  // Extract readChapters from reader_settings
+  const settings = data.reader_settings || {}
+  const { readChapters, ...readerSettings } = settings
+
   return {
     data: {
       books: data.books || [],
       progress: data.progress || [],
-      readerSettings: data.reader_settings,
+      readerSettings,
       theme: data.theme || 'light',
+      readChapters: readChapters || {},
       syncedAt: data.synced_at
     }
   }

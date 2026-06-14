@@ -32,10 +32,20 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
       }
       const settings = localStorage.getItem('reader-settings')
       const theme = localStorage.getItem('theme') || 'light'
+      
+      // Collect readChapters from localStorage
+      const readChapters: Record<string, number[]> = {}
+      for (const book of allBooks) {
+        try {
+          const stored = localStorage.getItem(`read-${book.id}`)
+          if (stored) readChapters[book.id] = JSON.parse(stored)
+        } catch {}
+      }
+
       const { error } = await uploadToCloud({
         books: allBooks, progress: progressList,
         readerSettings: settings ? JSON.parse(settings) : null,
-        theme,
+        theme, readChapters,
         syncedAt: new Date().toISOString()
       })
       if (!error) {
@@ -59,6 +69,12 @@ export default function UserSettings({ books, showToast, onSyncComplete }: Props
     if (data.theme) {
       localStorage.setItem('theme', data.theme)
       document.documentElement.className = `theme-${data.theme}`
+    }
+    // Restore readChapters
+    if (data.readChapters) {
+      for (const [bookId, chapters] of Object.entries(data.readChapters)) {
+        localStorage.setItem(`read-${bookId}`, JSON.stringify(chapters))
+      }
     }
     onSyncComplete(await getAllBooks())
     return true
