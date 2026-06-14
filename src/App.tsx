@@ -324,9 +324,13 @@ function AppInner() {
             {downloadError && (
               <div style={{ width: '100%', marginBottom: 16, padding: 12, borderRadius: 8, background: 'rgba(224,85,85,0.1)', border: '1px solid rgba(224,85,85,0.2)' }}>
                 <p style={{ fontSize: 13, color: 'var(--danger)', marginBottom: 4, fontWeight: 600 }}>下载失败</p>
-                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                  安装包从 GitHub 下载，国内网络可能不稳定。请检查网络后重试。
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 8 }}>
+                  移动数据可能触发系统限制，建议连接 WiFi 后重试，或使用浏览器下载。
                 </p>
+                <button className="btn btn-secondary btn-sm" style={{ width: '100%' }}
+                  onClick={() => window.open(updateInfo.downloadUrl, '_system')}>
+                  用浏览器下载
+                </button>
               </div>
             )}
             <div style={{ display: 'flex', gap: 10, width: '100%' }}>

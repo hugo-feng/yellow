@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.7.1', date: '2026-06-14', changes: [
+    '修复移动数据下载失败：移除DownloadManager的MIME类型（触发系统安全限制）',
+    '下载失败弹窗保留+增加"浏览器下载"兜底按钮',
+    '提示用户连接WiFi后重试'
+  ]},
   { version: '5.7.0', date: '2026-06-14', changes: [
     '登录后自动从云端恢复数据',
     '每5分钟自动后台备份（静默，显示上次备份时间）',
@@ -306,7 +311,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadUrl, setDownloadUrl] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.7.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.7.1')
   const [debugLog, setDebugLog] = useState('')
 
   const checkUpdate = useCallback(async () => {
