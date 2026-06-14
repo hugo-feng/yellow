@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { getStoredProfile, storeProfile, changeNickname, changePassword, updateAvatar, uploadToCloud, type UserProfile } from '../utils/github-sync'
-import { hasInviteCode, setInviteCode } from '../utils/invite'
+import { hasInviteCode, setInviteCode, isInviteCodeValid } from '../utils/invite'
 import { getAllBooks, getProgress } from '../utils/db'
 
 const AVATARS = ['🐉', '🦅', '🐺', '🦁', '🐯', '🦈', '🐙', '🦂', '🦖', '👻', '🤖', '👽', '🦊', '🐲', '🦋']
@@ -30,28 +30,36 @@ function getNextChangeTime(): string {
 export default function ProfilePage({ showToast, onClose }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(getStoredProfile)
   const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatarIndex ?? 0)
+  const [pendingAvatar, setPendingAvatar] = useState<number | null>(null)
   const [showAvatarPicker, setShowAvatarPicker] = useState(false)
   const [newNickname, setNewNickname] = useState('')
   const [showNicknameForm, setShowNicknameForm] = useState(false)
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [inviteInput, setInviteInput] = useState('')
+  const [showInviteInput, setShowInviteInput] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const handleSelectAvatar = useCallback(async (index: number) => {
-    if (!profile || index === selectedAvatar) return
+  const handleSelectAvatar = useCallback((index: number) => {
+    setPendingAvatar(index)
+  }, [])
+
+  const handleConfirmAvatar = useCallback(async () => {
+    if (!profile || pendingAvatar === null) return
     setLoading(true)
-    const { error } = await updateAvatar(profile.userId, index)
+    const { error } = await updateAvatar(profile.userId, pendingAvatar)
     setLoading(false)
     if (error) {
       showToast('更新头像失败: ' + error)
       return
     }
-    setSelectedAvatar(index)
-    setProfile({ ...profile, avatarIndex: index })
+    setSelectedAvatar(pendingAvatar)
+    setProfile({ ...profile, avatarIndex: pendingAvatar })
+    setPendingAvatar(null)
     setShowAvatarPicker(false)
     showToast('头像已更新')
-  }, [profile, selectedAvatar, showToast])
+  }, [profile, pendingAvatar, showToast])
 
   const handleChangeNickname = useCallback(async () => {
     if (!profile) return
@@ -78,6 +86,7 @@ export default function ProfilePage({ showToast, onClose }: Props) {
     const updated = { ...profile, inviteCodeActivated: false }
     setProfile(updated)
     storeProfile(updated)
+    setShowInviteInput(true)
     try {
       const allBooks = await getAllBooks()
       const progressList: any[] = []
@@ -93,6 +102,32 @@ export default function ProfilePage({ showToast, onClose }: Props) {
     } catch {}
     showToast('邀请码已清除')
   }, [profile, showToast])
+
+  const handleReactivateInvite = useCallback(async () => {
+    const code = inviteInput.trim()
+    if (!code) { showToast('请输入邀请码'); return }
+    if (!isInviteCodeValid(code)) { showToast('邀请码无效'); return }
+    setInviteCode(code)
+    const updated = { ...profile!, inviteCodeActivated: true }
+    setProfile(updated)
+    storeProfile(updated)
+    setShowInviteInput(false)
+    setInviteInput('')
+    try {
+      const allBooks = await getAllBooks()
+      const progressList: any[] = []
+      for (const book of allBooks) {
+        const prog = await getProgress(book.id)
+        if (prog) progressList.push(prog)
+      }
+      await uploadToCloud({
+        books: allBooks, progress: progressList,
+        readerSettings: null, theme: localStorage.getItem('theme') || 'light',
+        readChapters: {}, inviteCodeActivated: true, syncedAt: new Date().toISOString()
+      })
+    } catch {}
+    showToast('邀请码已重新激活')
+  }, [profile, inviteInput, showToast])
 
   const handleChangePassword = useCallback(async () => {
     if (!profile) return
@@ -177,8 +212,8 @@ export default function ProfilePage({ showToast, onClose }: Props) {
                   onClick={() => handleSelectAvatar(i)}
                   disabled={loading}
                   style={{
-                    width: '100%', aspectRatio: '1', borderRadius: '50%', border: selectedAvatar === i ? '2px solid var(--accent)' : '2px solid var(--border)',
-                    background: selectedAvatar === i ? 'var(--accent-glow)' : 'var(--bg-card)',
+                    width: '100%', aspectRatio: '1', borderRadius: '50%', border: (pendingAvatar ?? selectedAvatar) === i ? '2px solid var(--accent)' : '2px solid var(--border)',
+                    background: (pendingAvatar ?? selectedAvatar) === i ? 'var(--accent-glow)' : 'var(--bg-card)',
                     fontSize: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transition: 'all 0.2s'
                   }}
@@ -187,6 +222,14 @@ export default function ProfilePage({ showToast, onClose }: Props) {
                 </button>
               ))}
             </div>
+            {pendingAvatar !== null && pendingAvatar !== selectedAvatar && (
+              <button
+                className="btn btn-primary btn-sm" style={{ width: '100%', marginTop: 12 }}
+                onClick={handleConfirmAvatar} disabled={loading}
+              >
+                {loading ? '更新中...' : '确认更换头像'}
+              </button>
+            )}
           </div>
         )}
 
@@ -224,10 +267,10 @@ export default function ProfilePage({ showToast, onClose }: Props) {
               </button>
             </div>
           )}
-          <button
+          <div
             style={{ ...entryStyle, borderTop: '1px solid var(--border)', borderRadius: '0 0 var(--radius) var(--radius)', cursor: 'default' }}
           >
-            <div>
+            <div style={{ paddingLeft: 0 }}>
               <div style={{ fontWeight: 600, fontSize: 14 }}>修改密码</div>
               <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>密码至少4位</div>
             </div>
@@ -237,7 +280,7 @@ export default function ProfilePage({ showToast, onClose }: Props) {
             >
               {showPasswordForm ? '取消' : '修改'}
             </button>
-          </button>
+          </div>
         </div>
 
         {showPasswordForm && (
@@ -273,7 +316,7 @@ export default function ProfilePage({ showToast, onClose }: Props) {
         {/* 邀请码 */}
         <h3 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, paddingLeft: 4 }}>邀请码</h3>
         <div className="card" style={{ padding: 16 }}>
-          {hasInviteCode() ? (
+          {hasInviteCode() && !showInviteInput ? (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -288,7 +331,19 @@ export default function ProfilePage({ showToast, onClose }: Props) {
               </button>
             </div>
           ) : (
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>未激活</div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8 }}>输入邀请码可解锁更多书源</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="text" placeholder="输入邀请码" value={inviteInput}
+                  onChange={e => setInviteInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleReactivateInvite()}
+                  maxLength={20}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: 14, outline: 'none' }}
+                />
+                <button className="btn btn-primary btn-sm" onClick={handleReactivateInvite} disabled={loading}>确认</button>
+              </div>
+            </div>
           )}
         </div>
       </div>

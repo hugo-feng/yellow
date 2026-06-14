@@ -3,6 +3,18 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.16.0', date: '2026-06-15', changes: [
+    '修复严重bug：昵称修改后无法登录（改为按昵称精确匹配查询）',
+    '头像更新改为选择后确认才生效，防止误操作',
+    '修复头像更新失败：本地先更新再同步，忽略列不存在错误',
+    '设置页和个人资料页头像数组统一',
+    '下载超时从30秒改为15秒，弹窗更详细',
+    '昵称修改时检查是否已被其他用户使用',
+    '当前昵称/修改密码文字缩进修复',
+    '清除邀请码后可重新输入邀请码激活',
+    '搜索页添加书籍后直接打开详情页',
+    '删除13本无章节内容的测试书籍，剩余231本'
+  ]},
   { version: '5.15.0', date: '2026-06-15', changes: [
     '头像升级：15个酷炫新头像（龙、鹰、狼、鲨鱼等）',
     '邀请码激活后可在个人资料中清除，状态同步到Supabase',
@@ -461,7 +473,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [errorMsg, setErrorMsg] = useState('')
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.15.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.16.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
@@ -513,7 +525,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
           setDownloading(false)
           setDownloadError('下载超时，请检查网络后重试')
         }
-      }, 30000)
+      }, 15000)
     } catch (e) {
       setDownloading(false)
       setDownloadError((e as Error).message || '下载失败')

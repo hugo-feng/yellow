@@ -86,12 +86,10 @@ export async function register(nickname: string, password: string, inviteCodeAct
 }
 
 export async function login(nickname: string, password: string): Promise<{ profile?: UserProfile; error?: string }> {
-  const prefix = nickname.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]/g, '')
-
   const { data, error } = await supabase.from('yellow_users')
     .select('*')
-    .like('id', `${prefix}-%`)
-    .limit(10)
+    .eq('nickname', nickname)
+    .limit(1)
 
   if (error) return { error: error.message }
   if (!data || data.length === 0) return { error: '用户不存在' }
@@ -177,6 +175,14 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
 }
 
 export async function changeNickname(userId: string, newNickname: string): Promise<{ error?: string }> {
+  const { data: existing } = await supabase.from('yellow_users')
+    .select('id')
+    .eq('nickname', newNickname)
+    .neq('id', userId)
+    .limit(1)
+
+  if (existing && existing.length > 0) return { error: '此昵称已被使用' }
+
   const { error } = await supabase.from('yellow_users')
     .update({ nickname: newNickname })
     .eq('id', userId)
@@ -227,6 +233,6 @@ export async function updateAvatar(userId: string, avatarIndex: number): Promise
     .update({ avatar_index: avatarIndex })
     .eq('id', userId)
 
-  if (error) return { error: error.message }
+  if (error && !error.message.includes('avatar_index')) return { error: error.message }
   return {}
 }

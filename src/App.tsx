@@ -393,7 +393,7 @@ function AppInner() {
                         setDownloading(false)
                         setDownloadError('下载超时，请检查网络后重试')
                       }
-                    }, 30000)
+                    }, 15000)
                   } catch (e) {
                     setDownloading(false)
                     setDownloadError((e as Error).message || '下载失败')

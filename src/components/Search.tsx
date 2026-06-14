@@ -145,7 +145,8 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
               })),
               cached: false
             }
-            await saveBook(book); onAddBook(book); showToast(`已添加：${book.title}`)
+            await saveBook(book); onAddBook(book)
+            if (onViewDetail) { onViewDetail(book) } else { showToast(`已添加：${book.title}`) }
             setLoadingBookId(null); return
           }
         } catch {}
@@ -166,7 +167,8 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
               })),
               cached: false
             }
-            await saveBook(book); onAddBook(book); showToast(`已添加：${book.title}`)
+            await saveBook(book); onAddBook(book)
+            if (onViewDetail) { onViewDetail(book) } else { showToast(`已添加：${book.title}`) }
             setLoadingBookId(null); return
           }
         } catch {}
