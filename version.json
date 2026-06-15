@@ -1,7 +1,7 @@
 {
-  "version": "5.25.0",
-  "versionCode": 5250,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.25.0/yellow-v5.25.0.apk",
-  "updateContent": "清理105本书籍简介杂质文字\n修复清除缓存后搜索仍显示已缓存\n重爬脚本修复207本缺失章节书籍\n爬虫支持分页章节列表+章节数验证",
-  "releaseDate": "2026-06-15"
+  "version": "5.27.0",
+  "versionCode": 5270,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.27.0/yellow-v5.27.0.apk",
+  "updateContent": "邀请激活状态同步到Supabase数据库\n清理1232本书来源残留+3299本补充tag\n退出登录二次确认防误触\n集书阁仅登录+邀请激活后显示\n搜索结果持久化返回不消失\n发现页tag筛选优化至5个",
+  "releaseDate": "2026-06-16"
 }
