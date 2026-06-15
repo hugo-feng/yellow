@@ -92,8 +92,7 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
       const { error } = await uploadToCloud({
         books: allBooks, progress: progressList,
         readerSettings: settings ? JSON.parse(settings) : null,
-        theme: thm, readChapters,
-        inviteCodeActivated: hasInviteCode(),
+        readChapters,
         autoCheckUpdates: localStorage.getItem('ota-auto-check') !== 'off',
         backupFrequency: parseInt(localStorage.getItem('yellow-backup-frequency') || '5', 10),
         searchHistory,

@@ -77,14 +77,6 @@ export async function register(nickname: string, password: string, inviteCodeAct
     return { error: error.message }
   }
 
-  try {
-    await supabase.from('yellow_users').update({
-      invite_code_activated: inviteCodeActivated || false,
-      books: [],
-      progress: []
-    }).eq('id', userId)
-  } catch {}
-
   const profile: UserProfile = { userId, nickname, passwordHash, avatarColor, createdAt: new Date().toISOString(), inviteCodeActivated: inviteCodeActivated || false }
   storeProfile(profile)
   return { profile }
@@ -92,7 +84,7 @@ export async function register(nickname: string, password: string, inviteCodeAct
 
 export async function login(nickname: string, password: string): Promise<{ profile?: UserProfile; error?: string }> {
   const { data, error } = await supabase.from('yellow_users')
-    .select('*')
+    .select('id, nickname, password_hash, avatar_color, created_at, books, progress, reader_settings, synced_at')
     .eq('nickname', nickname)
     .limit(1)
 
@@ -102,14 +94,15 @@ export async function login(nickname: string, password: string): Promise<{ profi
   for (const row of data) {
     const passwordHash = await hashPassword(password, row.id)
     if (row.password_hash === passwordHash) {
+      const storedAvatar = localStorage.getItem('yellow-avatar-index')
       const profile: UserProfile = {
         userId: row.id,
         nickname: row.nickname,
         passwordHash: row.password_hash,
         avatarColor: row.avatar_color || '#f0c040',
-        avatarIndex: row.avatar_index ?? 0,
+        avatarIndex: storedAvatar ? parseInt(storedAvatar, 10) : 0,
         createdAt: row.created_at,
-        inviteCodeActivated: row.invite_code_activated || false
+        inviteCodeActivated: localStorage.getItem('yellow-invite-code') === '1887415157'
       }
       storeProfile(profile)
       return { profile }
@@ -135,11 +128,7 @@ export async function uploadToCloud(data: SyncData): Promise<{ error?: string }>
     books: data.books,
     progress: data.progress,
     reader_settings: settingsWithRead,
-    theme: data.theme || 'light',
     synced_at: new Date().toISOString()
-  }
-  if (data.inviteCodeActivated !== undefined) {
-    updatePayload.invite_code_activated = data.inviteCodeActivated
   }
 
   const { error } = await supabase.from('yellow_users').update(updatePayload).eq('id', profile.userId)
@@ -153,7 +142,7 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
   if (!profile) return { error: '未登录' }
 
   const { data, error } = await supabase.from('yellow_users')
-    .select('books, progress, reader_settings, theme, synced_at, invite_code_activated')
+    .select('books, progress, reader_settings, synced_at')
     .eq('id', profile.userId)
     .single()
 
@@ -168,9 +157,9 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
       books: data.books || [],
       progress: data.progress || [],
       readerSettings,
-      theme: data.theme || 'light',
+      theme: localStorage.getItem('theme') || 'light',
       readChapters: readChapters || {},
-      inviteCodeActivated: data.invite_code_activated || false,
+      inviteCodeActivated: localStorage.getItem('yellow-invite-code') === '1887415157',
       autoCheckUpdates: autoCheckUpdates ?? true,
       backupFrequency: backupFrequency ?? 5,
       searchHistory: searchHistory || [],
@@ -228,16 +217,11 @@ export async function changePassword(userId: string, oldPassword: string, newPas
 }
 
 export async function updateAvatar(userId: string, avatarIndex: number): Promise<{ error?: string }> {
+  localStorage.setItem('yellow-avatar-index', String(avatarIndex))
   const profile = getStoredProfile()
   if (profile) {
     profile.avatarIndex = avatarIndex
     storeProfile(profile)
   }
-
-  const { error } = await supabase.from('yellow_users')
-    .update({ avatar_index: avatarIndex })
-    .eq('id', userId)
-
-  if (error && !error.message.includes('avatar_index')) return { error: error.message }
   return {}
 }

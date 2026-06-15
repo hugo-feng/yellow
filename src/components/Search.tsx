@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { Book, SearchResult } from '../types'
 import { searchAcrossSources, getBookContent } from '../utils/sources'
-import { saveBook } from '../utils/db'
 import { hasInviteCode } from '../utils/invite'
 
 interface Props {
@@ -145,8 +144,7 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
               })),
               cached: false
             }
-            await saveBook(book); onAddBook(book)
-            if (onViewDetail) { onViewDetail(book) } else { showToast(`已添加：${book.title}`) }
+            if (onViewDetail) { onViewDetail(book) } else { onRead(book) }
             setLoadingBookId(null); return
           }
         } catch {}
@@ -167,8 +165,7 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
               })),
               cached: false
             }
-            await saveBook(book); onAddBook(book)
-            if (onViewDetail) { onViewDetail(book) } else { showToast(`已添加：${book.title}`) }
+            if (onViewDetail) { onViewDetail(book) } else { onRead(book) }
             setLoadingBookId(null); return
           }
         } catch {}
@@ -176,8 +173,7 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
       const book = await getBookContent(result.id, result.sourceId)
       if (!book.title || book.title === '未知书名') book.title = result.title || book.title
       if (!book.author || book.author === '未知作者' || book.author === '未知') book.author = result.author || book.author
-      await saveBook(book); onAddBook(book)
-      if (onViewDetail) { onViewDetail(book) } else { showToast(`已添加：${book.title}`) }
+      if (onViewDetail) { onViewDetail(book) } else { onRead(book) }
     } catch { showToast('获取书籍失败，请重试') }
     setLoadingBookId(null)
   }, [books, onAddBook, onRead, onViewDetail, showToast])
@@ -280,7 +276,8 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
             const isAdded = books.some(b => b.id === result.id && b.sourceId === result.sourceId)
             const isLocal = result.sourceId === 'jisge'
             return (
-              <div key={`${result.sourceId}-${result.id}`} className="card fade-in" style={{ display: 'flex', padding: 12, gap: 12, animationDelay: `${idx * 0.04}s` }}>
+              <div key={`${result.sourceId}-${result.id}`} className="card fade-in" style={{ display: 'flex', padding: 12, gap: 12, animationDelay: `${idx * 0.04}s`, cursor: 'pointer' }}
+                onClick={() => handleAddOrRead(result)}>
                 <div style={{ width: 60, height: 80, borderRadius: 6, background: result.cover ? `url(${result.cover}) center/cover` : 'var(--bg-hover)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--text-muted)', overflow: 'hidden' }}>
                   {!result.cover && result.title.slice(0, 2)}
                 </div>
@@ -293,9 +290,9 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
                     {isAdded && <span className="badge" style={{ background: 'rgba(76,175,132,0.15)', color: 'var(--success)', fontSize: 10 }}>已添加</span>}
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{result.description}</div>
-                  <button className="btn btn-primary btn-sm" style={{ marginTop: 8, width: '100%' }} onClick={() => handleAddOrRead(result)} disabled={loadingBookId === result.id}>
-                    {loadingBookId === result.id ? '加载中...' : isAdded ? '查看详情' : '添加到书架'}
-                  </button>
+                  {loadingBookId === result.id && (
+                    <div style={{ fontSize: 12, color: 'var(--accent)', marginTop: 6 }}>加载中...</div>
+                  )}
                 </div>
               </div>
             )

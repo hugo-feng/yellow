@@ -3,6 +3,13 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.20.0', date: '2026-06-15', changes: [
+    '修复云端同步/备份/注册/登录全部失效（Supabase缺失avatar_index/theme/invite_code_activated列）',
+    '头像改为localStorage持久化，不再依赖Supabase列',
+    '搜索点击书籍卡片直接进入详情页，移除搜索结果中的按钮',
+    '添加书架功能移至书籍详情页',
+    '集书阁新增167本书籍，总计185本离线可读'
+  ]},
   { version: '5.19.0', date: '2026-06-15', changes: [
     '恢复下载后自动安装，同时保留手动「安装更新」按钮作为兜底',
     '修复注册失败：register只插入必需字段，避免列不存在错误',
@@ -492,7 +499,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.19.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.20.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
