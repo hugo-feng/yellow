@@ -248,7 +248,6 @@ function AppInner() {
           isInitiallyCached={cachedBookIds.has(detailBook!.id)}
           onAddToShelf={() => { handleAddBook(detailBook!) }}
           onStartRead={(chapterIndex) => {
-            if (!books.some(b => b.id === detailBook!.id)) handleAddBook(detailBook!)
             handleReadBook(detailBook!, chapterIndex)
             setDetailBook(null)
           }}

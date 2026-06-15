@@ -9,7 +9,6 @@ const INDEX_FILE = path.join(BOOKS_DIR, 'index.json')
 const PROGRESS_FILE = path.join(__dirname, '..', '.crawl-jisge-all.json')
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
-const MAX_CHAPTERS = 500
 const REQ_DELAY = 300
 const CH_DELAY = 200
 const BASE = 'https://26b.jisge.com'
@@ -51,7 +50,19 @@ function cleanText(t) {
 }
 
 function loadJSON(file, def) { try { return JSON.parse(fs.readFileSync(file, 'utf-8')) } catch { return def } }
-function saveJSON(file, data) { fs.writeFileSync(file, JSON.stringify(data, null, 2)) }
+function saveJSON(file, data, retries = 3) {
+  const tmp = file + '.tmp'
+  for (let i = 0; i < retries; i++) {
+    try {
+      fs.writeFileSync(tmp, JSON.stringify(data, null, 2))
+      fs.renameSync(tmp, file)
+      return
+    } catch (e) {
+      if (i < retries - 1) { const start = Date.now(); while (Date.now() - start < 200) {} }
+    }
+  }
+  try { fs.writeFileSync(file, JSON.stringify(data, null, 2)) } catch {}
+}
 
 function getNextBookId() {
   const existing = fs.readdirSync(BOOKS_DIR)
@@ -127,13 +138,40 @@ function parseLongStory(html) {
 
 function parseChapterContent(html) {
   const doc = parseDoc(html)
-  const paragraphs = doc.querySelectorAll('#bookcontent p')
-  const lines = []
-  paragraphs.forEach(p => {
-    const text = cleanText(p.textContent || '')
-    if (text.length > 2) lines.push(text)
-  })
-  return lines.join('\n')
+  const contentEl = doc.querySelector('#bookcontent')
+  if (!contentEl) return ''
+  let h = contentEl.innerHTML
+  h = h.replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/<p[^>]*>/gi, '')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<div[^>]*>/gi, '\n')
+    .replace(/<\/div>/gi, '')
+  h = h.replace(/<[^>]+>/g, '')
+  const ta = doc.createElement('textarea')
+  ta.innerHTML = h
+  return ta.value
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/来源\s*$/gm, '')
+    .trim()
+}
+
+function extractChapterNum(title) {
+  const m = title.match(/第\s*(\d+)\s*章/)
+  if (m) return parseInt(m[1], 10)
+  const m2 = title.match(/(\d+)/)
+  if (m2) return parseInt(m2[1], 10)
+  return 0
+}
+
+function getMaxPageFromHtml(html) {
+  const doc = parseDoc(html)
+  const pageEl = doc.querySelector('.stui-page .num')
+  if (pageEl) {
+    const m = pageEl.textContent.match(/\/(\d+)/)
+    if (m) return parseInt(m[1], 10)
+  }
+  return 1
 }
 
 function getMaxPage(html) {
@@ -255,7 +293,22 @@ async function main() {
 
       let chapters = []
       if (book.isLong && detail.chapters.length > 0 && !detail.chapters[0].content) {
-        for (const ch of detail.chapters.slice(0, MAX_CHAPTERS)) {
+        // Handle pagination for chapter lists
+        let allChLinks = [...detail.chapters]
+        const maxPage = getMaxPageFromHtml(bookHtml)
+        if (maxPage > 1) {
+          for (let pg = 2; pg <= maxPage; pg++) {
+            try {
+              const pageUrl = `${BASE}/${book.id}_${pg}.html`
+              const pageHtml = await fetchText(pageUrl, 10000)
+              const pageDetail = parseLongStory(pageHtml)
+              allChLinks.push(...pageDetail.chapters)
+            } catch {}
+            await sleep(REQ_DELAY)
+          }
+        }
+
+        for (const ch of allChLinks) {
           try {
             const chUrl = ch.url.startsWith('http') ? ch.url : `${BASE}${ch.url.startsWith('/') ? '' : '/'}${ch.url}`
             const chHtml = await fetchText(chUrl, 10000)
@@ -266,8 +319,12 @@ async function main() {
           } catch {}
           await sleep(CH_DELAY)
         }
+
+        // Sort by chapter number
+        chapters.sort((a, b) => extractChapterNum(a.title) - extractChapterNum(b.title))
+        chapters.forEach((ch, i) => { ch.index = i })
       } else {
-        chapters = detail.chapters.slice(0, MAX_CHAPTERS)
+        chapters = detail.chapters
       }
 
       if (chapters.length === 0) {

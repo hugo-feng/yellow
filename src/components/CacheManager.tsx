@@ -72,7 +72,7 @@ export default function CacheManager({ onClose, showToast, cacheTask }: Props) {
   const { data: books = [], isLoading } = useQuery({
     queryKey: ['cacheBooks'],
     queryFn: fetchCacheBooks,
-    staleTime: 30_000,
+    staleTime: 0,
   })
 
   const deleteMutation = useMutation({

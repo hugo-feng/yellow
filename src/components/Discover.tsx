@@ -56,7 +56,7 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
 
   const allTags = Array.from(new Set(bookIndex.flatMap(b => b.tags || [])))
 
-  const filteredIndex = hasInviteCode() ? bookIndex : bookIndex.filter(b => b.sourceId !== 'jisge')
+  const filteredIndex = useMemo(() => hasInviteCode() ? bookIndex : bookIndex.filter(b => b.sourceId !== 'jisge'), [bookIndex])
 
   const shuffled = useMemo(() => [...filteredIndex].sort(() => Math.random() - 0.5), [filteredIndex, shuffleKey])
   const recommended = selectedCat
@@ -178,7 +178,7 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
             <div
               key={`${item.sourceId}-${item.id}`}
               className="discover-card fade-in"
-              style={{ animationDelay: `${i * 0.03}s` }}
+              style={{ animationDelay: `${i * 0.03}s`, position: 'relative' }}
               onClick={() => handleClick(item)}
             >
               <div className="discover-cover" style={{ padding: 6, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: 1.3, wordBreak: 'break-all' }}>
@@ -192,6 +192,9 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
                 <div className="discover-title">{item.title}</div>
                 <div className="discover-author">{item.sourceName}</div>
               </div>
+              {item.tags && item.tags.length > 0 && (
+                <span style={{ position: 'absolute', top: 4, left: 4, background: 'var(--accent)', color: '#fff', fontSize: 9, padding: '2px 5px', borderRadius: 4, fontWeight: 600, lineHeight: 1.2 }}>{item.tags[0]}</span>
+              )}
             </div>
           ))}
         </div>

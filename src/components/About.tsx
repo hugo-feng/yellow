@@ -3,6 +3,14 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.24.0', date: '2026-06-15', changes: [
+    '修复对话引号后文字丢失：移除DOMPurify，改用innerHTML保留段落边界',
+    '缓存管理即时刷新：添加书架后立即更新缓存列表',
+    '全部发现页卡片显示tag标签（推荐区+tag分类区）',
+    '返回首页不再重新排列书籍，只有点击换一换才刷新',
+    '集书阁爬虫：移除章节数量限制，支持分页爬取全部章节，按章节号排序',
+    '阅读不再自动加入书架，只有手动点击加入书架才添加'
+  ]},
   { version: '5.23.0', date: '2026-06-15', changes: [
     '发现页仅点击「换一换」才重新随机排列，切换界面不再重排',
     '阅读器顶栏中央显示当前章节标题',
@@ -518,7 +526,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.23.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.24.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
