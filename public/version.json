@@ -1,7 +1,7 @@
 {
-  "version": "5.24.0",
-  "versionCode": 5240,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.24.0/yellow-v5.24.0.apk",
-  "updateContent": "修复对话引号后文字丢失(移除DOMPurify+innerHTML解析)\n缓存管理即时刷新\n全部发现卡片显示tag标签\n返回首页不再重排(只有换一换才刷新)\n集书阁爬虫支持全部章节+分页+按章节号排序\n阅读不再自动加入书架",
+  "version": "5.25.0",
+  "versionCode": 5250,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.25.0/yellow-v5.25.0.apk",
+  "updateContent": "清理105本书籍简介杂质文字\n修复清除缓存后搜索仍显示已缓存\n重爬脚本修复207本缺失章节书籍\n爬虫支持分页章节列表+章节数验证",
   "releaseDate": "2026-06-15"
 }

@@ -24,6 +24,7 @@ interface Props {
   onClose: () => void
   showToast: (msg: string) => void
   cacheTask?: CacheTask | null
+  onDelete?: (bookId: string) => void
 }
 
 async function fetchCacheBooks(): Promise<CacheBookInfo[]> {
@@ -65,7 +66,7 @@ async function fetchCacheBooks(): Promise<CacheBookInfo[]> {
   return infos.sort((a, b) => b.size - a.size)
 }
 
-export default function CacheManager({ onClose, showToast, cacheTask }: Props) {
+export default function CacheManager({ onClose, showToast, cacheTask, onDelete }: Props) {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
@@ -79,6 +80,7 @@ export default function CacheManager({ onClose, showToast, cacheTask }: Props) {
     mutationFn: async (id: string) => { await removeBook(id) },
     onSuccess: (_, id) => {
       queryClient.setQueryData<CacheBookInfo[]>(['cacheBooks'], prev => (prev || []).filter(b => b.id !== id))
+      onDelete?.(id)
       setConfirmDelete(null)
       showToast('已删除缓存')
     }

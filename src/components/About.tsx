@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.25.0', date: '2026-06-15', changes: [
+    '清理105本集书阁书籍简介中的"返回长篇情色小说"杂质文字',
+    '修复清除缓存后搜索仍显示已添加的bug：CacheManager删除同步App状态',
+    '重爬脚本修复207本缺失章节书籍（分页爬取+innerHTML保留引号内容）',
+    '爬虫按章节数验证完整性，确保无缺漏章节'
+  ]},
   { version: '5.24.0', date: '2026-06-15', changes: [
     '修复对话引号后文字丢失：移除DOMPurify，改用innerHTML保留段落边界',
     '缓存管理即时刷新：添加书架后立即更新缓存列表',
@@ -526,7 +532,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.24.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.25.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

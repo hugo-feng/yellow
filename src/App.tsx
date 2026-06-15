@@ -277,6 +277,7 @@ function AppInner() {
           onClose={() => closePage('cache', () => setShowCacheManager(false))}
           showToast={showToast}
           cacheTask={cacheTask}
+          onDelete={handleDeleteBook}
         />
       </div>
     )
