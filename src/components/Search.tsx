@@ -34,6 +34,7 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
   const [history, setHistory] = useState<string[]>(loadHistory)
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>()
   const inputRef = useRef<HTMLInputElement>(null)
+  const searchIdRef = useRef(0)
 
   useEffect(() => {
     fetch('books/index.json').then(r => r.json()).then((data: LocalBookIndex[]) => {
@@ -58,6 +59,7 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
 
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return }
+    const sid = ++searchIdRef.current
     setLoading(true)
     addToHistory(q)
 
@@ -82,12 +84,14 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
         }
       }
     }
+    if (sid !== searchIdRef.current) return
     setResults([...allResults])
     setLoading(false)
 
-    // Online search (append results, loading already false)
+    // Online search (append results)
     try {
       const onlineResults = await searchAcrossSources(q.trim())
+      if (sid !== searchIdRef.current) return
       for (const r of onlineResults) {
         const key = `${r.sourceId}-${r.id}`
         if (!seen.has(key)) {
@@ -95,8 +99,8 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
           allResults.push(r)
         }
       }
-      setResults([...allResults])
-    } catch { /* online failed */ }
+      if (sid === searchIdRef.current) setResults([...allResults])
+    } catch { /* online failed, keep local results */ }
   }, [localIndex, addToHistory])
 
   const handleSearch = useCallback((q: string) => {

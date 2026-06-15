@@ -51,7 +51,7 @@ async function crawlBook(browser, bookUrl, existingIndex, existingTitles, bookId
         const paragraphs = document.querySelectorAll('#bookcontent p')
         const lines = []
         paragraphs.forEach(p => {
-          let text = (p.textContent || '').replace(/来源[：:]\s*\S+/g, '').replace(/jishuge\S*/gi, '').replace(/集书阁\S*/g, '').replace(/请收藏.*?$/gm, '').replace(/https?:\/\/\S+/g, '').trim()
+          let text = (p.textContent || '').replace(/来源[：:]\s*\S+/g, '').replace(/来源\s*$/g, '').replace(/jishuge\S*/gi, '').replace(/集书阁\S*/g, '').replace(/请收藏.*?$/gm, '').replace(/https?:\/\/\S+/g, '').trim()
           if (text.length > 2) lines.push(text)
         })
         if (lines.length > 0) {
@@ -92,7 +92,7 @@ async function crawlBook(browser, bookUrl, existingIndex, existingTitles, bookId
               const paragraphs = document.querySelectorAll('#bookcontent p')
               const lines = []
               paragraphs.forEach(p => {
-                let text = (p.textContent || '').replace(/来源[：:]\s*\S+/g, '').replace(/jishuge\S*/gi, '').replace(/集书阁\S*/g, '').replace(/请收藏.*?$/gm, '').replace(/https?:\/\/\S+/g, '').trim()
+                let text = (p.textContent || '').replace(/来源[：:]\s*\S+/g, '').replace(/来源\s*$/g, '').replace(/jishuge\S*/gi, '').replace(/集书阁\S*/g, '').replace(/请收藏.*?$/gm, '').replace(/https?:\/\/\S+/g, '').trim()
                 if (text.length > 2) lines.push(text)
               })
               return lines.join('\n')

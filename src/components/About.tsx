@@ -3,6 +3,11 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.22.0', date: '2026-06-15', changes: [
+    '修复爬虫内容中每行残留的"来源"文字，清理194本书共149830行',
+    '修复搜索结果闪现后消失的bug：添加searchId竞态防护',
+    '爬虫清理逻辑增加行尾"来源"匹配规则'
+  ]},
   { version: '5.21.0', date: '2026-06-15', changes: [
     '重下载APK时自动取消旧下载进程+删除旧安装包，避免重复下载',
     '搜索支持按书源名称检索（输入"集书阁"或"jisge"可筛选）',
@@ -505,7 +510,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.21.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.22.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
