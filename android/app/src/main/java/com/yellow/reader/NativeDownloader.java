@@ -24,6 +24,7 @@ public class NativeDownloader {
     private volatile boolean downloading = false;
     private volatile int progress = 0;
     private File lastDownloadedFile = null;
+    private volatile boolean cancelled = false;
 
     public NativeDownloader(Context context) {
         this.context = context;
@@ -32,6 +33,7 @@ public class NativeDownloader {
     @JavascriptInterface
     public void download(String url, String filename, String version) {
         Log.d(TAG, "download: " + url);
+        cancelled = false;
         downloading = true;
         progress = 0;
 
@@ -84,6 +86,13 @@ public class NativeDownloader {
                 int lastReported = -1;
 
                 while ((bytesRead = is.read(buffer)) != -1) {
+                    if (cancelled) {
+                        Log.d(TAG, "download cancelled");
+                        fos.flush(); fos.close(); is.close(); conn.disconnect();
+                        if (file.exists()) file.delete();
+                        downloading = false;
+                        return;
+                    }
                     fos.write(buffer, 0, bytesRead);
                     downloaded += bytesRead;
                     if (totalSize > 0) {
@@ -146,6 +155,20 @@ public class NativeDownloader {
     @JavascriptInterface
     public boolean isDownloading() {
         return downloading;
+    }
+
+    @JavascriptInterface
+    public void cancel() {
+        Log.d(TAG, "cancel download");
+        cancelled = true;
+        downloading = false;
+        progress = -1;
+        File dir = new File(context.getExternalFilesDir(null), "updates");
+        if (dir.exists()) {
+            for (File f : dir.listFiles()) {
+                if (f.getName().endsWith(".apk")) f.delete();
+            }
+        }
     }
 
     @JavascriptInterface

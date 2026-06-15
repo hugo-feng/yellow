@@ -5,6 +5,7 @@ declare global {
       getProgress(): number
       isDownloading(): boolean
       install(): boolean
+      cancel(): void
     }
     __nativeDownloadCallback?: (status: string) => void
   }
@@ -44,4 +45,8 @@ export function getNativeProgress(): number {
 
 export function installDownloaded(): boolean {
   return window.NativeDownloader?.install() ?? false
+}
+
+export function cancelDownload(): void {
+  window.NativeDownloader?.cancel()
 }

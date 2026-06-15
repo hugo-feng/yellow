@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { Book, TabKey, ReadingProgress, ReaderSettings } from './types'
 import { getAllBooks, removeBook, saveProgress, getProgress, saveBook, saveChapter, getChapter } from './utils/db'
 import { checkForUpdates, waitSWReady, APP_VERSION, UpdateInfo } from './utils/updater'
-import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from './plugins/NativeDownloader'
+import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded, cancelDownload } from './plugins/NativeDownloader'
 import { ThemeProvider, useTheme } from './hooks/useTheme'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { toast } from 'sonner'
@@ -390,6 +390,7 @@ function AppInner() {
                       showToast('下载组件未加载，请重启app')
                       return
                     }
+                    cancelDownload()
                     setDownloading(true)
                     setDownloadProgress(0)
                     setDownloadError(null)

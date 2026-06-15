@@ -69,7 +69,7 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
     const allowJisge = hasInviteCode()
     for (const book of localIndex) {
       if (!allowJisge && book.sourceId === 'jisge') continue
-      if (book.title.toLowerCase().includes(kw) || book.description.toLowerCase().includes(kw) || book.author.toLowerCase().includes(kw)) {
+      if (book.title.toLowerCase().includes(kw) || book.description.toLowerCase().includes(kw) || book.author.toLowerCase().includes(kw) || (book.sourceName || '').toLowerCase().includes(kw) || (book.sourceId || '').toLowerCase().includes(kw)) {
         const key = `${book.sourceId}-${book.id}`
         if (!seen.has(key)) {
           seen.add(key)

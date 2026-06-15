@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.21.0', date: '2026-06-15', changes: [
+    '重下载APK时自动取消旧下载进程+删除旧安装包，避免重复下载',
+    '搜索支持按书源名称检索（输入"集书阁"或"jisge"可筛选）',
+    '清理105本集书阁书籍的杂质书名前缀（"返回长篇情色小说"等）',
+    '修复43本重复ID书籍，确保每本书ID唯一'
+  ]},
   { version: '5.20.0', date: '2026-06-15', changes: [
     '修复云端同步/备份/注册/登录全部失效（Supabase缺失avatar_index/theme/invite_code_activated列）',
     '头像改为localStorage持久化，不再依赖Supabase列',
@@ -499,7 +505,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.20.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.21.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)
