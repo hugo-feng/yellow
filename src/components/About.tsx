@@ -3,6 +3,12 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.26.0', date: '2026-06-15', changes: [
+    '集书阁书籍库扩充至3379本（从215本增长15倍）',
+    'Puppeteer爬虫替代fetch，绕过Cloudflare保护，成功率从0.4%提升至99.9%',
+    '爬虫监控面板：实时查看运行状态、章节分布、书籍详情',
+    '爬虫支持分页章节列表+章节数验证+按章节号排序'
+  ]},
   { version: '5.25.0', date: '2026-06-15', changes: [
     '清理105本集书阁书籍简介中的"返回长篇情色小说"杂质文字',
     '修复清除缓存后搜索仍显示已添加的bug：CacheManager删除同步App状态',
@@ -532,7 +538,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.25.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.26.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

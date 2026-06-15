@@ -1,7 +1,7 @@
 {
-  "version": "5.25.0",
-  "versionCode": 5250,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.25.0/yellow-v5.25.0.apk",
-  "updateContent": "清理105本书籍简介杂质文字\n修复清除缓存后搜索仍显示已缓存\n重爬脚本修复207本缺失章节书籍\n爬虫支持分页章节列表+章节数验证",
+  "version": "5.26.0",
+  "versionCode": 5260,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.26.0/yellow-v5.26.0.apk",
+  "updateContent": "集书阁书籍库扩充至3379本\nPuppeteer爬虫绕过Cloudflare保护\n爬虫监控面板实时查看运行状态",
   "releaseDate": "2026-06-15"
 }
