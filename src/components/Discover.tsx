@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Book } from '../types'
-import { hasInviteCode } from '../utils/invite'
+import { hasInviteCode, hasInviteCodeFromProfile } from '../utils/invite'
+import { getStoredProfile } from '../utils/github-sync'
 
 interface DiscoverItem {
   id: string; title: string; author: string; cover: string; description: string
@@ -56,14 +57,18 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
 
   const allTags = Array.from(new Set(bookIndex.flatMap(b => b.tags || [])))
 
-  const filteredIndex = useMemo(() => hasInviteCode() ? bookIndex : bookIndex.filter(b => b.sourceId !== 'jisge'), [bookIndex])
+  const filteredIndex = useMemo(() => {
+    const profile = getStoredProfile()
+    const showJisge = !!profile && hasInviteCodeFromProfile(profile)
+    return showJisge ? bookIndex : bookIndex.filter(b => b.sourceId !== 'jisge')
+  }, [bookIndex])
 
   const shuffled = useMemo(() => [...filteredIndex].sort(() => Math.random() - 0.5), [filteredIndex, shuffleKey])
   const recommended = selectedCat
     ? shuffled.filter(b => b.tags?.includes(selectedCat)).slice(0, 36)
     : shuffled.slice(0, 36)
 
-  const tagSections = useMemo(() => allTags.slice(0, 6).map(tag => ({
+  const tagSections = useMemo(() => allTags.slice(0, 5).map(tag => ({
     tag,
     books: shuffled.filter(b => b.tags?.includes(tag)).slice(0, 12)
   })).filter(s => s.books.length > 0), [allTags, shuffled])

@@ -3,6 +3,16 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.27.0', date: '2026-06-16', changes: [
+    '邀请激活状态同步到Supabase数据库，登录/恢复时自动同步',
+    '清理1232本书内容中的"来源"残留文字',
+    '3299本缺少tag的书籍自动补充分类标签',
+    '退出登录添加二次确认弹窗，防止误触',
+    '集书阁书籍仅登录+邀请激活后才显示（发现页+搜索）',
+    '搜索结果持久化，返回后不再消失',
+    '发现页tag筛选从6个优化至5个',
+    'Reader清理正则增加来源+空格匹配'
+  ]},
   { version: '5.26.0', date: '2026-06-15', changes: [
     '集书阁书籍库扩充至3379本（从215本增长15倍）',
     'Puppeteer爬虫替代fetch，绕过Cloudflare保护，成功率从0.4%提升至99.9%',
@@ -538,7 +548,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.26.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.27.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

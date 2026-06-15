@@ -128,6 +128,7 @@ export async function uploadToCloud(data: SyncData): Promise<{ error?: string }>
     books: data.books,
     progress: data.progress,
     reader_settings: settingsWithRead,
+    invite_code_activated: data.inviteCodeActivated ?? false,
     synced_at: new Date().toISOString()
   }
 
@@ -142,7 +143,7 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
   if (!profile) return { error: '未登录' }
 
   const { data, error } = await supabase.from('yellow_users')
-    .select('books, progress, reader_settings, synced_at')
+    .select('books, progress, reader_settings, invite_code_activated, synced_at')
     .eq('id', profile.userId)
     .single()
 
@@ -152,6 +153,17 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
   const settings = data.reader_settings || {}
   const { readChapters, autoCheckUpdates, backupFrequency, searchHistory, ...readerSettings } = settings
 
+  const dbInvite = data.invite_code_activated === true
+  const localInvite = localStorage.getItem('yellow-invite-code') === '1887415157'
+  if (dbInvite && !localInvite) {
+    localStorage.setItem('yellow-invite-code', '1887415157')
+  }
+  const profile2 = getStoredProfile()
+  if (profile2 && dbInvite && !profile2.inviteCodeActivated) {
+    profile2.inviteCodeActivated = true
+    storeProfile(profile2)
+  }
+
   return {
     data: {
       books: data.books || [],
@@ -159,7 +171,7 @@ export async function downloadFromCloud(): Promise<{ data?: SyncData; error?: st
       readerSettings,
       theme: localStorage.getItem('theme') || 'light',
       readChapters: readChapters || {},
-      inviteCodeActivated: localStorage.getItem('yellow-invite-code') === '1887415157',
+      inviteCodeActivated: dbInvite || localInvite,
       autoCheckUpdates: autoCheckUpdates ?? true,
       backupFrequency: backupFrequency ?? 5,
       searchHistory: searchHistory || [],

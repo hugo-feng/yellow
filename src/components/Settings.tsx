@@ -190,7 +190,14 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
     }
   }, [nickname, password, showToast, doRestore])
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+
   const handleLogout = useCallback(async () => {
+    setShowLogoutConfirm(true)
+  }, [])
+
+  const confirmLogout = useCallback(async () => {
+    setShowLogoutConfirm(false)
     await doBackup(true)
     clearLocalData()
     setProfile(null)
@@ -478,6 +485,22 @@ export default function Settings({ books, showToast, onOpenAbout, cacheTask, onO
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowClearConfirm(false)}>取消</button>
               <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleClearAll}>确认清除</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLogoutConfirm && (
+        <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()}>
+            <div className="modal-handle" />
+            <h3 style={{ fontSize: 16, marginBottom: 8 }}>确认退出登录</h3>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
+              退出前将自动备份数据到云端。确定要退出吗？
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowLogoutConfirm(false)}>取消</button>
+              <button className="btn btn-danger" style={{ flex: 1 }} onClick={confirmLogout}>确认退出</button>
             </div>
           </div>
         </div>

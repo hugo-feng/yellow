@@ -1,7 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import type { Book, SearchResult } from '../types'
 import { searchAcrossSources, getBookContent } from '../utils/sources'
-import { hasInviteCode } from '../utils/invite'
+import { hasInviteCode, hasInviteCodeFromProfile } from '../utils/invite'
+import { getStoredProfile } from '../utils/github-sync'
 
 interface Props {
   onAddBook: (book: Book) => void
@@ -26,8 +27,10 @@ function saveHistory(terms: string[]) {
 }
 
 export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast, books }: Props) {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
+  const [query, setQuery] = useState(() => sessionStorage.getItem('yellow-search-query') || '')
+  const [results, setResults] = useState<SearchResult[]>(() => {
+    try { return JSON.parse(sessionStorage.getItem('yellow-search-results') || '[]') } catch { return [] }
+  })
   const [loading, setLoading] = useState(false)
   const [loadingBookId, setLoadingBookId] = useState<string | null>(null)
   const [localIndex, setLocalIndex] = useState<LocalBookIndex[]>([])
@@ -68,7 +71,8 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
     const kw = q.trim().toLowerCase()
 
     // Local search (instant)
-    const allowJisge = hasInviteCode()
+    const profile = getStoredProfile()
+    const allowJisge = !!profile && hasInviteCodeFromProfile(profile)
     for (const book of localIndex) {
       if (!allowJisge && book.sourceId === 'jisge') continue
       if (book.title.toLowerCase().includes(kw) || book.description.toLowerCase().includes(kw) || book.author.toLowerCase().includes(kw) || (book.sourceName || '').toLowerCase().includes(kw) || (book.sourceId || '').toLowerCase().includes(kw)) {
@@ -86,6 +90,8 @@ export default function SearchPage({ onAddBook, onRead, onViewDetail, showToast,
     }
     if (sid !== searchIdRef.current) return
     setResults([...allResults])
+    sessionStorage.setItem('yellow-search-results', JSON.stringify(allResults))
+    sessionStorage.setItem('yellow-search-query', q)
     setLoading(false)
 
     // Online search (append results)

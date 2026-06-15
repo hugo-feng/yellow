@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
-import { getStoredProfile, storeProfile, changeNickname, changePassword, updateAvatar, uploadToCloud, type UserProfile } from '../utils/github-sync'
-import { hasInviteCode, setInviteCode, isInviteCodeValid } from '../utils/invite'
+import { getStoredProfile, storeProfile, clearLocalData, changeNickname, changePassword, updateAvatar, uploadToCloud, type UserProfile } from '../utils/github-sync'
+import { hasInviteCode, setInviteCode, isInviteCodeValid, clearInviteCode } from '../utils/invite'
 import { getAllBooks, getProgress } from '../utils/db'
 
 const AVATARS = [
@@ -15,6 +15,7 @@ const AVATARS = [
 interface Props {
   showToast: (msg: string) => void
   onClose: () => void
+  onLogout?: () => void
 }
 
 const NICKNAME_COOLDOWN_KEY = 'yellow-nickname-last-change'
@@ -34,7 +35,7 @@ function getNextChangeTime(): string {
   return `${Math.ceil(remaining / 1000)}秒后`
 }
 
-export default function ProfilePage({ showToast, onClose }: Props) {
+export default function ProfilePage({ showToast, onClose, onLogout }: Props) {
   const [profile, setProfile] = useState<UserProfile | null>(getStoredProfile)
   const [selectedAvatar, setSelectedAvatar] = useState(profile?.avatarIndex ?? 0)
   const [pendingAvatar, setPendingAvatar] = useState<number | null>(null)
@@ -46,6 +47,7 @@ export default function ProfilePage({ showToast, onClose }: Props) {
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [inviteInput, setInviteInput] = useState('')
   const [showInviteInput, setShowInviteInput] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSelectAvatar = useCallback((index: number) => {
@@ -136,6 +138,33 @@ export default function ProfilePage({ showToast, onClose }: Props) {
     } catch {}
     showToast('邀请码已重新激活')
   }, [profile, inviteInput, showToast])
+
+  const handleConfirmLogout = useCallback(async () => {
+    setShowLogoutConfirm(false)
+    try {
+      const allBooks = await getAllBooks()
+      const progressList: any[] = []
+      for (const book of allBooks) {
+        const prog = await getProgress(book.id)
+        if (prog) progressList.push(prog)
+      }
+      let searchHistory: string[] = []
+      try { searchHistory = JSON.parse(localStorage.getItem('yellow-search-history') || '[]') } catch {}
+      await uploadToCloud({
+        books: allBooks, progress: progressList,
+        readerSettings: localStorage.getItem('reader-settings') ? JSON.parse(localStorage.getItem('reader-settings')!) : null,
+        readChapters: {},
+        autoCheckUpdates: localStorage.getItem('ota-auto-check') !== 'off',
+        backupFrequency: parseInt(localStorage.getItem('yellow-backup-frequency') || '5', 10),
+        searchHistory,
+        inviteCodeActivated: hasInviteCode(),
+        syncedAt: new Date().toISOString()
+      })
+    } catch {}
+    clearLocalData()
+    clearInviteCode()
+    window.location.reload()
+  }, [showToast])
 
   const handleChangePassword = useCallback(async () => {
     if (!profile) return
@@ -359,6 +388,36 @@ export default function ProfilePage({ showToast, onClose }: Props) {
             </div>
           )}
         </div>
+
+        {/* 退出登录 */}
+        {onLogout && (
+          <>
+            <h3 style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 8, paddingLeft: 4 }}>账号</h3>
+            <button
+              className="btn btn-danger"
+              style={{ width: '100%', marginBottom: 20 }}
+              onClick={() => setShowLogoutConfirm(true)}
+            >
+              退出登录
+            </button>
+          </>
+        )}
+
+        {showLogoutConfirm && (
+          <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
+            <div className="modal-sheet slide-up" onClick={e => e.stopPropagation()}>
+              <div className="modal-handle" />
+              <h3 style={{ fontSize: 16, marginBottom: 8 }}>确认退出登录</h3>
+              <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.6 }}>
+                退出前将自动备份数据到云端。确定要退出吗？
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setShowLogoutConfirm(false)}>取消</button>
+                <button className="btn btn-danger" style={{ flex: 1 }} onClick={handleConfirmLogout}>确认退出</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
