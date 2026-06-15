@@ -1,7 +1,7 @@
 {
-  "version": "5.20.0",
-  "versionCode": 5200,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.20.0/yellow-v5.20.0.apk",
-  "updateContent": "修复云端同步/注册/登录/头像全部失效（Supabase列缺失）\n搜索点击书籍卡片直接进入详情页\n添加书架移至书籍详情页\n集书阁书籍增至185本\n新增167本集书阁书籍",
+  "version": "5.21.0",
+  "versionCode": 5210,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.21.0/yellow-v5.21.0.apk",
+  "updateContent": "重下载APK时自动取消旧下载+删除旧安装包\n搜索支持按书源名称检索\n清理105本集书阁书名杂质前缀\n修复43本重复ID书籍",
   "releaseDate": "2026-06-15"
 }
