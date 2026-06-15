@@ -33,7 +33,9 @@ function cleanPaginationMarkers(text: string): string {
     .replace(/本章未完.*?$/gm, '')
     .replace(/章节错误.*?$/gm, '')
     .replace(/点此报错.*?$/gm, '')
-    .replace(/来源[：:]\s*\S+/g, '')
+    .replace(/来源[：:]\s*https?:\/\/\S+/g, '')
+    .replace(/来源[：:]\s*[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\S*/g, '')
+    .replace(/[\s]来源\s*$/gm, '')
     .replace(/https?:\/\/\S+/g, '')
     .replace(/[\u200b\u200c\u200d\ufeff]/g, '')
     .replace(/\n{3,}/g, '\n\n')
@@ -186,7 +188,8 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
             返回
           </button>
-          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>{overallPercent}%</span>
+          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, flex: 1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 8px' }}>{chapter?.title || ''}</span>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, flexShrink: 0 }}>{overallPercent}%</span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 20, padding: '8px 12px', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowChapterList(true)}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
@@ -286,12 +289,12 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
             display: 'flex', flexDirection: 'column',
             animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ padding: '16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
-                <div style={{ fontWeight: 700, fontSize: 15 }}>{book.title}</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>共{book.chapters.length}章 · 已读{readChapters.size}章</div>
+                <div style={{ fontWeight: 700, fontSize: 15, color: theme.text }}>{book.title}</div>
+                <div style={{ fontSize: 12, color: theme.text, opacity: 0.6, marginTop: 2 }}>共{book.chapters.length}章 · 已读{readChapters.size}章</div>
               </div>
-              <button onClick={() => setShowChapterList(false)} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: 20, cursor: 'pointer', padding: '4px 8px' }}>✕</button>
+              <button onClick={() => setShowChapterList(false)} style={{ background: 'none', border: 'none', color: theme.text, fontSize: 20, cursor: 'pointer', padding: '4px 8px' }}>✕</button>
             </div>
             <div style={{ flex: 1, overflow: 'auto', paddingBottom: 20 }}>
               {book.chapters.map((ch, i) => {
@@ -303,7 +306,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
                     onClick={() => { goChapter(i); setShowChapterList(false) }}
                     style={{
                       padding: '12px 16px',
-                      borderBottom: '1px solid var(--border)',
+                      borderBottom: '1px solid rgba(255,255,255,0.08)',
                       cursor: 'pointer',
                       background: isCurrent ? 'var(--accent)' : 'transparent',
                       display: 'flex',
@@ -314,7 +317,7 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
                   >
                     <div style={{
                       width: 20, height: 20, borderRadius: 10,
-                      border: `2px solid ${isRead ? 'var(--success)' : 'var(--border)'}`,
+                      border: `2px solid ${isRead ? 'var(--success)' : 'rgba(255,255,255,0.2)'}`,
                       background: isRead ? 'var(--success)' : 'transparent',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       flexShrink: 0
@@ -324,8 +327,11 @@ export default function Reader({ book, initialProgress, settings, onSettingsChan
                     <span style={{
                       fontSize: 14,
                       fontWeight: isCurrent ? 700 : 400,
-                      color: isCurrent ? '#fff' : 'var(--text-primary)',
-                      flex: 1
+                      color: isCurrent ? '#fff' : theme.text,
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
                     }}>{ch.title}</span>
                   </div>
                 )

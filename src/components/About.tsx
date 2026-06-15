@@ -3,6 +3,14 @@ import { checkForUpdates, APP_VERSION } from '../utils/updater'
 import { nativeDownload, getNativeProgress, isNativeDownloaderAvailable, installDownloaded } from '../plugins/NativeDownloader'
 
 const changelog = [
+  { version: '5.23.0', date: '2026-06-15', changes: [
+    '发现页仅点击「换一换」才重新随机排列，切换界面不再重排',
+    '阅读器顶栏中央显示当前章节标题',
+    '阅读器章节列表文字对比度修复，使用阅读器主题色',
+    '修复对话内容在引号后丢失的bug：biquChapterParser改用innerHTML保留段落边界',
+    '发现页tag分类卡片左上角显示彩色标签',
+    'cleanPaginationMarkers来源正则改为只匹配URL，不再误删对话内容'
+  ]},
   { version: '5.22.0', date: '2026-06-15', changes: [
     '修复爬虫内容中每行残留的"来源"文字，清理194本书共149830行',
     '修复搜索结果闪现后消失的bug：添加searchId竞态防护',
@@ -510,7 +518,7 @@ export default function About({ currentVersion, showToast, onClose, onOtaSuccess
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [downloadCompleted, setDownloadCompleted] = useState(false)
   const [showLatest, setShowLatest] = useState(false)
-  const [expandedVer, setExpandedVer] = useState<string | null>('5.22.0')
+  const [expandedVer, setExpandedVer] = useState<string | null>('5.23.0')
 
   const checkUpdate = useCallback(async () => {
     setChecking(true)

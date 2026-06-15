@@ -1,7 +1,7 @@
 {
-  "version": "5.22.0",
-  "versionCode": 5220,
-  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.22.0/yellow-v5.22.0.apk",
-  "updateContent": "修复爬虫内容中残留的\"来源\"文字（清理194本书149830行）\n修复搜索结果闪现后消失的bug（竞态条件防护）",
+  "version": "5.23.0",
+  "versionCode": 5230,
+  "downloadUrl": "https://github.com/hugo-feng/yellow/releases/download/v5.23.0/yellow-v5.23.0.apk",
+  "updateContent": "发现页仅点击换一换才重新随机排列\n阅读器顶栏显示当前章节标题\n章节列表文字对比度修复\n修复对话内容在引号后丢失的bug\n发现页tag分类显示标签文字",
   "releaseDate": "2026-06-15"
 }

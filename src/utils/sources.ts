@@ -80,14 +80,29 @@ function biquBookParser(doc: Document): Partial<Book> {
 function biquChapterParser(doc: Document): { title: string; content: string } {
   const title = doc.querySelector('.bookname h1, .chaptername, h1')?.textContent?.trim() || ''
   const contentEl = doc.querySelector('#content, #chaptercontent, .content, .txt')
-  const content = contentEl?.textContent?.trim()
-    ?.replace(/\s{2,}/g, '\n')
-    ?.replace(/请收藏本站.*?$/gm, '')
-    ?.replace(/最快更新.*?$/gm, '')
-    ?.replace(/一秒记住.*?$/gm, '')
-    ?.replace(/【.*?】/g, '')
-    ?.replace(/\(本章完\)/g, '')
-    || ''
+  if (!contentEl) return { title, content: '' }
+
+  // Use innerHTML to preserve paragraph boundaries
+  let html = contentEl.innerHTML
+  // Convert block elements to newlines
+  html = html.replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>\s*<p[^>]*>/gi, '\n\n')
+    .replace(/<p[^>]*>/gi, '')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<div[^>]*>/gi, '\n')
+    .replace(/<\/div>/gi, '')
+  // Strip remaining HTML tags
+  html = html.replace(/<[^>]+>/g, '')
+  // Decode HTML entities
+  const textarea = doc.createElement('textarea')
+  textarea.innerHTML = html
+  const content = textarea.value
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/请收藏本站.*?$/gm, '')
+    .replace(/最快更新.*?$/gm, '')
+    .replace(/一秒记住.*?$/gm, '')
+    .replace(/\(本章完\)/g, '')
+    .trim()
   return { title, content }
 }
 

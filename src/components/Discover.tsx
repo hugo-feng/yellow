@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { Book } from '../types'
 import { hasInviteCode } from '../utils/invite'
@@ -58,15 +58,15 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
 
   const filteredIndex = hasInviteCode() ? bookIndex : bookIndex.filter(b => b.sourceId !== 'jisge')
 
-  const shuffled = [...filteredIndex].sort(() => Math.random() - 0.5 + shuffleKey * 0)
+  const shuffled = useMemo(() => [...filteredIndex].sort(() => Math.random() - 0.5), [filteredIndex, shuffleKey])
   const recommended = selectedCat
     ? shuffled.filter(b => b.tags?.includes(selectedCat)).slice(0, 36)
     : shuffled.slice(0, 36)
 
-  const tagSections = allTags.slice(0, 6).map(tag => ({
+  const tagSections = useMemo(() => allTags.slice(0, 6).map(tag => ({
     tag,
     books: shuffled.filter(b => b.tags?.includes(tag)).slice(0, 12)
-  })).filter(s => s.books.length > 0)
+  })).filter(s => s.books.length > 0), [allTags, shuffled])
 
   const toItems = (list: typeof bookIndex): DiscoverItem[] => list.map(b => ({
     id: b.id, title: b.title, author: b.author || '未知',
@@ -206,7 +206,7 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
               <div
                 key={`tag-${item.sourceId}-${item.id}`}
                 className="discover-card fade-in"
-                style={{ animationDelay: `${i * 0.03}s` }}
+                style={{ animationDelay: `${i * 0.03}s`, position: 'relative' }}
                 onClick={() => handleClick(item)}
               >
                 <div className="discover-cover" style={{ padding: 6, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', lineHeight: 1.3, wordBreak: 'break-all' }}>
@@ -220,6 +220,7 @@ export default function Discover({ onViewDetail, showToast, books }: Props) {
                   <div className="discover-title">{item.title}</div>
                   <div className="discover-author">{item.sourceName}</div>
                 </div>
+                <span style={{ position: 'absolute', top: 4, left: 4, background: 'var(--accent)', color: '#fff', fontSize: 9, padding: '2px 5px', borderRadius: 4, fontWeight: 600, lineHeight: 1.2 }}>{section.tag}</span>
               </div>
             ))}
           </div>
